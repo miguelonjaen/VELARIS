@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
-import { InventoryItem, VesselStatus, UserProfile } from '../types';
+import { InventoryItem, VesselStatus, UserProfile } from '../shared/types';
 import { 
   Fuel, 
   Droplets, 

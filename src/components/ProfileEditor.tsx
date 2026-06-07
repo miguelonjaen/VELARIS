@@ -9,7 +9,7 @@ import {
   ShieldAlert, 
   Loader2 
 } from 'lucide-react';
-import { UserProfile } from '../types';
+import { UserProfile } from '../shared/types';
 import TestSubidaFoto from './TestSubidaFoto';
 
 interface ProfileEditorProps {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { UserProfile, ShipData, SmartshipAlarm, AlarmSeverity, SecurityThresholds } from '@/types';
+import { UserProfile, ShipData, SmartshipAlarm, AlarmSeverity, SecurityThresholds } from '@/shared/types';
 import { SensorQualityMap } from './lib/sensorQuality';
 
 interface SmartShieldProps {
@@ -15,6 +15,10 @@ interface SmartShieldProps {
   isTravesiaActive: boolean;
   isEngineOn: boolean;
   sensorQuality?: SensorQualityMap;
+  anchorWatch?: {
+    anchorTrend: 'stable' | 'drifting' | 'swinging';
+    currentAnchorDistance: number;
+  } | null;
 }
 
 export const useSmartShield = ({
@@ -28,7 +32,8 @@ export const useSmartShield = ({
   telemetry,
   isTravesiaActive,
   isEngineOn,
-  sensorQuality
+  sensorQuality,
+  anchorWatch
 }: SmartShieldProps) => {
   const [alarms, setAlarms] = useState<SmartshipAlarm[]>([]);
   const [alarmHistory, setAlarmHistory] = useState<any[]>([]);
@@ -37,7 +42,7 @@ export const useSmartShield = ({
     minDepth: 2.5,
     maxEngineTemp: 90,
     minFuel: 15,
-    minCPA: 0.2,
+    minCPA: 0.27, // Umbral de seguridad ajustado a 500m (0.27 NM)
     maxInternalTemp: 35,
     maxHumidity: 85
   });
@@ -126,6 +131,13 @@ export const useSmartShield = ({
         addAlarm('ais_collision', 'critical', 'PELIGRO COLISION: ' + targetName + '.' + tcpaText, proximityTarget.cpa);
       } else { removeAlarmByType('ais_collision'); }
 
+      if (anchorWatch?.anchorTrend === 'drifting') {
+        addAlarm('anchor_drag', 'critical', `¡ALERTA GARREO! Deriva: ${anchorWatch.currentAnchorDistance.toFixed(0)}m`, anchorWatch.currentAnchorDistance);
+      } else {
+        removeAlarmByType('anchor_drag');
+        removeAlarmByType('anchor_drift');
+      }
+
       const badSensor = sensorQuality
         ? Object.values(sensorQuality).find(sensor => sensor.source === 'real' && (sensor.status === 'stale' || sensor.status === 'offline'))
         : null;
@@ -136,7 +148,7 @@ export const useSmartShield = ({
 
     const interval = setInterval(checkSecurity, 5000);
     return () => clearInterval(interval);
-  }, [depth, engineData, aisTargets, thresholds, isTravesiaActive, isEngineOn, sensorQuality, addAlarm, removeAlarmByType]);
+  }, [depth, engineData, aisTargets, thresholds, isTravesiaActive, isEngineOn, sensorQuality, anchorWatch, addAlarm, removeAlarmByType]);
 
   return {
     alarms, alarmHistory, thresholds, setThresholds, 

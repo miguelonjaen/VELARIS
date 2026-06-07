@@ -15,6 +15,11 @@ interface SmartShieldProps {
   isTravesiaActive: boolean;
   isEngineOn: boolean;
   sensorQuality?: SensorQualityMap;
+  // Actualización de la interfaz para el monitoreo de ancla
+  anchorWatch?: { 
+    anchorTrend: 'stable' | 'drifting' | 'swinging';
+    currentAnchorDistance: number;
+  } | null;
 }
 
 export const useSmartShield = ({
@@ -29,6 +34,7 @@ export const useSmartShield = ({
   isTravesiaActive,
   isEngineOn,
   sensorQuality,
+  anchorWatch,
 }: SmartShieldProps) => {
   const [alarms, setAlarms] = useState<SmartshipAlarm[]>([]);
   const [alarmHistory, setAlarmHistory] = useState<any[]>([]);
@@ -160,6 +166,14 @@ export const useSmartShield = ({
       if (telemetry.internalTemp > thresholds.maxInternalTemp) addAlarm('internal_temp', 'critical', 'TEMP. CABINA: ' + telemetry.internalTemp + 'C', telemetry.internalTemp);
       else removeAlarmByType('internal_temp');
 
+      // Alerta de Garreo (Trend-based)
+      if (anchorWatch?.anchorTrend === 'drifting') {
+        addAlarm('anchor_drag', 'critical', `¡ALERTA GARREO! Deriva: ${anchorWatch.currentAnchorDistance.toFixed(0)}m`, anchorWatch.currentAnchorDistance);
+      } else {
+        removeAlarmByType('anchor_drag');
+        removeAlarmByType('anchor_drift');
+      }
+
       const proximityTarget = aisTargets.reduce((prev, curr) => ((curr.cpa || Infinity) < (prev?.cpa || Infinity) ? curr : prev), null);
       if (proximityTarget && proximityTarget.cpa < thresholds.minCPA) {
         const tcpaText = Number.isFinite(proximityTarget.tcpa) ? ' TCPA ' + proximityTarget.tcpa.toFixed(1) + ' min' : '';
@@ -180,3 +194,4 @@ export const useSmartShield = ({
 
   return { alarms, setAlarms, alarmHistory, thresholds, setThresholds, isAlertMuted, setIsAlertMuted, removeAlarm, removeAlarmByType, addAlarm };
 };
+

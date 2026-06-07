@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { supabase } from '../supabaseClient';
-import { ShipData, UserProfile } from '../types';
+import { ShipData, UserProfile } from '../shared/types';
 import { cn } from '../lib/utils';
 
 interface FleetManagerProps {

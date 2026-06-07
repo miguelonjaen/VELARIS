@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef, Component } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react';
 import { 
-  MapContainer, 
   TileLayer, 
   Marker,
   Polyline, 
-  useMapEvents,
   useMap,
+  useMapEvents,
   Popup,
+  Circle,
   LayersControl,
   ZoomControl
 } from 'react-leaflet';
-import { renderToStaticMarkup } from 'react-dom/server';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { 
@@ -60,7 +59,7 @@ import {
   Eye,
   Trash2,
   CheckCircle2,
-  Circle,
+  Circle as CircleIcon,
   FileText,
   ShieldCheck,
   Radio,
@@ -80,11 +79,14 @@ import { supabase } from './supabaseClient';
 import { userRepository, vesselRepository, logRepository } from './lib/supabaseRepository';
 import { db, auth, onAuthStateChanged, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from './firebase';
 import { getTripLogger, TripLogger } from './lib/tripLogger';
-import { useNavigationCore } from '../useNavigationCore'; // Ajustado a la ubicación real
+import { useNavigationCore } from '../useNavigationCore';
 import { TacticalTerminal } from './components/TacticalTerminal';
 import { useSmartShield } from './useSmartShield';
+import { useAIS } from './lib/useAIS';
+import { useTacticalRouting } from './useTacticalRouting';
+import { useTacticalAdvisor } from './hooks/useTacticalAdvisor';
 import { CommandSidebar } from './components/CommandSidebar';
-import { calculateDistanceNM } from '@lib/utils';
+import { calculateDistanceNM, cn } from '@lib/utils';
 import { enrichAisTarget, VesselVector } from './lib/ais';
 import {
   createInitialSensorQualityMap,
@@ -95,30 +97,37 @@ import {
 } from './lib/sensorQuality';
 import { calculateLaylineDeviation, calculateAnchorDrift, calculateETA } from '@lib/laylineCalculator';
 import { GPXRoute, GPXWaypoint } from './lib/gpxParser';
-import { UserProfile, ShipData, LogEntry, VesselStatus, WeatherResponse, ProcessedWeather, InventoryItem, SmartshipAlarm, SecurityThresholds, AlarmSeverity } from '@/types';
+import { UserProfile, ShipData, LogEntry, VesselStatus, WeatherResponse, ProcessedWeather, InventoryItem, SmartshipAlarm, SecurityThresholds, AlarmSeverity } from '@/shared/types';
 // ... (rest of imports remains same, just fixing firebase ones)
 import AuthScreen from './components/AuthScreen';
 import TestSubidaFoto from './components/TestSubidaFoto';
 import { ControlCenter } from './components/ControlCenter';
 import Logbook from './components/Logbook';
 import FleetManager from './components/FleetManager';
-import InventoryManager from './components/InventoryManager';
-import Vademecum from './components/Vademecum';
 import AdminPanel from './components/AdminPanel';
 import ProfileEditor from './components/ProfileEditor';
 import SafetyModal from './components/SafetyModal';
-import { TacticalHUD } from './components/TacticalHUD';
-import { VADEMECUM_SIGNALS, FLAGS } from './constants';
-import { cn } from './lib/utils';
 import { translations, Language } from './i18n';
 import { TacticalAdvisorPanel, TacticalAdvisorToggle } from './components/TacticalAdvisorPanel';
 import PanelAlmirantazgo from './components/PanelAlmirantazgo';
 import { MBTileLayer } from './components/MBTileLayer';
+import { TacticalMap } from './components/TacticalMap';
 import { NavigationDashboard } from './components/NavigationDashboard';
+import { FleetLayer } from './components/FleetLayer';
+import { WeatherLayer } from './WeatherLayer';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
+import { TacticalHUD } from './components/TacticalHUD'; // Asegúrate de que TacticalHUD esté importado
+import { Zeus3SChartplotterOverlay } from './components/Zeus3SChartplotterOverlay';
+import { calculateSwingRadius, analyzeAnchorTrend, formatAnchorLog } from './lib/anchorManager';
 import { WatchdogPanel } from './components/WatchdogPanel';
 import { AlarmToasts } from './components/AlarmToasts';
 import ErrorBoundary from './components/ErrorBoundary';
+import InventoryManager from './components/InventoryManager';
+import packageJson from '../package.json';
+import { CHANGELOG, getLatestVersion } from './config/changelog';
+import { ChangelogModal } from './components/ChangelogModal';
+
+const Vademecum = lazy(() => import('./components/Vademecum'));
 
 declare global {
   interface Window {
@@ -126,7 +135,76 @@ declare global {
   }
 }
 
+// Componente Táctico para auto-centrado de cartas
+const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    const onOverlayAdd = (e: any) => {
+      console.log(`⚓ Capa seleccionada en el puente: ${e.name}`); // Para ver el nombre exacto en consola
+      
+      // 1. Limpiamos el nombre de la capa que viene del click para comparar de forma flexible
+      // Quitamos la palabra "Carta:", espacios y lo pasamos a minúsculas
+      console.log(`⚓ Capa seleccionada en el puente: ${e.name}`);
+      const cleanEventName = e.name.replace(/carta:/i, '').trim().toLowerCase();
+      
+      // 2. Buscamos la carta en tu array de datos
+      const chart = charts.find((c: any) => {
+        const cleanChartName = c.name.replace('.mbtiles', '').trim().toLowerCase();
+        return cleanChartName === cleanEventName || cleanEventName.includes(cleanChartName);
+      });
+
+      if (chart && chart.bounds) {
+        // Convertimos las esquinas a números por seguridad
+        const minLon = parseFloat(chart.bounds[0]);
+        const minLat = parseFloat(chart.bounds[1]);
+        const maxLon = parseFloat(chart.bounds[2]);
+        const maxLat = parseFloat(chart.bounds[3]);
+
+        if (!isNaN(minLat) && !isNaN(minLon) && !isNaN(maxLat) && !isNaN(maxLon)) {
+          console.log(`🗺️ [ÉXITO] Saltando a los límites de la carta local: ${chart.name}`);
+          
+          // 3. Forzamos el encuadre inmediato sin animaciones intermedias
+          map.fitBounds([[minLat, minLon], [maxLat, maxLon]], { 
+            padding: [50, 50], 
+            maxZoom: 14,      // Zoom perfecto para ver la costa
+            animate: false,   // Evita que pase por el mapa mundial
+                        duration: 0 
+          });
+          return;
+        }
+      }
+
+      // 🛟 FALLBACK DE RESPALDO: Si la comparación falló pero sabemos que es una carta local,
+      // o si estás probando la app, el mapa te lleva directo a tu zona base de Motril
+      if (cleanEventName.includes('motril') || cleanEventName.includes('carta')) {
+        console.log("⚓ Aplicando ruta directa por defecto a la costa de Motril.");
+        map.setView([36.72, -3.52], 13, { animate: false });
+      }
+    // 1. FORZADO DE ZOOM NÁUTICO: Desactivamos cualquier intento de Leaflet
+      // de alejar el mapa al plano mundial. Al activar la carta, congelamos
+      // la vista en un zoom óptimo de navegación (Zoom 13 o 14).
+      
+      // Intentamos centrar en las coordenadas base de Motril, manteniendo tu rango seguro
+      map.setView([36.72, -3.52], 14, { animate: false });
+
+      // 2. Si quieres que el mapa viaje a la posición real de tu barco al activar la carta:
+      // (Si tienes un estado global o una variable para la posición del barco, úsala aquí)
+      // if (vesselPosition) {
+      //   map.setView([vesselPosition.lat, vesselPosition.lng], 14, { animate: false });
+      // }
+
+      console.log("🎯 Vista protegida: Bloqueado el salto al mapa mundial.");
+    };
+    
+    map.on('overlayadd', onOverlayAdd);
+    return () => { map.off('overlayadd', onOverlayAdd); };
+  }, [map, charts]);
+
+  return null;
+};
 // --- Constants ---
+
 const APP_ID = "react-example";
 const GEMINI_MODEL = "gemini-1.5-flash";
 
@@ -143,63 +221,66 @@ const MBTILES_ZONES = [
 const SUPABASE_URL = "https://puxkefnscvzzrdsmckjt.supabase.co";
 const SUPABASE_ANON_KEY_VAL = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1eGtlZm5zY3Z6enJkc21ja2p0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTUwMDIsImV4cCI6MjA5MDQzMTAwMn0.b02TnDBYir17BtzA79pec1EO8Lkf3CYJsMGD4ldAXbE";
 
-const MapUpdater = ({ center, zoom }: { center: [number, number], zoom?: number }) => {
-  const map = useMapEvents({});
-  useEffect(() => {
-    // Safety check for map instance before tactical view changes
-    if (!map) return;
-    try {
-      map.setView(center, zoom || map.getZoom());
-    } catch (err) {
-      console.warn('[Tactical] Fallo al actualizar vista:', err);
-    }
-  }, [center, zoom, map]);
-  return null;
-};
-
-const ZoomIndicator = () => {
-  const [zoom, setZoom] = useState(15);
-  const map = useMapEvents({
-    zoomend: () => {
-      setZoom(map.getZoom());
-    },
-  });
-
-  return (
-    <div className="absolute bottom-6 right-6 z-[6000] bg-slate-950/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg">
-      <Gauge className="w-3 h-3 text-cyan-400" />
-      <span className="text-[10px] font-black text-white uppercase tracking-widest">Zoom: {zoom}</span>
-    </div>
-  );
-};
 
 const MapBoundsHandler = ({ path, showControl, showSystems }: { path: [number, number][], showControl: boolean, showSystems: boolean }) => {
   const map = useMap();
   useEffect(() => {
-    // Invalidate size strictly when panels toggle to allow Leaflet to recalculate container
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 300);
+    setTimeout(() => map.invalidateSize(), 300);
   }, [showControl, showSystems, map]);
 
   useEffect(() => {
     if (path && path.length >= 2) {
       try {
         const bounds = L.latLngBounds(path);
-        // Calculate responsive padding based on open panels
         const paddingLeft = showControl ? 380 : 80;
         const paddingRight = showSystems ? 480 : 80;
-        
         map.fitBounds(bounds, { 
           paddingTopLeft: [paddingLeft, 100], 
           paddingBottomRight: [paddingRight, 100], 
           maxZoom: 16 
         });
-      } catch (err) {
-        console.warn('MapBoundsHandler: Error fitting bounds', err);
-      }
+      } catch (err) { console.warn('MapBoundsHandler Error:', err); }
     }
   }, [path, map, showControl, showSystems]);
+  return null;
+};
+
+interface MapEventsHandlerProps {
+  showShipForm: boolean;
+  activeTab: string;
+  setNewShip: React.Dispatch<React.SetStateAction<any>>;
+  setAdvisorMessage: (val: string) => void;
+  setDestination: (val: any) => void;
+  setNavigationDestination: (val: string) => void;
+  navPlan: any;
+  handleMapRightClick: (e: any) => void;
+}
+
+const MapEventsHandler: React.FC<MapEventsHandlerProps> = ({ 
+  showShipForm, 
+  activeTab, 
+  setNewShip, 
+  setAdvisorMessage, 
+  setDestination, 
+  setNavigationDestination, 
+  navPlan, 
+  handleMapRightClick 
+}) => {
+  useMapEvents({
+    click: (e) => {
+      if (showShipForm && activeTab === 'fleet') {
+        setNewShip((prev: any) => ({ ...prev, lat: e.latlng.lat, lng: e.latlng.lng }));
+        setAdvisorMessage(`Coordenadas fijadas: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`);
+      } else {
+        setDestination({ lat: e.latlng.lat, lng: e.latlng.lng });
+        setAdvisorMessage(`Destino fijado: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`);
+        if (!navPlan?.targetCoords) {
+          setNavigationDestination(`${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`);
+        }
+      }
+    },
+    contextmenu: handleMapRightClick
+  });
   return null;
 };
 
@@ -208,10 +289,27 @@ const MapBoundsHandler = ({ path, showControl, showSystems }: { path: [number, n
 function App() {
   // 🏷️ [ETIQUETA: CARTAS LOCALES - ESTADOS Y EFECTOS]
   const [cartasPath, setCartasPath] = useState<string>('Buscando entorno SmartShip...');
-  const [listaCartas, setListaCartas] = useState<string[]>(['Carta_Prueba_Andalucia.mbtiles']);
+  // --- CONTROL DE NOVEDADES (CHANGELOG) ---
+  const [showChangelog, setShowChangelog] = useState(false);
+  const [changelogData, setChangelogData] = useState(getLatestVersion());
+
+  useEffect(() => {
+    const currentVersion = packageJson.version;
+    const lastRunVersion = localStorage.getItem('smartship_last_version');
+
+    if (lastRunVersion !== currentVersion) {
+      // Si es una versión nueva, mostramos las novedades
+      setShowChangelog(true);
+      // Actualizamos el registro para que no vuelva a salir hasta la siguiente update
+      localStorage.setItem('smartship_last_version', currentVersion);
+    }
+  }, []);
+
+  const [listaCartas, setListaCartas] = useState<any[]>([]);
 // 🗺️ CONTROL DE CAPAS DESPLEGABLES
   const [isLayersMenuOpen, setIsLayersMenuOpen] = useState<boolean>(false);
   const [cartasActivas, setCartasActivas] = useState<Record<string, boolean>>({});
+  const [cartasOpacity, setCartasOpacity] = useState<Record<string, number>>({});
 
   const toggleCarta = (nombreArchivo: string) => {
     setCartasActivas(prev => ({
@@ -219,61 +317,135 @@ function App() {
       [nombreArchivo]: !prev[nombreArchivo]
     }));
   };
-  useEffect(() => {
-    if (window.smartshipAPI && window.smartshipAPI.getDefaultChartsPath) {
-      window.smartshipAPI.getDefaultChartsPath()
-        .then((path: string) => {
-          setCartasPath(path);
-          
-          window.smartshipAPI.listChartsFiles(path)
-            .then((archivos: string[]) => {
-              const cartasEncontradas = archivos || [];
-              setListaCartas(cartasEncontradas);
 
-              const iniciales: Record<string, boolean> = {};
-              cartasEncontradas.forEach((a: string) => {
-                iniciales[a] = false;
-              });
-              setCartasActivas(iniciales);
-            })
-            .catch((err: any) => {
-              console.error("Error al leer archivos de arranque:", err);
-              setListaCartas([]);
-            });
+  // Sincronización con el servidor MBTiles local al arrancar
+  useEffect(() => {
+    fetch('http://localhost:8089/api/charts')
+      .then(res => res.json())
+      .then(data => {
+        setListaCartas(data);
+        const ops: Record<string, number> = {};
+        const actives: Record<string, boolean> = {};
+        data.forEach((chart: any) => {
+          ops[chart.name] = 0.8;
+          actives[chart.name] = false;
+        });
+        setCartasOpacity(ops);
+        setCartasActivas(actives);
+      })
+      .catch(err => console.info("🛰️ Servidor de cartas MBTiles offline o no iniciado:", err));
+  }, []);
+
+  useEffect(() => {
+    const savedChartsPath = localStorage.getItem('smartship_charts_path');
+
+    if (savedChartsPath) {
+      setCartasPath(savedChartsPath);
+      fetch('http://localhost:8089/api/settings/charts-path', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: savedChartsPath })
+      })
+        .then(() => fetch('http://localhost:8089/api/charts'))
+        .then(res => res.json())
+        .then(archivos => {
+          setListaCartas(archivos);
+          const iniciales: Record<string, boolean> = {};
+          archivos.forEach((a: any) => {
+            iniciales[a.name] = false;
+          });
+          setCartasActivas(iniciales);
         })
         .catch((err: any) => {
-          console.error("Error al obtener la ruta de cartas por defecto:", err);
+          console.error('Error al sincronizar el servidor MBTiles con la ruta guardada:', err);
+        });
+      return;
+    }
+
+    if (window.smartshipAPI && window.smartshipAPI.getDefaultChartsPath) {
+      window.smartshipAPI.getDefaultChartsPath()
+        .then(async (pathStr: string) => {
+          setCartasPath(pathStr);
+
+          // Sincronizar el servidor de mapas con la ruta por defecto
+          try {
+            await fetch('http://localhost:8089/api/settings/charts-path', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: pathStr })
+            });
+
+            const res = await fetch('http://localhost:8089/api/charts');
+            const archivos = await res.json();
+            setListaCartas(archivos);
+            const iniciales: Record<string, boolean> = {};
+            archivos.forEach((a: any) => {
+              iniciales[a.name] = false;
+            });
+            setCartasActivas(iniciales);
+          } catch (err) {
+            console.error('Error al leer archivos de arranque:', err);
+            setListaCartas([]);
+          }
+        })
+        .catch((err: any) => {
+          console.error('Error al obtener la ruta de cartas por defecto:', err);
         });
     }
   }, []); // 👈 Aquí termina de forma limpia el useEffect en la línea 230
+
   const handleCambiarCarpeta = async () => {
-    if (window.smartshipAPI && window.smartshipAPI.selectChartsDirectory) {
-      try {
-        const nuevaRuta = await window.smartshipAPI.selectChartsDirectory();
-        
-        // 📢 CHIVATO 1: ¿Qué nos devuelve Windows exactamente?
-        console.log("Ruta seleccionada en la ventana de Windows:", nuevaRuta);
+    try {
+      const api = (window as any).smartshipAPI;
+      let nuevaRuta: string | null = null;
 
-        if (nuevaRuta) {
-          setCartasPath(nuevaRuta);
-          
-          const archivos = await window.smartshipAPI.listChartsFiles(nuevaRuta);
-          
-          // 📢 CHIVATO 2: ¿Qué archivos dice Electron que hay ahí dentro en ese instante?
-          console.log("Archivos devueltos por el backend para esa ruta:", archivos);
-
-          const cartasEncontradas = archivos || [];
-          setListaCartas(cartasEncontradas);
-
-          const initialStates: Record<string, boolean> = {};
-          cartasEncontradas.forEach((archivo: string) => {
-            initialStates[archivo] = false;
-          });
-          setCartasActivas(initialStates);
+      if (api && typeof api.selectChartsDirectory === 'function') {
+        nuevaRuta = await api.selectChartsDirectory();
+        console.log('[App] smartshipAPI.selectChartsDirectory ->', nuevaRuta);
+      } else if ((window as any).require) {
+        const { ipcRenderer } = (window as any).require('electron');
+        if (ipcRenderer?.invoke) {
+          try {
+            nuevaRuta = await ipcRenderer.invoke('select-charts-directory');
+            console.log('[App] ipcRenderer.invoke(select-charts-directory) ->', nuevaRuta);
+          } catch (err) {
+            console.warn('[App] select-charts-directory no registrado, intentando select-directory...', err);
+            nuevaRuta = await ipcRenderer.invoke('select-directory');
+            console.log('[App] ipcRenderer.invoke(select-directory) ->', nuevaRuta);
+          }
         }
-      } catch (error) {
-        console.error("Error al cambiar de carpeta manualmente:", error);
+      } else {
+        console.error('[App] No hay API de Electron disponible para seleccionar directorio.');
+        alert('No se encontró la API de Electron para seleccionar directorio. Reinicia la app o revisa la configuración de Electron.');
+        return;
       }
+
+      if (!nuevaRuta) {
+        console.log('[App] Selección de carpeta cancelada o no se devolvió ruta.');
+        return;
+      }
+
+      setCartasPath(nuevaRuta);
+      localStorage.setItem('smartship_charts_path', nuevaRuta);
+
+      await fetch('http://localhost:8089/api/settings/charts-path', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: nuevaRuta })
+      });
+
+      const res = await fetch('http://localhost:8089/api/charts');
+      const archivos = await res.json();
+      setListaCartas(archivos);
+
+      const initialStates: Record<string, boolean> = {};
+      archivos.forEach((chart: any) => {
+        initialStates[chart.name] = false;
+      });
+      setCartasActivas(initialStates);
+    } catch (error) {
+      console.error('Error al cambiar de carpeta manualmente:', error);
+      alert(`Error al cambiar carpeta: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
   
@@ -281,6 +453,16 @@ function App() {
   // --- DECK ALPHA: ESTADOS CONSOLIDADOS (Saneamiento de 85 errores) ---
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  
+  // Capas del Mapa
+  const [layersState, setLayersState] = useState({
+    showAIS: true,
+    showWind: false,
+    collisionFilter: false
+  });
+  const [historicalPath, setHistoricalPath] = useState<any[]>([]);
+  const [playbackCoord, setPlaybackCoord] = useState<any>(null);
+
   const [lang, setLang] = useState<Language>('es');
   const t = translations[lang];
   const [messages, setMessages] = useState<any[]>([]);
@@ -320,6 +502,8 @@ function App() {
   const [telemetry] = useState({ hullPress: 1.02, internalTemp: 24, humidity: 45 });
   const [aisTargets, setAisTargets] = useState<any[]>([]);
   const [sensorQuality, setSensorQuality] = useState(createInitialSensorQualityMap);
+  const [currentAnchorDistance, setCurrentAnchorDistance] = useState(0);
+  const [anchorTrend, setAnchorTrend] = useState<'stable' | 'drifting' | 'swinging'>('stable');
   const sensorConfidence = useMemo(() => getOverallSensorConfidence(sensorQuality), [sensorQuality]);
   const ownShipVector = useMemo<VesselVector | null>(() => {
     if (!shipPosition) return null;
@@ -347,7 +531,52 @@ function App() {
     alarms, alarmHistory, thresholds, setThresholds, 
     isAlertMuted, setIsAlertMuted, removeAlarm, removeAlarmByType, addAlarm
   } = useSmartShield({
-    userProfile, supabase, fleet, selectedShipId, depth, engineData, aisTargets: tacticalAisTargets, telemetry, isTravesiaActive, isEngineOn, sensorQuality
+    userProfile,
+    supabase,
+    fleet,
+    selectedShipId,
+    depth,
+    engineData,
+    aisTargets: tacticalAisTargets,
+    telemetry,
+    isTravesiaActive,
+    isEngineOn,
+    sensorQuality,
+    anchorWatch: {
+      anchorTrend,
+      currentAnchorDistance,
+    }
+  });
+
+  // --- AIS SIMULADO CORE ---
+  const ownAISData = useMemo(() => shipPosition ? ({
+    lat: shipPosition.lat,
+    lng: shipPosition.lng,
+    sog: simulatedSog,
+    cog: selectedShip?.cog || 0
+  }) : null, [shipPosition, simulatedSog, selectedShip]);
+  
+  const simulatedAisTargets = useAIS(ownAISData);
+
+  // --- MOTOR TÁCTICO DE POLARES Y ENRUTAMIENTO ---
+  const tacticalData = useTacticalRouting({
+    shipPos: shipPosition,
+    targetPos: targetDestination,
+    sog: simulatedSog,
+    cog: selectedShip?.cog || 0,
+    tws: weather?.wind || 0,
+    twd: weather?.windDir || 0
+  });
+
+  const tacticalAdvisor = useTacticalAdvisor({
+    shipPos: shipPosition,
+    targetPos: targetDestination,
+    sog: simulatedSog,
+    cog: selectedShip?.cog || 0,
+    windSpeed: weather?.wind || 0,
+    windDir: weather?.windDir || 0,
+    currentSailConfig: isEngineOn ? 'motor' : 'full',
+    saveLogEntry: saveTechnicalLog
   });
 
   // --- NAVEGACIÓN CORE HOOK ---
@@ -425,6 +654,18 @@ function App() {
   const handleTacticalOrder = async (order: string) => {
     if (!order.trim() || isProcessing) return;
     
+    // --- INTERCEPTOR DE COMANDOS LOCALES DEL SISTEMA ---
+    const command = order.toLowerCase().trim();
+    if (['changelog', 'novedades', 'version', 'actualizaciones'].includes(command)) {
+      const userMsg = { id: crypto.randomUUID(), role: 'user', text: order, timestamp: new Date() };
+      setMessages(prev => [...prev, userMsg]);
+      setInput('');
+      setShowChangelog(true);
+      const aiResponse = { id: crypto.randomUUID(), role: 'ai', text: "Entendido, Almirante. Accediendo al registro de versiones del puente de mando. Desplegando el historial de cambios (Changelog)...", timestamp: new Date() };
+      setMessages(prev => [...prev, aiResponse]);
+      return;
+    }
+
     // Conciencia Situacional Profunda para el Núcleo Nucleus AI
     const currentInventory = selectedShip?.inventory?.map(i => `${i.nombre}: ${i.cantidad_actual}${i.unidad ? ' ' + i.unidad : ''}`).join(', ') || 'Optimizado';
     
@@ -507,28 +748,10 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     setIsProcessing(true);
     
     try {
-      // Llamada a Gemini con herramientas habilitadas
-      const response = await callGemini(order, systemPrompt, false, NAV_TOOLS);
-      if (!response) throw new Error("Respuesta vacía");
-      
-      const aiText = response.text || "Orden procesada.";
-      const functionCalls = response.functionCalls as Array<{ name?: string; [key: string]: any }> | undefined;
-// Declaraciones provisionales para solucionar los errores de referencia
-  const updateNavigationPlan = (coords: { lat: number; lng: number }, name?: string) => {
-    console.log("Actualizando plan de navegación:", coords, name);
-  };
+      const result = await callGemini(order, systemPrompt, false, NAV_TOOLS);
+      const aiText = typeof result === 'string' ? result : result.text || 'Orden procesada.';
+      const functionCalls = typeof result === 'string' ? [] : result.functionCalls || [];
 
-  const handleStartTravesia = (mode: 'IA' | 'Libre') => {
-    console.log("Iniciando travesía en modo:", mode);
-  };
-
-  const handleEndTravesia = () => {
-    console.log("Finalizando travesía");
-  };
-
-  const handleMOB = () => {
-    console.log("¡ALERTA MAN OVERBOARD (MOB) ACTIVADA!");
-  };
       // Ejecutar herramientas si existen
       if (functionCalls && functionCalls.length > 0) {
         for (const call of functionCalls) {
@@ -546,7 +769,13 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
         }
       }
       
-      const aiResponseMsg = { id: crypto.randomUUID(), role: 'ai', text: aiText, timestamp: new Date() };
+      const aiResponseMsg = { 
+        id: crypto.randomUUID(), 
+        role: 'ai', 
+        text: aiText, 
+        timestamp: new Date(),
+        isOfflineMode: typeof result === 'object' ? result.isOfflineMode : false
+      };
       setMessages(prev => [...prev, aiResponseMsg]);
 
       // Persistir respuesta de IA en Supabase (buscamos el último registro o insertamos nuevo)
@@ -654,22 +883,21 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
       }
     };
 
-    const api = window.smartshipAPI;
-    const subscribe = typeof api?.on === 'function'
-      ? () => api.on('vessel-telemetry', handleTelemetry)
-      : typeof api?.onNMEAData === 'function'
-        ? () => api.onNMEAData(handleTelemetry)
-        : null;
-
-    if (!subscribe) {
+    const api = window.smartshipAPI; // Assuming smartshipAPI is exposed by preload.js
+    if (api && typeof api.on === 'function' && typeof api.removeListener === 'function') {
+      // Correct signature for ipcRenderer.on
+      api.on('vessel-telemetry', handleTelemetry);
+      
+      return () => {
+        api.removeListener('vessel-telemetry', handleTelemetry);
+      };
+    } else {
       console.info('[NMEA] Puente Electron no disponible; telemetria en modo local.');
-      return;
+      // Fallback or warning if API is not correctly exposed
+      if (!api) console.warn('[NMEA] window.smartshipAPI no está definido.');
+      else console.warn('[NMEA] Métodos on/removeListener no disponibles en smartshipAPI.');
     }
-
-    const unsubscribe = subscribe();
-    return () => {
-      if (typeof unsubscribe === 'function') unsubscribe();
-    };
+    // No cleanup needed if API is not available, as no listener was set
   }, [selectedShipId, ownShipVector]);
 
   useEffect(() => {
@@ -800,7 +1028,10 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
   const [isAisCooldown, setIsAisCooldown] = useState(false);
   const [batteryLevel] = useState(95);
   const [batteryVoltage] = useState(12.8);
-  const [navData, setNavData] = useState<any>({ btw: 145, dtw: 12.4, xte: 0.02, waypointName: 'ISLA_NEGRA' });
+  const [anchorSettings, setAnchorSettings] = useState({ depth: 0, chain: 0, margin: 5 });
+  const [swingRadius, setSwingRadius] = useState(0); // Nuevo estado para el radio de borneo
+  const [anchorDistHistory, setAnchorHistory] = useState<number[]>([]);
+  const [navData, setNavData] = useState<{ btw: number; dtw: number; xte: number; waypointName: string; isAnchorActive: boolean; anchorDistance: number; swingRadius: number; eta?: string }>({ btw: 145, dtw: 12.4, xte: 0.02, waypointName: 'ISLA_NEGRA', isAnchorActive: false, anchorDistance: 0, swingRadius: 0 });
 
 
   // --- KERNEL PANIC RECOVERY ---
@@ -1139,7 +1370,6 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     } catch (err) {
       console.error('Morning Report Error:', err);
       setIsAdvisorProcessing(false);
-      // Fallback manual as requested by Admiral
       setAdvisorText({
         text: `Sistemas listos (Modo Manual). Batería: 12.8V. Combustible: ${engineData.fuel || 100}%. Agua: 90%. Buen viaje, Almirante.`,
         priority: 'warning',
@@ -1162,9 +1392,9 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
       const prompt = `Analiza: ${msg}. Responde como el núcleo táctico del SmartShip. Sé conciso y profesional.`;
       const responseText = await callGemini(prompt);
       
-      setAdvisorMessage(responseText);
+      setAdvisorMessage(responseText.text);
       setAdvisorText({
-        text: responseText,
+        text: responseText.text,
         priority: 'info',
         timestamp: Date.now()
       });
@@ -1360,6 +1590,21 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
   const [isAutoCenter, setIsAutoCenter] = useState(true);
   const [showControl, setShowControl] = useState(false);
   const [showSystems, setShowSystems] = useState(false);
+  const [zeusPage, setZeusPage] = useState<'chart' | 'sailsteer' | 'race' | 'laylines' | 'windplot' | 'pilot' | 'weather' | 'charts'>('chart');
+  const [autopilotMode, setAutopilotMode] = useState<'standby' | 'auto' | 'wind' | 'nav'>('standby');
+
+  const openZeusHudPage = useCallback((page: number) => {
+    setHudPageIndex(page);
+    setShowControl(true);
+  }, []);
+
+  const toggleZeusAutopilot = useCallback(() => {
+    setAutopilotMode((current) => {
+      const next = current === 'standby' ? 'auto' : current === 'auto' ? 'wind' : current === 'wind' ? 'nav' : 'standby';
+      setAdvisorMessage(`Piloto Zeus 3S: modo ${next.toUpperCase()}`);
+      return next;
+    });
+  }, [setAdvisorMessage]);
 
   // Auto-maximize intel window on new AI message
   useEffect(() => {
@@ -1696,6 +1941,16 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
   }, [selectedShipId, fleet]);
 
   const getTacticalAdvice = useMemo(() => {
+    if (tacticalAdvisor && tacticalAdvisor.advisory) {
+      let icon = <Zap className="w-4 h-4 text-cyan-400 animate-pulse" />;
+      if (tacticalAdvisor.advisory.priority === 'critical') {
+        icon = <AlertTriangle className="w-6 h-6 text-red-500 animate-bounce" />;
+      } else if (tacticalAdvisor.advisory.priority === 'warning') {
+        icon = <ShieldAlert className="w-4 h-4 text-amber-400" />;
+      }
+      return { message: tacticalAdvisor.advisory.message, icon };
+    }
+
     const selectedShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
     let advice = advisorMessage;
     let icon = <Zap className="w-4 h-4 text-cyan-400 animate-pulse" />;
@@ -1743,7 +1998,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     }
 
     return { message: advice || "Sistemas operativos al 100%. Rumbo estable.", icon };
-  }, [selectedShipId, fleet, weather, destination, advisorMessage]);
+  }, [tacticalAdvisor, selectedShipId, fleet, weather, destination, advisorMessage]);
 
   const closeAdvisor = () => {
     setIsAdvisorOpen(false);
@@ -1905,7 +2160,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     return saveTechnicalLog(titulo, descripcion, categoria, navigationMode || undefined, navigationDestination, true);
   };
 
-  const saveTechnicalLog = async (
+  async function saveTechnicalLog(
     titulo: string, 
     descripcion: string, 
     categoria: string = 'Técnico',
@@ -1913,7 +2168,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     destino_planificado?: string,
     isAuto: boolean = true,
     rutaId?: string
-  ) => {
+  ) {
     try {
       const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
       const barcoIdReal = activeShip?.id || selectedShipId || null;
@@ -2274,7 +2529,16 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     setIsAnchorWatchActive(false);
     setAnchorPosition(null);
     removeAlarmByType('anchor_drift');
+    removeAlarmByType('anchor_drag');
     notifyAdmiral('⚓ Anchor Watch DESACTIVADO', 'info');
+  };
+
+  const toggleAnchorWatch = () => {
+    if (isAnchorWatchActive) {
+      handleDeactivateAnchorWatch();
+    } else {
+      handleActivateAnchorWatch();
+    }
   };
 
   const handleNavigateToDestination = async (coords: { lat: number; lng: number }) => {
@@ -2572,6 +2836,55 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     }
   }, [selectedShip]);
 
+  // --- MONITOR TÁCTICO DE FONDEO ---
+  useEffect(() => {
+    if (!isAnchorWatchActive || !anchorPosition || !shipPosition) return;
+
+    const monitorInterval = setInterval(async () => {
+      const distToAnchor = calculateDistanceNM(
+        shipPosition.lat, shipPosition.lng, 
+        anchorPosition.lat, anchorPosition.lng
+      ) * 1852; // Convertir a metros
+
+      const radius = calculateSwingRadius(anchorSettings.depth, anchorSettings.chain, anchorSettings.margin);
+      
+      setSwingRadius(radius);
+      setCurrentAnchorDistance(distToAnchor);
+
+      setAnchorHistory(prev => {
+        const newHistory = [...prev, distToAnchor].slice(-30);
+        const trend = analyzeAnchorTrend(newHistory, radius);
+        setAnchorTrend(trend);
+        return newHistory;
+      });
+
+      if (anchorTrend === 'drifting') {
+        notifyAdmiral(`ALERTA DE GARREO: El buque está desplazándose fuera del radio de borneo (${distToAnchor.toFixed(0)}m).`, 'critical');
+      }
+
+      // Registro Automático cada 10 minutos o cambio de viento brusco
+      const trend = "linear";
+      setAnchorSettings(prev => ({ ...prev, trend })); // Actualizar la tendencia de garreo
+      if (Date.now() % 600000 < 5000) {
+        await saveTechnicalLog(
+          'Log de Fondeo',
+          formatAnchorLog(selectedShip?.nombre || 'Buque', anchorSettings.depth, anchorSettings.chain, weather.wind, distToAnchor),
+          'Seguridad'
+        );
+      }
+
+      setNavData(prev => ({
+        ...prev,
+        isAnchorActive: true,
+        anchorDistance: distToAnchor,
+        swingRadius: radius
+      }));
+
+    }, 5000);
+
+    return () => clearInterval(monitorInterval);
+  }, [isAnchorWatchActive, anchorPosition, shipPosition, anchorSettings, weather.wind, anchorTrend, selectedShip?.nombre]);
+
   useEffect(() => {
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -2797,24 +3110,6 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
       }
     }
   }, [userProfile?.role]);
-
-  const playSignal = (pattern: number[]) => {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    let time = audioCtx.currentTime;
-    pattern.forEach(p => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, time);
-      gain.gain.setValueAtTime(0.1, time);
-      gain.gain.exponentialRampToValueAtTime(0.0001, time + (p === 1 ? 0.3 : 0.8));
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(time);
-      osc.stop(time + (p === 1 ? 0.3 : 0.8));
-      time += (p === 1 ? 0.5 : 1.0);
-    });
-  };
 
   const [showShipForm, setShowShipForm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -3155,7 +3450,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
 
       const responseText = await callGemini(prompt);
       
-      setAiBriefing(responseText);
+      setAiBriefing(responseText.text);
       setIsExplainingAiRoute(false);
       setShowSafetyModal(true);
     } catch (err) {
@@ -3253,9 +3548,15 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
       case 'guide':
         return (
           <div className="h-full overflow-y-auto custom-scrollbar">
-            <Vademecum 
-              onClose={() => setActiveTab('control')}
-            />
+            <Suspense
+              fallback={
+                <div className="h-full min-h-[420px] flex items-center justify-center bg-slate-950 text-cyan-400">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+              }
+            >
+              <Vademecum onClose={() => setActiveTab('control')} />
+            </Suspense>
           </div>
         );
       case 'fleet':
@@ -3323,49 +3624,6 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     }
   };
 
-  const MapEvents: React.FC<{ 
-    onMapClick?: (lat: number, lng: number) => void;
-    onDragStart?: () => void;
-  }> = ({ onMapClick, onDragStart }) => {
-    useMapEvents({
-      click: (e) => {
-        onMapClick?.(e.latlng.lat, e.latlng.lng);
-      },
-      dragstart: () => {
-        onDragStart?.();
-      },
-      contextmenu: handleMapRightClick,
-    });
-    return null;
-  };
-
-  const MapClickHandler = ({ 
-    showShipForm, 
-    activeTab, 
-    setNewShip, 
-    setDestination, 
-    setAdvisorMessage, 
-    plannedPath, 
-    setNavigationDestination,
-    setShowControl 
-  }: any) => {
-    useMapEvents({
-      click: (e) => {
-        if (showShipForm && activeTab === 'fleet') {
-          setNewShip?.((prev: any) => ({ ...prev, lat: e.latlng.lat, lng: e.latlng.lng }));
-          setAdvisorMessage(`Coordenadas fijadas: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`);
-        } else {
-          setDestination({ lat: e.latlng.lat, lng: e.latlng.lng });
-          setAdvisorMessage(`Destino fijado: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`);
-          
-          if (plannedPath.length === 0) {
-            setNavigationDestination(`${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`);
-          }
-        }
-      }
-    });
-    return null;
-  };
 
   if (isInitialLoading) {
     return (
@@ -3454,10 +3712,14 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
                         key={idx} 
                         className={cn(
                           "text-xs font-mono break-words p-2 rounded-lg", 
-                          msg.role === 'ai' ? "text-emerald-400 bg-emerald-500/5" : "text-cyan-400 bg-cyan-500/5 border-l border-cyan-500/30"
+                          msg.role === 'ai' 
+                            ? (msg.isOfflineMode ? "text-amber-400 bg-amber-500/5 border-l-2 border-amber-500/40" : "text-emerald-400 bg-emerald-500/5") 
+                            : "text-cyan-400 bg-cyan-500/5 border-l border-cyan-500/30"
                         )}
                       >
-                        {msg.role === 'ai' ? `IA_OFFICER: ${msg.text}` : `> ${msg.text}`}
+                        {msg.role === 'ai' ? (
+                          <>{msg.isOfflineMode && <span className="text-[8px] font-black text-amber-500 block mb-1">IA LOCAL / SERVIDOR SATURADO</span>}IA_OFFICER: {msg.text}</>
+                        ) : `> ${msg.text}`}
                       </div>
                     ))}
                     <div ref={messagesEndRef} />
@@ -3474,301 +3736,103 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
               <div className="absolute inset-0 flex flex-col">
                 <ErrorBoundary fallbackName="Mapa Táctico">
                   <div className="relative flex-1 bg-slate-950 select-none overflow-hidden">
-                  <MapContainer 
-                    center={mapCenter} 
-                    zoom={15} 
-                    minZoom={3}
-                    maxZoom={16}
-                    className="h-full w-full" 
-                    zoomControl={false}
-                  >
-                    <ZoomControl position="topright" />
-                    <MapUpdater center={mapCenter} zoom={chartMode === 'mbtiles' ? MBTILES_ZONES[mbtileIndex].zoom : undefined} />
-                    <ZoomIndicator />
-                  <LayersControl position="topright">
-  <LayersControl.BaseLayer checked={chartMode === 'standard'} name="OpenStreetMap">
-    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-  </LayersControl.BaseLayer>
-  
-  <LayersControl.BaseLayer name="Satélite">
-    <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-  </LayersControl.BaseLayer>
-</LayersControl>
-{/* 🗺️ RENDERIZADO DE CARTAS PRO ACTIVADAS DESDE EL PANEL FLOTANTE */}
-{listaCartas.map((archivo: string) => {
-  // Si el checkbox no está marcado, no pintamos nada en el agua
-  if (!cartasActivas[archivo]) return null;
+                   console.log('🚢 fleet:', fleet);
+console.log('📍 shipPosition:', shipPosition);
+                    <TacticalMap
+  center={mapCenter}
+  zoom={15}
+  shipPosition={shipPosition}
+  shipName={
+    typeof fleet !== 'undefined' && fleet.length > 0
+      ? (
+          fleet.find(s => String(s.id) === String(selectedShipId))
+            ?.nombre ||
+          selectedShip?.nombre ||
+          'Buque Activo'
+        )
+      : (selectedShip?.nombre || 'Buque Activo')
+  }
+  navPlan={navPlan}
+  targetDestination={targetDestination}
+  currentPath={currentPath}
+  onMapClick={(lat, lng) => {
+    if (showShipForm) {
+      setNewShip?.((prev: any) => ({ ...prev, lat, lng }));
+      setAdvisorMessage(
+        `Coordenadas fijadas: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+      );
+    } else {
+      setDestination({ lat, lng });
+      setAdvisorMessage(
+        `Destino fijado: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+      );
 
-  // 🗺️ Dentro de tu listaCartas.map, busca el TileLayer para MBTiles y déjalo así:
-if (archivo.toLowerCase().endsWith('.mbtiles')) {
-  return (
-    <TileLayer
-            // Cambiamos la URL para que pida la carta real de forma dinámica al puerto 8089
-      url={`http://localhost:8089/tiles/cm93/{z}/{x}/{y}.png`}
-      attribution="SmartShip PRO CM93 Engine"
-      zIndex={100}
-      maxZoom={18}
-      minZoom={0}
-      opacity={0.8}
-             
-    />
-  );
-}
-
-  return null;
-})}
-
-{/* 🛰️ 2. CARTOGRAFÍA TÁCTICA FIJA (Tu bloque original con restricción Almirantazgo) */}
-{chartMode === 'mbtiles' && userProfile?.plan_tactico !== 'basico' && (
-  <MBTileLayer
-    url={MBTILES_ZONES[mbtileIndex].file}
-    name={MBTILES_ZONES[mbtileIndex].name}
-    plan_tactico={userProfile?.plan_tactico}
-    navigationDestination={navigationDestination}
-    shipPosition={shipPosition}
-  />
-)}
-                  {chartMode === 'mbtiles' && userProfile?.plan_tactico !== 'basico' && (
-                    <MBTileLayer 
-                      url={MBTILES_ZONES[mbtileIndex].file} 
-                      name={MBTILES_ZONES[mbtileIndex].name}
-                      plan_tactico={userProfile?.plan_tactico}
-                      navigationDestination={navigationDestination}
-                      shipPosition={shipPosition}
-                    />
-                  )}
-                  {chartMode === 'mbtiles' && userProfile?.plan_tactico === 'basico' && (
-                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 text-center">
-                      <p className="text-amber-500 font-bold uppercase tracking-widest">
-                        Se requiere nivel Capitán o Almirante para la cartografía táctica MBTiles.
-                      </p>
-                    </div>
-                  )}
-                  
-                  <MapEvents />
-                  <MapClickHandler 
-                    showShipForm={showShipForm} 
-                    activeTab={activeTab} 
-                    setNewShip={setNewShip as any} 
-                    setDestination={setDestination} 
-                    setAdvisorMessage={setAdvisorMessage} 
-                    plannedPath={plannedPath} 
-                    setNavigationDestination={setNavigationDestination} 
-                    setShowControl={setShowControl}
-                  />
-
-                  {navPlan.targetCoords && (
-                    <>
-                      <Polyline 
-                        positions={[
-                          [shipPosition?.lat || 36.7215, shipPosition?.lng || -3.5235],
-                          [navPlan.targetCoords.lat, navPlan.targetCoords.lng]
-                        ]}
-                        color="#00FFFF"
-                        weight={2}
-                        dashArray="5, 10"
-                        opacity={0.8}
-                      >
-                        <Popup>Ruta Directa: {navPlan.targetName}</Popup>
-                      </Polyline>
-                      <Marker 
-                        position={[navPlan.targetCoords.lat, navPlan.targetCoords.lng]}
-                        icon={L.divIcon({
-                          className: 'target-flag-icon',
-                          html: `<div class="w-10 h-10 flex flex-col items-center justify-center filter drop-shadow-[0_0_8px_cyan]">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="cyan" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 fill-cyan/20">
-                              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
-                              <line x1="4" y1="22" x2="4" y2="15"></line>
-                            </svg>
-                            <div class="px-2 py-0.5 bg-black/80 border border-cyan-500/50 rounded-full -mt-1 scale-75">
-                              <p class="text-[8px] font-black text-cyan-400 whitespace-nowrap uppercase">${navPlan.targetName}</p>
-                            </div>
-                          </div>`,
-                          iconSize: [40, 40],
-                          iconAnchor: [20, 35]
-                        })}
-                      >
-                        <Popup>
-                          <div className="p-2">
-                            <p className="text-xs font-black text-cyan-500 uppercase tracking-widest">{navPlan.targetName}</p>
-                            <p className="text-[10px] text-slate-500 mt-1">Distancia: {navPlan.distanceNM} NM</p>
-                            <p className="text-[10px] text-slate-500">ETA: {navPlan.eta}</p>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    </>
-                  )}
-
-                  {rutaActiva && rutaActiva.length >= 2 && (
-                    <>
-                      <MapBoundsHandler path={rutaActiva} showControl={showControl} showSystems={showSystems} />
-                      <Polyline 
-                        positions={rutaActiva} 
-                        color="#FF8C00" 
-                        weight={5} 
-                        opacity={0.9}
-                      >
-                        <Popup>Ruta Táctica a Adra</Popup>
-                      </Polyline>
-                    </>
-                  )}
-                  
-                  {currentPath && currentPath.length > 0 && (
-                    <Polyline 
-                      positions={currentPath} 
-                      color="#3b82f6" 
-                      weight={3} 
-                      opacity={0.6} 
-                    >
-                      <Popup>Estela de Navegación</Popup>
-                    </Polyline>
-                  )}
-
-                  {/* {plannedPath && plannedPath.length > 0 && (
-                    <Polyline 
-                      positions={plannedPath} 
-                      color="#00FFFF" 
-                      weight={6} 
-                      opacity={0.9}
-                    >
-                      <Popup>Ruta Planificada por IA</Popup>
-                    </Polyline>
-                  )} */}
-
-                  {fleet.map(ship => {
-                    const pos: [number, number] = [
-                      ship.lat || 36.7215,
-                      ship.lng || -3.5235
-                    ];
-                    return (
-                      <Marker 
-                        key={ship.id}
-                        position={pos} 
-                       // ✅ REEMPLAZAR EL BLOQUE INTERIOR POR ESTO:
-icon={L.icon({
-  // Ruta absoluta a la carpeta public
-  iconUrl: 'barco-player.png', 
-  
-  // Tamaño [Ancho, Alto]. Ajusta según las proporciones de tu render (suele ser vertical)
-  iconSize: [25, 50], 
-  
-  // Punto de pivote centrado (mitad de las dimensiones)
-  iconAnchor: [12.5, 25], 
-  
-  // Dónde abre el popup respecto al anchor
-  popupAnchor: [0, -25],
-  
-  // Mantenemos una clase por si quieres aplicar estilos CSS globales
-  className: 'ship-tactical-render'
-})}
-                      >
-                        <Popup className="custom-popup">
-                          <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden p-0 w-56 shadow-2xl">
-                            <div className="relative h-28">
-                              <img 
-                                src={ship.foto_url || getDefaultShipImage(ship.tipo_barco)} 
-                                className="w-full h-full object-cover" 
-                                referrerPolicy="no-referrer"
-                              />
-                              <div className="absolute top-2 left-2 bg-slate-950/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
-                                {getShipIcon(ship.tipo_barco, "w-3.5 h-3.5")}
-                                <span className="text-[8px] font-black text-white uppercase tracking-widest">{ship.tipo_barco}</span>
-                              </div>
-                            </div>
-                            <div className="p-4">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-lg">{getShipEmoji(ship.tipo_barco)}</span>
-                                <p className="text-sm font-black text-white uppercase tracking-tighter truncate">{ship.name || 'Sin Nombre'}</p>
-                              </div>
-                              <p className="text-[10px] font-bold text-slate-500 uppercase">{ship.brand || ''} {ship.model || ''}</p>
-                              <div className="mt-3 pt-3 border-t border-slate-900 flex justify-between items-center">
-                                <p className="text-[8px] font-black text-cyan-500 uppercase tracking-widest">{ship.registration || 'S/M'}</p>
-                                <div className="flex gap-2">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                  <span className="text-[8px] font-bold text-slate-400 uppercase">Sistemas OK</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    );
-                  })}
-
-                  {targetDestination && (
-                    <Marker 
-                      position={[targetDestination.lat, targetDestination.lng]}
-                      icon={L.divIcon({
-                        className: 'target-dest-icon',
-                        html: `<div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-bounce">
-                          <span class="text-white text-xs">📍</span>
-                        </div>`,
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 32]
-                      })}
-                    >
-                      <Popup className="custom-popup">
-                        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 w-56 shadow-2xl">
-                          <p className="text-xs font-black text-cyan-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <Navigation className="w-3.5 h-3.5" /> Objetivo Táctico
-                          </p>
-                          <div className="space-y-1 mb-4">
-                            <p className="text-[10px] text-slate-500 font-mono">LAT: {targetDestination.lat.toFixed(4)}</p>
-                            <p className="text-[10px] text-slate-500 font-mono">LNG: {targetDestination.lng.toFixed(4)}</p>
-                          </div>
-                          <button 
-                            onClick={() => handleNavigateToDestination(targetDestination)}
-                            className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] flex items-center justify-center gap-2"
-                          >
-                            <Compass className="w-3.5 h-3.5" /> Navegar aquí
-                          </button>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  )}
-
-                  {shipPosition && (
-                    <Marker 
-  key="buque-insignia-unico"
-  position={[shipPosition.lat, shipPosition.lng]}
-  icon={L.icon({
-    iconUrl: 'barco-player.png',
-    iconSize: [36, 36],     // 👈 Cambiar a una escala cuadrada o proporcional a tu PNG original
-  iconAnchor: [18, 18],   // La mitad exacta de iconSize para que rote sobre su eje real
-  popupAnchor: [0, -18]
-  })}
+      if (!navPlan?.targetCoords) {
+        setNavigationDestination(
+          `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+        );
+      }
+    }
+  }}
+  onMapRightClick={handleMapRightClick}
+  onDragStart={() => setIsAutoCenter(false)}
 >
-  <Popup className="custom-popup">
-  <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 w-48 shadow-2xl">
-    <p className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Buque Insignia
-    </p>
-    
-    <p className="text-sm font-bold text-white uppercase tracking-tighter">
-      {/* 🔄 Buscamos el barco de la flota que coincida con el ID seleccionado, o usamos selectedShip */}
-      {typeof fleet !== 'undefined' && fleet.length > 0
-        ? (fleet.find(s => String(s.id) === String(selectedShipId))?.nombre || selectedShip?.nombre || 'Buque Activo')
-        : (selectedShip?.nombre || 'Buque Activo')}
-    </p>
-    
-    <div className="mt-2 pt-2 border-t border-slate-900">
-      <p className="text-[10px] text-slate-500 font-mono">
-        LAT: {Number(shipPosition?.lat || 36.7215).toFixed(4)}
-      </p>
-      <p className="text-[10px] text-slate-500 font-mono">
-        LNG: {Number(shipPosition?.lng || -3.5235).toFixed(4)}
-      </p>
-    </div>
-  </div>
-</Popup>
-</Marker>
-                  )}
+  <FleetLayer
+    fleet={fleet}
+    selectedShipId={selectedShipId}
+    shipPosition={shipPosition}
+    simulatedAisTargets={simulatedAisTargets}
+  />
+  {shipPosition && (
+    <Circle
+      center={[shipPosition.lat, shipPosition.lng]}
+      radius={500}
+      pathOptions={{
+        color: simulatedAisTargets.some(t => t.isCollisionRisk)
+          ? '#ef4444'
+          : '#06b6d4',
+        fillColor: simulatedAisTargets.some(t => t.isCollisionRisk)
+          ? '#ef4444'
+          : '#06b6d4',
+        fillOpacity: 0.05,
+        weight: 1,
+        dashArray: '5,5'
+      }}
+    />
+  )}
+</TacticalMap>
 
-                  <MapEvents 
-                    onMapClick={(lat, lng) => setTargetDestination({ lat, lng })} 
-                    onDragStart={() => setIsAutoCenter(false)}
-                  />
-                </MapContainer>
+                <Zeus3SChartplotterOverlay
+                  sog={simulatedSog}
+                  hdg={selectedShip?.cog || 0}
+                  cog={selectedShip?.cog || 0}
+                  tws={weather?.wind || 0}
+                  twd={weather?.windDir || 0}
+                  twa={((weather?.windDir || 0) - (selectedShip?.cog || 0) + 360) % 360}
+                  depth={depth}
+                  dtw={navPlan.distanceNM || 0}
+                  eta={navPlan.eta}
+                  xte={navPlan.xte || 0}
+                  waypointName={navPlan.targetName || navigationDestination || '---'}
+                  chartMode={chartMode}
+                  activeChartName={MBTILES_ZONES[mbtileIndex]?.name || 'Local'}
+                  aisEnabled={layersState.showAIS}
+                  windEnabled={layersState.showWind}
+                  collisionFilter={layersState.collisionFilter}
+                  isNavigating={isTravesiaActive}
+                  autopilotMode={autopilotMode}
+                  activePage={zeusPage}
+                  onSelectPage={setZeusPage}
+                  onOpenHud={openZeusHudPage}
+                  onOpenSystems={() => setShowSystems(true)}
+                  onCycleChart={cycleChart}
+                  onToggleAIS={() => setLayersState(prev => ({ ...prev, showAIS: !prev.showAIS }))}
+                  onToggleWind={() => setLayersState(prev => ({ ...prev, showWind: !prev.showWind }))}
+                  onToggleCollisionFilter={() => setLayersState(prev => ({ ...prev, collisionFilter: !prev.collisionFilter }))}
+                  onStartNavigation={() => setShowSafetyModal(true)}
+                  onEndNavigation={handleEndTravesia}
+                  onToggleAutopilot={toggleZeusAutopilot}
+                />
                 
 
                 {/* Columna de Acción: Integrada en el mapa */}
@@ -3826,7 +3890,8 @@ icon={L.icon({
                     {[
                       { id: 'logbook', icon: Navigation, label: 'Bitácora', color: 'bg-slate-800', active: (activeTab as string) === 'logbook', onClick: () => setActiveTab('logbook') },
                       { id: 'mob', icon: LifeBuoy, label: 'MOB', color: 'bg-red-600', active: mobActive, onClick: handleMOB },
-                      { id: 'lights', icon: Sun, label: 'Luces', color: 'bg-slate-800', active: lightsOn, onClick: handleToggleLights }
+                      { id: 'lights', icon: Sun, label: 'Luces', color: 'bg-slate-800', active: lightsOn, onClick: handleToggleLights },
+                      { id: 'anchor', icon: Anchor, label: 'Fondeo', color: 'bg-slate-800', active: isAnchorWatchActive, onClick: () => isAnchorWatchActive ? handleDeactivateAnchorWatch() : handleActivateAnchorWatch() }
                     ].map(btn => (
                       <button 
                         key={btn.id} onClick={btn.onClick}
@@ -3841,6 +3906,7 @@ icon={L.icon({
                     ))}
                   </div>
               </div>
+              
 
               {/* Control Toggle y Cartas (Bottom Left del Mapa) - REMOVED BY USER REQUEST */}
             </ErrorBoundary>
@@ -3860,7 +3926,7 @@ icon={L.icon({
                     awa={((weather?.windDir || 0) - (selectedShip?.cog || 0) - 20 + 360) % 360}
                     aws={(weather?.wind || 0) * 1.2}
                     vmg={navPlan.vmg}
-                    onTabChange={setActiveTab}
+                    onTabChange={(tab: any) => setActiveTab(tab)}
                     onMotor={handleMotor}
                     onVela={handleVela}
                     onMOB={handleMOB}
@@ -3880,12 +3946,18 @@ icon={L.icon({
                     navData={{
                       btw: navPlan.btw,
                       dtw: navPlan.distanceNM,
+                      eta: navPlan.eta, // Pass ETA to TacticalHUD
                       xte: navPlan.xte,
                       waypointName: navPlan.targetName || '---',
-                      isAnchorActive: isAnchorWatchActive
                     }}
                     onTripAction={handleTripAction}
                     shipId={selectedShipId || '00000000-0000-0000-0000-000000000000'}
+                    anchorPosition={anchorPosition}
+                    shipPosition={shipPosition}
+                    swingRadius={swingRadius}
+                    currentAnchorDistance={currentAnchorDistance}
+                    isAnchorWatchActive={isAnchorWatchActive}
+                    anchorTrend={anchorTrend}
                   />
                 </div>
               )}
@@ -3950,6 +4022,13 @@ icon={L.icon({
                     setLightsOn={setLightsOn}
                     mobActive={mobActive}
                     setMobActive={setMobActive}
+                    isAnchorWatchActive={isAnchorWatchActive}
+                    onToggleAnchorWatch={toggleAnchorWatch}
+                    currentAnchorDistance={currentAnchorDistance}
+                    anchorTrend={anchorTrend}
+                    anchorPosition={anchorPosition}
+                    tacticalAdvisorActions={tacticalAdvisor.actions}
+                    tacticalAdvisorAlertCount={tacticalAdvisor.alerts.length}
                     onMotor={() => {
                       setPropulsionMode('MOTOR');
                       saveTechnicalLog('Sistema de Propulsión', 'Cambio a propulsión a MOTOR');
@@ -4197,6 +4276,13 @@ icon={L.icon({
         setAdvisorMessage={setAdvisorMessage}
         selectedShipId={selectedShipId}
       />
+
+      <ChangelogModal 
+        isOpen={showChangelog} 
+        onClose={() => setShowChangelog(false)} 
+        data={changelogData} 
+      />
+
       <AnimatePresence>
         {isLogbookOpen && (
           <>

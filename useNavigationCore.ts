@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { calculateDistanceNM, calculateBearing } from '@lib/utils';
 import { calculateLaylineDeviation, calculateAnchorDrift, calculateETA } from '@lib/laylineCalculator';
-import { SmartshipAlarm, AlarmSeverity, ProcessedWeather, ShipData } from '@/types';
+import { SmartshipAlarm, AlarmSeverity, ProcessedWeather, ShipData } from '@/shared/types';
 
 interface NavigationCoreProps {
   shipPosition: { lat: number; lng: number } | null;

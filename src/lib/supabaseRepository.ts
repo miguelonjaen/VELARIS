@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient';
-import { UserProfile, ShipData, LogEntry, VesselStatus } from '@/types';
+import { UserProfile, ShipData, LogEntry, VesselStatus } from '@/shared/types';
 
 export const userRepository = {
   async getProfile(userId: string) {

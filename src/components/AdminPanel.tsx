@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShieldAlert, Ship } from 'lucide-react';
-import { UserProfile, ShipData } from '../types';
+import { UserProfile, ShipData } from '../shared/types';
 
 interface AdminPanelProps {
   userProfile: UserProfile | null;

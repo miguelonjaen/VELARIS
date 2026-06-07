@@ -20,9 +20,37 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 import { VADEMECUM_DATA, VademecumItem } from "../data/vademecumData";
 
+type AudioContextConstructor = typeof AudioContext;
+type AudioCapableWindow = Window &
+  typeof globalThis & {
+    webkitAudioContext?: AudioContextConstructor;
+  };
+
 interface VademecumProps {
   onClose: () => void;
 }
+
+const PUBLIC_BASE = import.meta.env.BASE_URL;
+const FALLBACK_IMAGE = `${PUBLIC_BASE}barco-player.png`;
+
+const resolvePublicAsset = (assetPath?: string, fallbackPath?: string): string => {
+  const path = assetPath || fallbackPath;
+  if (!path) return FALLBACK_IMAGE;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${PUBLIC_BASE}${path.replace(/^\/+/, "")}`;
+};
+
+const applyImageFallback = (event: React.SyntheticEvent<HTMLImageElement>): void => {
+  const image = event.currentTarget;
+  if (image.dataset.fallbackApplied === "true") return;
+  image.dataset.fallbackApplied = "true";
+  image.src = FALLBACK_IMAGE;
+};
+
+const getAudioContextConstructor = (): AudioContextConstructor | undefined => {
+  const audioWindow = window as AudioCapableWindow;
+  return audioWindow.AudioContext ?? audioWindow.webkitAudioContext;
+};
 
 const Vademecum: React.FC<VademecumProps> = ({ onClose }) => {
   const [activeSubTab, setActiveSubTab] = useState<string>("banderas");
@@ -140,7 +168,8 @@ const Vademecum: React.FC<VademecumProps> = ({ onClose }) => {
     stopAudio();
     if (!item.soundPattern || item.soundPattern.length === 0) return;
 
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioCtx = getAudioContextConstructor();
+    if (!AudioCtx) return;
     const ctx = new AudioCtx();
     audioCtxRef.current = ctx;
     setPlayingId(item.id);
@@ -380,21 +409,13 @@ const Vademecum: React.FC<VademecumProps> = ({ onClose }) => {
                 className="bg-slate-900/50 border border-slate-800 hover:border-cyan-500/30 rounded-[2rem] p-5 flex flex-col justify-between transition-all group shadow-xl cursor-pointer"
               >
                 <div>
-                  {/* Foto del nudo: Wikimedia CDN → local nudos/ → placeholder */}
+                  {/* Foto local del nudo con respaldo offline. */}
                   <div className="w-full h-44 bg-slate-950 rounded-2xl border border-slate-800/80 overflow-hidden mb-4 shadow-inner flex items-center justify-center relative">
                     <img
-                      src={item.imageUrl || `nudos/${item.id}.png`}
+                      src={resolvePublicAsset(item.imageUrl, `nudos/${item.id}.png`)}
                       alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        // Si falla la URL externa, intentar local
-                        if (item.imageUrl && target.src === item.imageUrl) {
-                          target.src = `nudos/${item.id}.png`;
-                        } else {
-                          target.src = `https://placehold.co/400x250/0f172a/22d3ee?text=${encodeURIComponent(item.title)}`;
-                        }
-                      }}
+                      onError={applyImageFallback}
                     />
                     <div className="absolute top-3 right-3 bg-slate-950/80 border border-slate-800 px-2.5 py-1 rounded-lg text-[9px] font-mono text-cyan-400 uppercase">
                       Cabuyería
@@ -420,8 +441,7 @@ const Vademecum: React.FC<VademecumProps> = ({ onClose }) => {
         {activeSubTab === "balizamiento" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-8">
             {filteredData.map((item) => {
-              const normalizedImageUrl = item.imageUrl?.replace(/^\/+/, '') || `balizas/${item.id}.png`;
-              const imageSrc = `${import.meta.env.BASE_URL}${normalizedImageUrl}`;
+              const imageSrc = resolvePublicAsset(item.imageUrl, `balizas/${item.id}.png`);
 
               return (
                 <div
@@ -551,7 +571,7 @@ const Vademecum: React.FC<VademecumProps> = ({ onClose }) => {
                         {item.title}
                       </td>
                       <td className="px-6 py-4 text-cyan-300 font-bold">
-                        {String((item as any).velocity || item.symbol || "0")}{" "}
+                        {String(item.velocity || item.symbol || "0")}{" "}
                         Kts
                       </td>
                       <td className="px-6 py-4 text-slate-400 font-sans leading-tight text-[11px] italic">
@@ -714,13 +734,10 @@ const Vademecum: React.FC<VademecumProps> = ({ onClose }) => {
                     {/* Photo */}
                     <div className="relative h-44 bg-slate-950 overflow-hidden">
                       <img
-                        src={item.imageUrl || `nubes/${item.id}.jpg`}
+                        src={resolvePublicAsset(item.imageUrl, `nubes/${item.id}.jpg`)}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            `https://placehold.co/500x300/0f172a/7dd3fc?text=${encodeURIComponent(item.title)}`;
-                        }}
+                        onError={applyImageFallback}
                       />
                       {/* Gradient overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
@@ -1035,9 +1052,10 @@ const Vademecum: React.FC<VademecumProps> = ({ onClose }) => {
               >
                 {selectedItem.imageUrl && (
                   <img
-                    src={selectedItem.imageUrl}
+                    src={resolvePublicAsset(selectedItem.imageUrl)}
                     alt={selectedItem.title}
                     className="absolute inset-0 w-full h-full object-cover object-center opacity-30"
+                    onError={applyImageFallback}
                   />
                 )}
                 <div className="absolute inset-0 bg-black/60 z-0" />
@@ -1076,12 +1094,10 @@ const Vademecum: React.FC<VademecumProps> = ({ onClose }) => {
                 {selectedItem.imageUrl && (
                   <div className="rounded-2xl overflow-hidden border border-slate-800 shadow-xl">
                     <img
-                      src={selectedItem.imageUrl}
+                      src={resolvePublicAsset(selectedItem.imageUrl)}
                       alt={`${selectedItem.title} — fotografía de referencia`}
                       className="w-full object-contain max-h-72 bg-slate-950"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
+                      onError={applyImageFallback}
                     />
                     <div className="px-4 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between">
                       <span className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">

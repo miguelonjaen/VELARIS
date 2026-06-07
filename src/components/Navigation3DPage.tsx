@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../lib/utils';
-import { supabase } from '../supabaseClient';
+import { cn } from '@lib/utils';
+import { supabase } from '@/supabaseClient';
 import { MapPin, Navigation } from 'lucide-react';
 
 interface Navigation3DPageProps {

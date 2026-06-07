@@ -1,3 +1,25 @@
+export interface VesselState {
+  lat: number;
+  lng: number;
+  sog: number; // Speed Over Ground
+  cog: number; // Course Over Ground
+  hdg: number; // Heading
+  depth: number;
+  wind: {
+    speed: number;
+    angle: number;
+  };
+  timestamp: number;
+}
+
+export interface TacticalAdvice {
+  id: string;
+  severity: 'info' | 'warning' | 'critical';
+  message: string;
+  rule: string;
+  action?: string;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -115,8 +137,8 @@ export interface ProcessedWeather {
   humidity: number;
   pressure: number;
   visibility: number;
-  waveHeight?: number;
-  tideLevel?: number;
+  waveHeight: number;
+  tideLevel: number;
 }
 
 export interface WeatherResponse {
@@ -199,7 +221,7 @@ export type AlarmSeverity = 'normal' | 'warning' | 'critical';
 
 export interface SmartshipAlarm {
   id: string;
-  type: 'depth' | 'engine_temp' | 'fuel' | 'ais_collision' | 'internal_temp' | 'humidity' | 'layline_deviation' | 'anchor_drift' | 'sensor_quality';
+  type: 'depth' | 'engine_temp' | 'fuel' | 'ais_collision' | 'internal_temp' | 'humidity' | 'layline_deviation' | 'anchor_drift' | 'anchor_drag' | 'sensor_quality';
   severity: AlarmSeverity;
   message: string;
   timestamp: number;

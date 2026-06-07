@@ -1,42 +1,13 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
-  X,
-  ShieldCheck,
-  Target,
-  Video,
-  Bell,
-  AlertTriangle,
-  Zap,
-  Wind,
-  Box,
-  LifeBuoy,
-  Sun,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { cn } from "../lib/utils";
-import { SailSteerPage } from "./SailSteerPage";
-import { RaceTimerPage } from "./RaceTimerPage";
-import { DepthPage } from "./DepthPage";
-import { WindAnalogPage } from "./WindAnalogPage";
-import { WindInstrument } from "./WindInstrument";
-import H5000Frame from "./H5000Frame";
-import { TravelLogPage } from "./TravelLogPage";
-import { EnginePage } from "./EnginePage";
-import { AISPage } from "./AISPage";
-import { Navigation3DPage } from "./Navigation3DPage";
-import { PilotStatusPage } from "./PilotStatusPage";
-import { LaylinesPage } from "./LaylinesPage";
-import { WindPlotPage } from "./WindPlotPage";
-import { TidePage } from "./TidePage";
-import { WeatherPage } from "./WeatherPage";
-import { BasicDataPage } from "./BasicDataPage";
-import { GPSPage } from "./GPSPage";
-import { SteeringPage } from "./SteeringPage";
-import { PlotPage } from "./PlotPage";
-
-import { InstrumentGridPage } from "./InstrumentGridPage";
+  Gauge, Navigation, Wind, Fuel, Anchor, Clock,
+  ChevronLeft, ChevronRight, Settings, Cloud, X,
+  Play, Pause, RotateCcw, Flag
+} from 'lucide-react';
+import { cn } from '../lib/utils';
+import { AnchorWatchPage } from './AnchorWatchPage';
+import { H5000WindHub } from './H5000WindHub';
 
 interface TacticalHUDProps {
   isOpen: boolean;
@@ -49,31 +20,11 @@ interface TacticalHUDProps {
   awa: number;
   aws: number;
   vmg: number;
-  depth: number;
-  depthHistory: any[];
-  trip1: number;
-  trip2: number;
-  engineData: {
-    rpm: number;
-    temp: number;
-    voltage: number;
-    fuel: number;
-    water: number;
-  };
-  navData: {
-    btw: number;
-    dtw: number;
-    xte: number;
-    waypointName: string;
-    isAnchorActive?: boolean;
-  };
-  weather?: any;
-  onTabChange: (tab: any) => void;
+  onTabChange: (tab: string) => void;
   onMotor: () => void;
   onVela: () => void;
   onMOB: () => void;
   onToggleLights: () => void;
-  onTripAction: (action: string) => void;
   lightsOn: boolean;
   mobActive: boolean;
   activeTab: string;
@@ -81,8 +32,29 @@ interface TacticalHUDProps {
   initialPageIndex: number;
   onPageIndexChange: (index: number) => void;
   onRaceTimerFinished: () => void;
+  depth: number;
+  depthHistory: { time: number; depth: number }[];
+  trip1: number;
+  trip2: number;
+  engineData: { rpm: number; temp: number; voltage: number; fuel: number; water: number };
+  navData: {
+    btw: number;
+    dtw: number;
+    xte: number;
+    waypointName: string;
+    eta?: string; // Add eta to navData interface
+    isAnchorActive?: boolean;
+    anchorDistance?: number; 
+  };
+  onTripAction: (action: 'start' | 'stop' | 'reset') => void;
   shipId: string;
-  weatherData?: any;
+  // Nuevas props para el fondeo avanzado
+  anchorPosition: { lat: number; lng: number } | null;
+  shipPosition: { lat: number; lng: number } | null;
+  swingRadius: number;
+  currentAnchorDistance: number;
+  isAnchorWatchActive: boolean;
+  anchorTrend: 'stable' | 'drifting' | 'swinging';
 }
 
 export const TacticalHUD: React.FC<TacticalHUDProps> = ({
@@ -96,18 +68,11 @@ export const TacticalHUD: React.FC<TacticalHUDProps> = ({
   awa,
   aws,
   vmg,
-  depth,
-  depthHistory,
-  trip1,
-  trip2,
-  engineData,
-  navData,
   onTabChange,
   onMotor,
   onVela,
   onMOB,
   onToggleLights,
-  onTripAction,
   lightsOn,
   mobActive,
   activeTab,
@@ -115,296 +80,447 @@ export const TacticalHUD: React.FC<TacticalHUDProps> = ({
   initialPageIndex,
   onPageIndexChange,
   onRaceTimerFinished,
+  depth,
+  depthHistory,
+  trip1,
+  trip2,
+  engineData,
+  navData,
+  onTripAction,
   shipId,
-  weatherData,
+  anchorPosition,
+  shipPosition,
+  swingRadius,
+  currentAnchorDistance,
+  isAnchorWatchActive,
+  anchorTrend
 }) => {
-  const [isPagesMenuOpen, setIsPagesMenuOpen] = useState(false);
-  const bgWindPages = ["analog", "windplot", "pilot"];
+  const [pageIndex, setPageIndex] = useState(initialPageIndex);
+  const [raceTimer, setRaceTimer] = useState(0);
+  const [isRaceTimerRunning, setIsRaceTimerRunning] = useState(false);
+  const raceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const pages = [
-    {
-      id: "pilot",
-      title: "ESTADO PILOTO",
-      component: <PilotStatusPage hdg={hdg} isNavigating={isNavigating} />,
-    },
-    {
-      id: "sailsteer",
-      title: "SAILSTEER",
-      component: (
-        <SailSteerPage sog={sog} hdg={hdg} twd={twd} tws={tws} twa={twa} />
-      ),
-    },
-    {
-      id: "nav3d",
-      title: "NAVEGACIÓN",
-      component: (
-        <Navigation3DPage
-          btw={navData.btw}
-          dtw={navData.dtw}
-          xte={navData.xte}
-          hdg={hdg}
-          waypointName={navData.waypointName}
-          shipId={shipId}
-        />
-      ),
-    },
-    {
-      id: "laylines",
-      title: "LAYLINES",
-      component: <LaylinesPage twa={twa} twd={twd} hdg={hdg} />,
-    },
-    {
-      id: "windplot",
-      title: "GRÁFICO VIENTO",
-      component: <WindPlotPage tws={tws} twa={twa} />,
-    },
-    {
-      id: "tide",
-      title: "MAREA",
-      component: <TidePage tideLevel={weatherData?.tideLevel} />,
-    },
-    {
-      id: "weather",
-      title: "METEOROLOGÍA",
-      component: <WeatherPage weather={weatherData} />,
-    },
-    {
-      id: "depth",
-      title: "PROFUNDIDAD",
-      component: (
-        <DepthPage
-          currentDepth={depth}
-          depthHistory={depthHistory}
-          shipId={shipId}
-        />
-      ),
-    },
-    {
-      id: "basic_sd",
-      title: "VEL. / PROF. BÁSICAS",
-      component: (
-        <BasicDataPage
-          title="DATOS BÁSICOS"
-          items={[
-            { label: "BSPD", value: sog.toFixed(1), unit: "KT" },
-            { label: "DEPTH", value: depth.toFixed(1), unit: "M" },
-          ]}
-        />
-      ),
-    },
-    {
-      id: "gps",
-      title: "GPS",
-      component: <GPSPage sog={sog} cog={hdg + 2} />,
-    },
-    {
-      id: "analog",
-      title: "VIENTO COMPUESTO",
-      component: <WindAnalogPage awa={awa} tws={tws} twa={twa} />,
-    },
-    {
-      id: "ais",
-      title: "AIS",
-      component: <AISPage shipId={shipId} />,
-    },
-    {
-      id: "steering",
-      title: "GOBIERNO",
-      component: <SteeringPage hdg={hdg} rudderAngle={-5} />,
-    },
-    {
-      id: "plot_simple",
-      title: "GRÁFICO SIMPLE",
-      component: (
-        <PlotPage
-          mode="simple"
-          data={[
-            { label: "TEMP AGUA", value: "18.4", unit: "°C", color: "#10b981" },
-          ]}
-        />
-      ),
-    },
-    {
-      id: "plot_dual",
-      title: "GRÁFICO DUAL",
-      component: (
-        <PlotPage
-          mode="dual"
-          data={[
-            {
-              label: "BSPD",
-              value: sog.toFixed(1),
-              unit: "KT",
-              color: "#3b82f6",
-            },
-            {
-              label: "TWS",
-              value: tws.toFixed(1),
-              unit: "KT",
-              color: "#f59e0b",
-            },
-          ]}
-        />
-      ),
-    },
-  ];
+  useEffect(() => {
+    setPageIndex(initialPageIndex);
+  }, [initialPageIndex]);
 
-  const nextPage = () => {
-    const nextIndex = (initialPageIndex + 1) % pages.length;
-    onPageIndexChange(nextIndex);
+  const pages = useMemo(() => [
+    { id: 'nav', label: 'Navegación', icon: <Navigation className="w-5 h-5" /> },
+    { id: 'sail', label: 'Vela', icon: <Wind className="w-5 h-5" /> },
+    { id: 'engine', label: 'Motor', icon: <Fuel className="w-5 h-5" /> },
+    { id: 'weather', label: 'H5000', icon: <Gauge className="w-5 h-5" /> },
+    { id: 'anchor', label: 'Fondeo', icon: <Anchor className="w-5 h-5" /> },
+    { id: 'race', label: 'Regata', icon: <Flag className="w-5 h-5" /> },
+    { id: 'settings', label: 'Ajustes', icon: <Settings className="w-5 h-5" /> },
+  ], []);
+
+  const currentPage = pages[pageIndex];
+
+  useEffect(() => {
+    onPageIndexChange(pageIndex);
+  }, [pageIndex, onPageIndexChange]);
+
+  const handleNextPage = useCallback(() => {
+    setPageIndex((prev) => (prev + 1) % pages.length);
+  }, [pages.length]);
+
+  const handlePrevPage = useCallback(() => {
+    setPageIndex((prev) => (prev - 1 + pages.length) % pages.length);
+  }, [pages.length]);
+
+  // Race Timer Logic
+  useEffect(() => {
+    if (isRaceTimerRunning) {
+      raceTimerRef.current = setInterval(() => {
+        setRaceTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(raceTimerRef.current!);
+            setIsRaceTimerRunning(false);
+            onRaceTimerFinished();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else if (raceTimerRef.current) {
+      clearInterval(raceTimerRef.current);
+      raceTimerRef.current = null;
+    }
+    return () => {
+      if (raceTimerRef.current) clearInterval(raceTimerRef.current);
+    };
+  }, [isRaceTimerRunning, onRaceTimerFinished]);
+
+  const formatTime = (totalSeconds: number) => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const remainingSeconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
-  const prevPage = () => {
-    const prevIndex = (initialPageIndex - 1 + pages.length) % pages.length;
-    onPageIndexChange(prevIndex);
-  };
+
+  if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, x: -10, scale: 0.98 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          exit={{ opacity: 0, x: -10, scale: 0.98 }}
-          className="fixed left-[64px] top-[64px] z-[7100] w-[360px] aspect-[9/16] max-w-[calc(100vw-40px)] max-h-[calc(100vh-40px)] bg-[#0a0a0a] rounded-[30px] shadow-[0_60px_100px_rgba(0,0,0,0.9),inset_0_2px_4px_rgba(255,255,255,0.1)] overflow-hidden flex flex-col pointer-events-auto select-none border-[12px] border-[#121212]"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          {/* Matte Bezel inner groove */}
-          <div className="absolute inset-0 pointer-events-none border border-black/40 rounded-[18px] z-50 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]" />
+    <motion.div
+      initial={{ opacity: 0, x: -50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -50 }}
+      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+      className="fixed left-8 top-[15%] w-[450px] h-[500px] bg-slate-900/95 backdrop-blur-xl text-white shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[8000] flex flex-col pointer-events-auto border border-white/10 rounded-[40px] overflow-hidden"
+    >
+      <div className="flex-none p-4 border-b border-white/10 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Gauge className="w-6 h-6 text-cyan-400" />
+          <h2 className="text-lg font-black uppercase tracking-widest text-white">SmartHUD</h2>
+        </div>
+        <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+          <X className="w-5 h-5 text-slate-400" />
+        </button>
+      </div>
 
-          {/* Header is provided by H5000Frame to avoid duplication */}
-
-          {/* Active Display Panel (OLED BLACK) */}
-          <div className="bg-black relative overflow-hidden flex-1 flex flex-col">
-            <AnimatePresence mode="wait">
-              <motion.div
-                  key={initialPageIndex}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.12 }}
-                  className="flex-grow flex flex-col"
-                >
-                  <H5000Frame title={pages[initialPageIndex].title} hdg={hdg} isNavigating={isNavigating} onClose={onClose}>
-                    {bgWindPages.includes(pages[initialPageIndex].id) ? (
-                      <div className="flex-grow overflow-auto p-4 custom-scrollbar flex items-center justify-center">
-                        <WindInstrument
-                          awa={awa}
-                          aws={aws}
-                          twa={twa}
-                          tws={tws}
-                          heading={hdg}
-                          className=""
-                        />
-                      </div>
-                    ) : (
-                      <div className="p-3 h-full overflow-auto custom-scrollbar">{pages[initialPageIndex].component}</div>
-                    )}
-                  </H5000Frame>
-                </motion.div>
-            </AnimatePresence>
-
-            {/* Pages Menu Overlay */}
-            <AnimatePresence>
-              {isPagesMenuOpen && (
-                <motion.div
-                  initial={{ x: "-100%" }}
-                  animate={{ x: 0 }}
-                  exit={{ x: "-100%" }}
-                  transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                  className="absolute inset-0 z-[60] bg-[#050505] border-r border-white/10 flex flex-col pt-10"
-                >
-                  <div className="px-5 mb-4">
-                    <span className="text-[10px] font-black text-cyan-500 uppercase tracking-[0.3em]">
-                      SELECT PAGE
-                    </span>
-                  </div>
-                  <div className="flex-grow overflow-y-auto px-2 space-y-1 custom-scrollbar">
-                    {pages.map((p, idx) => (
-                      <button
-                        key={p.id}
-                        onClick={() => {
-                          onPageIndexChange(idx);
-                          setIsPagesMenuOpen(false);
-                        }}
-                        className={cn(
-                          "w-full text-left px-4 py-2.5 rounded text-[9px] font-black uppercase transition-all flex items-center gap-3",
-                          initialPageIndex === idx
-                            ? "bg-cyan-600/20 text-cyan-400 border-l-2 border-cyan-500"
-                            : "text-slate-500 hover:bg-white/5",
-                        )}
-                      >
-                        <span className="w-4 text-center opacity-30">
-                          {idx + 1}
-                        </span>
-                        {p.title}
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          {/* Triton 2 Hardware Physical Buttons */}
-          <div className="bg-[#121212] px-2 py-2 flex items-center justify-center gap-2 border-t border-black relative">
-            {/* Surface finish texture overlay */}
-            <div
-              className="absolute inset-0 opacity-[0.04] pointer-events-none"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle, #fff 1px, transparent 1px)",
-                backgroundSize: "3px 3px",
-              }}
-            />
-
-            {/* Button: PAGES */}
-            <button
-              onClick={() => setIsPagesMenuOpen(!isPagesMenuOpen)}
-              className="flex flex-col items-center justify-center w-[48px] h-[32px] bg-[#1a1a1a] rounded-lg border-t border-white/10 border-b-[3px] border-black active:translate-y-[1px] active:border-b-[1px] transition-all shadow-[0_3px_8px_rgba(0,0,0,0.35)] group z-10"
-            >
-              <span className="text-[7px] font-black text-slate-500 group-hover:text-white transition-colors tracking-tight">
-                PAGES
-              </span>
-              <div className="mt-1 flex flex-col gap-0.5 opacity-60 group-hover:opacity-100">
-                <div className="flex gap-0.5">
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-sm" />
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-sm" />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Page Content */}
+        <div className={cn(
+          'flex-1 overflow-y-auto custom-scrollbar',
+          currentPage.id === 'weather' || currentPage.id === 'sail' ? 'p-0' : 'p-6',
+        )}>
+          {currentPage.id === 'nav' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">SOG</p>
+                  <p className="text-3xl font-black text-white font-mono">{sog.toFixed(1)} <span className="text-sm text-slate-500">kn</span></p>
                 </div>
-                <div className="flex gap-0.5">
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-sm" />
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-sm" />
+                <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">HDG</p>
+                  <p className="text-3xl font-black text-white font-mono">{hdg.toFixed(0)} <span className="text-sm text-slate-500">°</span></p>
                 </div>
               </div>
-            </button>
-
-            {/* Directional Pad */}
-            <div className="flex items-center gap-1 p-1 bg-[#050505] rounded-2xl border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.7)] z-10">
-              <button
-                onClick={prevPage}
-                className="w-9 h-9 flex items-center justify-center bg-[#1c1c1c] rounded-full border-t border-white/10 border-b-[3px] border-black active:translate-y-[1px] active:border-b-[1px] transition-all text-slate-500 hover:text-white shadow-xl"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                onClick={nextPage}
-                className="w-9 h-9 flex items-center justify-center bg-[#1c1c1c] rounded-full border-t border-white/10 border-b-[3px] border-black active:translate-y-[1px] active:border-b-[1px] transition-all text-slate-500 hover:text-white shadow-xl"
-              >
-                <ChevronRight size={16} />
-              </button>
+              <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Destino</p>
+                <p className="text-xl font-black text-white font-mono">{navData.waypointName}</p>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs text-slate-400">Dist: {navData.dtw.toFixed(1)} NM</span>
+                  <span className="text-xs text-slate-400">ETA: {navData.eta}</span>
+                </div>
+              </div>
+              <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Profundidad</p>
+                <p className="text-3xl font-black text-white font-mono">{depth.toFixed(1)} <span className="text-sm text-slate-500">m</span></p>
+                <div className="h-1 bg-slate-800 rounded-full mt-3 overflow-hidden">
+                  <motion.div
+                    initial={{ width: '100%' }}
+                    animate={{ width: `${Math.min(100, depth / 20 * 100)}%` }} // Assuming max depth 20m for visual
+                    className={cn("h-full bg-cyan-500", depth < 5 && "bg-amber-500", depth < 2 && "bg-red-500")}
+                  />
+                </div>
+              </div>
             </div>
+          )}
 
-            {/* Button: MENU */}
-            <button className="flex flex-col items-center justify-center w-[48px] h-[32px] bg-[#1a1a1a] rounded-lg border-t border-white/10 border-b-[3px] border-black active:translate-y-[1px] active:border-b-[1px] transition-all shadow-[0_3px_8px_rgba(0,0,0,0.35)] group z-10">
-              <span className="text-[7px] font-black text-slate-500 group-hover:text-white transition-colors tracking-tight">
-                MENU
-              </span>
-              <Sun
-                size={12}
-                className="mt-1 text-slate-600 group-hover:text-amber-400 transition-colors"
-              />
-            </button>
+          {currentPage.id === 'sail' && (
+            <H5000WindHub
+              sog={sog}
+              hdg={hdg}
+              twd={twd}
+              tws={tws}
+              twa={twa}
+              awa={awa}
+              aws={aws}
+              vmg={vmg}
+              depth={depth}
+              voltage={engineData.voltage}
+              xte={navData.xte}
+              btw={navData.btw}
+              dtw={navData.dtw}
+              waypointName={navData.waypointName}
+              eta={navData.eta}
+            />
+          )}
+
+          {currentPage.id === 'engine' && (
+            <EnginePage
+              rpm={engineData.rpm}
+              temp={engineData.temp}
+              voltage={engineData.voltage}
+              fuel={engineData.fuel}
+              water={engineData.water}
+              onMotor={onMotor}
+              onVela={onVela}
+              isEngineOn={engineData.rpm > 0}
+            />
+          )}
+
+          {currentPage.id === 'weather' && (
+            <H5000WindHub
+              sog={sog}
+              hdg={hdg}
+              twd={twd}
+              tws={tws}
+              twa={twa}
+              awa={awa}
+              aws={aws}
+              vmg={vmg}
+              depth={depth}
+              voltage={engineData.voltage}
+              xte={navData.xte}
+              btw={navData.btw}
+              dtw={navData.dtw}
+              waypointName={navData.waypointName}
+              eta={navData.eta}
+            />
+          )}
+
+          {currentPage.id === 'anchor' && (
+            <AnchorWatchPage
+              anchorPosition={anchorPosition}
+              shipPosition={shipPosition}
+              swingRadius={swingRadius}
+              currentAnchorDistance={currentAnchorDistance}
+              isAnchorWatchActive={isAnchorWatchActive}
+              anchorTrend={anchorTrend}
+            />
+          )}
+
+          {currentPage.id === 'race' && (
+            <div className="space-y-6 text-center">
+              <h3 className="text-xl font-black uppercase tracking-widest text-cyan-400">Temporizador de Regata</h3>
+              <div className="text-7xl font-mono font-bold text-white">
+                {formatTime(raceTimer)}
+              </div>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setIsRaceTimerRunning(!isRaceTimerRunning)}
+                  className="p-3 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white"
+                >
+                  {isRaceTimerRunning ? <Pause /> : <Play />}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsRaceTimerRunning(false);
+                    setRaceTimer(0);
+                  }}
+                  className="p-3 rounded-full bg-slate-700 hover:bg-slate-600 text-white"
+                >
+                  <RotateCcw />
+                </button>
+                <button
+                  onClick={() => {
+                    setIsRaceTimerRunning(false);
+                    setRaceTimer(600); // 10 minutes
+                  }}
+                  className="p-3 rounded-full bg-slate-700 hover:bg-slate-600 text-white"
+                >
+                  <Clock /> 10 min
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Trip 1</p>
+                  <p className="text-2xl font-black text-white font-mono">{trip1.toFixed(1)} <span className="text-[10px] text-slate-500">NM</span></p>
+                  <button onClick={() => onTripAction('reset')} className="text-[8px] text-slate-500 hover:text-white mt-1">Reset</button>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Trip 2</p>
+                  <p className="text-2xl font-black text-white font-mono">{trip2.toFixed(1)} <span className="text-[10px] text-slate-500">NM</span></p>
+                  <button onClick={() => onTripAction('reset')} className="text-[8px] text-slate-500 hover:text-white mt-1">Reset</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentPage.id === 'settings' && (
+            <div className="space-y-6">
+              <h3 className="text-xl font-black uppercase tracking-widest text-cyan-400">Ajustes del HUD</h3>
+              <div className="bg-black/40 border border-white/5 p-4 rounded-2xl flex items-center justify-between">
+                <span className="text-sm font-bold">Luces de Navegación</span>
+                <button
+                  onClick={onToggleLights}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-xs font-bold",
+                    lightsOn ? "bg-emerald-600 text-white" : "bg-slate-700 text-slate-300"
+                  )}
+                >
+                  {lightsOn ? 'ON' : 'OFF'}
+                </button>
+              </div>
+              <div className="bg-black/40 border border-white/5 p-4 rounded-2xl flex items-center justify-between">
+                <span className="text-sm font-bold">Alerta MOB</span>
+                <button
+                  onClick={onMOB}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-xs font-bold",
+                    mobActive ? "bg-red-600 text-white animate-pulse" : "bg-slate-700 text-slate-300"
+                  )}
+                >
+                  {mobActive ? 'ACTIVO' : 'INACTIVO'}
+                </button>
+              </div>
+              <div className="bg-black/40 border border-white/5 p-4 rounded-2xl flex items-center justify-between">
+                <span className="text-sm font-bold">Modo Noche</span>
+                <button
+                  onClick={() => onTabChange('config')} // Assuming config tab has night mode toggle
+                  className="px-4 py-2 rounded-full text-xs font-bold bg-slate-700 text-slate-300 hover:bg-slate-600"
+                >
+                  Configurar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Page Navigation */}
+        <div className="flex-none p-4 border-t border-white/10 flex items-center justify-between">
+          <button onClick={handlePrevPage} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+            <ChevronLeft className="w-5 h-5 text-slate-400" />
+          </button>
+          <div className="flex gap-2">
+            {pages.map((page, index) => (
+              <button
+                key={page.id}
+                onClick={() => setPageIndex(index)}
+                className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                  pageIndex === index ? "bg-cyan-600 text-white" : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                )}
+              >
+                {page.icon}
+              </button>
+            ))}
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          <button onClick={handleNextPage} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+            <ChevronRight className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+      </div>
+    </motion.div>
   );
 };
+
+interface EnginePageProps {
+  rpm: number;
+  temp: number;
+  voltage: number;
+  fuel: number;
+  water: number;
+  onMotor: () => void;
+  onVela: () => void;
+  isEngineOn: boolean;
+}
+
+const EnginePage: React.FC<EnginePageProps> = ({ rpm, temp, voltage, fuel, onMotor, onVela, isEngineOn }) => (
+  <div className="space-y-6">
+    <h3 className="text-xl font-black uppercase tracking-widest text-cyan-400">Motor y Propulsión</h3>
+    <div className="grid grid-cols-2 gap-4">
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">RPM</p>
+        <p className="text-3xl font-black text-white font-mono">{rpm.toFixed(0)}</p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Temp. Motor</p>
+        <p className="text-3xl font-black text-white font-mono">{temp.toFixed(1)}°C</p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Voltaje</p>
+        <p className="text-3xl font-black text-white font-mono">{voltage.toFixed(1)}V</p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Combustible</p>
+        <p className="text-3xl font-black text-white font-mono">{fuel.toFixed(0)}%</p>
+      </div>
+    </div>
+    <div className="flex justify-center gap-4 mt-6">
+      <button
+        onClick={onMotor}
+        className={cn(
+          "flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-widest",
+          isEngineOn ? "bg-emerald-600 text-white" : "bg-slate-700 text-slate-300"
+        )}
+      >
+        Motor
+      </button>
+      <button
+        onClick={onVela}
+        className={cn(
+          "flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-widest",
+          !isEngineOn ? "bg-emerald-600 text-white" : "bg-slate-700 text-slate-300"
+        )}
+      >
+        Vela
+      </button>
+    </div>
+  </div>
+);
+
+interface SailSteerProps {
+  sog: number;
+  twa: number;
+  twd: number;
+  tws: number;
+  hdg: number;
+  trueWindDir?: number;
+}
+
+export const SailSteerPage: React.FC<SailSteerProps> = ({ sog, twa, twd, tws, hdg }) => (
+  <div className="space-y-6">
+    <h3 className="text-xl font-black uppercase tracking-widest text-cyan-400">Gobierno a Vela</h3>
+    <div className="grid grid-cols-2 gap-4">
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">SOG</p>
+        <p className="text-3xl font-black text-white font-mono">{sog?.toFixed(1) || '---'} <span className="text-sm text-slate-500">kn</span></p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">TWA</p>
+        <p className="text-3xl font-black text-white font-mono">{twa?.toFixed(0) || '---'} <span className="text-sm text-slate-500">°</span></p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">TWS</p>
+        <p className="text-3xl font-black text-white font-mono">{tws?.toFixed(1) || '---'} <span className="text-sm text-slate-500">kn</span></p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">HDG</p>
+        <p className="text-3xl font-black text-white font-mono">{hdg?.toFixed(0) || '---'} <span className="text-sm text-slate-500">°</span></p>
+      </div>
+    </div>
+  </div>
+);
+
+interface WeatherPageProps {
+  tws: number;
+  twd: number;
+  seaState: string;
+  waveHeight: number;
+  temperature: number;
+  pressure: number;
+}
+
+const WeatherPage: React.FC<WeatherPageProps> = ({ tws, twd, seaState, waveHeight, temperature, pressure }) => (
+  <div className="space-y-6">
+    <h3 className="text-xl font-black uppercase tracking-widest text-cyan-400">Meteorología</h3>
+    <div className="grid grid-cols-2 gap-4">
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Viento (TWS)</p>
+        <p className="text-3xl font-black text-white font-mono">{tws.toFixed(1)} <span className="text-sm text-slate-500">kn</span></p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Dirección (TWD)</p>
+        <p className="text-3xl font-black text-white font-mono">{twd.toFixed(0)} <span className="text-sm text-slate-500">°</span></p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Estado Mar</p>
+        <p className="text-xl font-black text-white font-mono">{seaState}</p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Altura Ola</p>
+        <p className="text-xl font-black text-white font-mono">{waveHeight.toFixed(1)} <span className="text-sm text-slate-500">m</span></p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Temperatura</p>
+        <p className="text-xl font-black text-white font-mono">{temperature.toFixed(0)} <span className="text-sm text-slate-500">°C</span></p>
+      </div>
+      <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Presión</p>
+        <p className="text-xl font-black text-white font-mono">{pressure.toFixed(0)} <span className="text-sm text-slate-500">mb</span></p>
+      </div>
+    </div>
+  </div>
+);

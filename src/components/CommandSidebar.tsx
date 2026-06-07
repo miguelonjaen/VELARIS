@@ -2,7 +2,7 @@ import React from 'react';
 import { Ship, Menu, LogOut, Command, Anchor, Book, Box, BookOpen, User, Settings, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@lib/utils';
-import { UserProfile } from '@/types';
+import { UserProfile } from '@/shared/types';
 
 interface CommandSidebarProps {
   isSidebarOpen: boolean;

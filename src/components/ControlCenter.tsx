@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { TacticalAdvisorPanel } from './TacticalAdvisorPanel';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShipData, VesselStatus, ProcessedWeather, LogEntry, SmartshipAlarm, SecurityThresholds } from '../types';
+import { ShipData, VesselStatus, ProcessedWeather, LogEntry, SmartshipAlarm, SecurityThresholds } from '../shared/types';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 import { cn } from '../lib/utils';
@@ -121,11 +121,22 @@ interface ControlCenterProps {
   setLightsOn: (val: boolean) => void;
   mobActive: boolean;
   setMobActive: (val: boolean) => void;
+  isAnchorWatchActive: boolean;
+  onToggleAnchorWatch: () => void;
+  currentAnchorDistance: number;
+  anchorTrend: 'stable' | 'drifting' | 'swinging';
+  anchorPosition?: { lat: number; lng: number } | null;
   onMotor?: () => void;
   onVela?: () => void;
   propulsionMode?: 'MOTOR' | 'VELA';
   targetDestination: { lat: number; lng: number } | null;
   setTargetDestination: (dest: { lat: number; lng: number } | null) => void;
+  tacticalAdvisorActions?: {
+    label: string;
+    onClick: () => Promise<void> | void;
+    variant?: 'primary' | 'secondary';
+  }[];
+  tacticalAdvisorAlertCount?: number;
   plannedPath: [number, number][];
   setPlannedPath: (route: [number, number][]) => void;
   rutaActiva: [number, number][];
@@ -212,11 +223,17 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   setLightsOn,
   mobActive,
   setMobActive,
+  isAnchorWatchActive,
+  onToggleAnchorWatch,
+  currentAnchorDistance,
+  anchorTrend,
+  anchorPosition,
   onMotor,
   onVela,
   propulsionMode = 'MOTOR',
   targetDestination,
   setTargetDestination,
+  tacticalAdvisorActions,
   plannedPath,
   setPlannedPath,
   rutaActiva,
@@ -226,6 +243,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   handleAcceptTactical,
   activeRouteId,
   isAutoCenter,
+  tacticalAdvisorAlertCount,
   setIsAutoCenter,
   navigationDestination,
   onClose,
@@ -421,6 +439,10 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
     };
   }, [selectedShipId, supabase, isTravesiaActive, setIsTravesiaActive]);
 
+  const tacticalAlertSummary = tacticalAdvisorAlertCount && tacticalAdvisorAlertCount > 0
+    ? `${tacticalAdvisorAlertCount} alerta${tacticalAdvisorAlertCount > 1 ? 's' : ''} táctic${tacticalAdvisorAlertCount > 1 ? 'as' : 'a'} activas`
+    : 'Estado táctico estable';
+
   const togglePropulsion = async () => {
     const newState = !isEngineOn;
     setIsEngineOn(newState);
@@ -551,9 +573,47 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
         message={getTacticalAdvice.message}
         priority={isDepthCritical ? 'critical' : 'info'}
         isProcessing={isProcessing}
+        actions={tacticalAdvisorActions}
       />
       <H5000Frame title="SISTEMAS" hdg={Math.round(currentHeading)} isNavigating={isTravesiaActive} onClose={onClose}>
         <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
+          <div className="px-4 py-3 border-b border-white/10 bg-slate-950/80">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Estado Táctico</p>
+                <p className="text-sm font-bold text-white">{tacticalAlertSummary}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onToggleAnchorWatch}
+                  className={cn(
+                    "rounded-2xl px-3 py-2 text-[10px] uppercase tracking-[0.3em] font-black transition-all",
+                    isAnchorWatchActive ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400' : 'bg-slate-800 text-white hover:bg-slate-700'
+                  )}
+                >
+                  {isAnchorWatchActive ? 'Anchor Watch' : 'Fondeo'}
+                </button>
+                {isAnchorWatchActive && (
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300">
+                    {currentAnchorDistance.toFixed(0)}m · {anchorTrend === 'drifting' ? 'GARREO' : anchorTrend === 'swinging' ? 'BORNEO' : 'ESTABLE'}
+                  </span>
+                )}
+                {tacticalAdvisorActions && tacticalAdvisorActions.length > 0 && (
+                  <button
+                    onClick={() => tacticalAdvisorActions[0].onClick()}
+                    className={cn(
+                      "rounded-2xl px-3 py-2 text-[10px] uppercase tracking-[0.3em] font-black transition-all",
+                      tacticalAdvisorActions[0].variant === 'primary'
+                        ? 'bg-cyan-500 text-slate-950 hover:bg-cyan-400'
+                        : 'bg-slate-800 text-white hover:bg-slate-700'
+                    )}
+                  >
+                    {tacticalAdvisorActions[0].label}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         {localActiveTab === 'viento' && (
           <div className="h-full flex flex-col p-4">
             {/* Tactical Wind Hub */}
@@ -564,7 +624,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
                 twa={Math.round((weather?.windDir || 0) - currentHeading + 360) % 360}
                 tws={weather?.wind || 0}
                 heading={currentHeading}
-                className="scale-110"
+                boatSpeed={simulatedSog}
               />
               
               {/* Corner Data Blocks */}

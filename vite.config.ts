@@ -1,8 +1,10 @@
+// Asegúrate de que esta línea esté presente para heredar los alias del tsconfig
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
@@ -11,6 +13,7 @@ export default defineConfig(({mode}) => {
     base: './',
     plugins: [
       react(), 
+      tsconfigPaths(),
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
@@ -42,7 +45,10 @@ export default defineConfig(({mode}) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
+        '@shared': path.resolve(__dirname, 'src/shared'),
+        '@main': path.resolve(__dirname, 'src/main'),
         '@lib': path.resolve(__dirname, 'src/lib'),
+        '@types': path.resolve(__dirname, 'src/types')
       },
     },
     server: {

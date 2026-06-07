@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { ShieldCheck, AlertTriangle, Info, BellOff, Bell, Zap, Activity, Trash2, Droplets, Thermometer, Fuel, Waves } from 'lucide-react';
-import { SmartshipAlarm, SecurityThresholds, AlarmSeverity } from '../types';
+import { SmartshipAlarm, SecurityThresholds, AlarmSeverity } from '../shared/types';
 import { cn } from '../lib/utils';
 
 interface WatchdogPanelProps {

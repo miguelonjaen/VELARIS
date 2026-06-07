@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { LogEntry, UserProfile, ShipData } from '../types';
+import { LogEntry, UserProfile, ShipData } from '../shared/types';
 import { cn } from '../lib/utils';
 
 interface LogbookProps {

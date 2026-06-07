@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { UserProfile, ShipData } from '../types';
+import { UserProfile, ShipData } from '../shared/types';
 import { cn } from '../lib/utils';
 
 interface PanelAlmirantazgoProps {

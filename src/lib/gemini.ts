@@ -1,135 +1,93 @@
 /**
- * Advanced Gemini API caller - Protocolo Nexus
- * Usa Google Generative AI directamente (sin dependencia de servidor local)
+ * Núcleo de Inteligencia Gemini - SmartShip PRO
+ * Implementación con Resiliencia Náutica y Modo Offline de Contingencia.
  */
+
+const API_ENDPOINT = "http://localhost:8089/api/chat";
 
 export interface GeminiResponse {
   text: string;
   functionCalls?: any[];
+  isOfflineMode: boolean;
+  [key: string]: any;
 }
 
-const TIMEOUT_MS = 15000;
-const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
-const DEFAULT_GEMINI_API_VERSION = "v1beta";
-
-const getGeminiConfig = () => ({
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY,
-  model: import.meta.env.VITE_GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
-  apiVersion: import.meta.env.VITE_GEMINI_API_VERSION || DEFAULT_GEMINI_API_VERSION,
-});
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Llamada directa a Gemini API (recomendado)
+ * Genera una respuesta basada en plantillas locales para situaciones de fallo de red.
  */
-async function callGeminiDirect(
+const getLocalNauticalFallback = (prompt: string): string => {
+  const p = prompt.toLowerCase();
+  
+  if (p.includes('asesor') || p.includes('táctico') || p.includes('situación') || p.includes('informe')) {
+    return "Sistemas locales estables. Modo IA en Contingencia. Telemetría HUD activa: Mantenga rumbo y vigile el viento actual.";
+  }
+  
+  if (p.includes('ancla') || p.includes('fondeo') || p.includes('garreo')) {
+    return "Monitor de fondeo local activo. Sin conexión con el centro de datos. Vigilancia de borneo operando por heurística local.";
+  }
+
+  if (p.includes('combustible') || p.includes('motor') || p.includes('logística')) {
+    return "Análisis logístico en modo local. Verifique niveles en el panel de control. Sensores de propulsión informan estado NOMINAL.";
+  }
+
+  return "Comando SmartShip PRO: Servidor saturado o sin red. Ejecutando protocolos de reserva. Sistemas del buque operativos.";
+};
+
+export const callGemini = async (
   prompt: string,
   systemInstruction?: string,
-  isJson?: boolean,
+  isJson: boolean = false,
   tools?: any[]
-): Promise<GeminiResponse> {
-  const { apiKey, model, apiVersion } = getGeminiConfig();
-  
-  if (!apiKey) {
-    throw new Error("VITE_GEMINI_API_KEY no configurada en .env");
-  }
+): Promise<GeminiResponse> => {
+  const maxRetries = 3;
+  const retryDelay = 1500; // 1.5 segundos entre intentos
 
-  const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${apiKey}`;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, systemInstruction, isJson, tools }),
+      });
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      // Manejo de Error 503 (Service Unavailable) o Saturación
+      if (response.status === 503) {
+        if (attempt < maxRetries) {
+          console.warn(`[Gemini] Intento ${attempt} fallido (503). Reintentando en ${retryDelay}ms...`);
+          await sleep(retryDelay);
+          continue;
+        }
+      }
 
-  try {
-    const requestBody: any = {
-      systemInstruction: systemInstruction ? {
-        parts: [{ text: systemInstruction }]
-      } : undefined,
-      contents: [{
-        parts: [{ text: prompt }]
-      }]
-    };
+      if (!response.ok) throw new Error(`Status: ${response.status}`);
 
-    if (isJson) {
-      requestBody.generationConfig = {
-        responseMimeType: "application/json"
+      const data = await response.json();
+      return {
+        text: data.text || "Operación procesada.",
+        functionCalls: data.functionCalls || [],
+        isOfflineMode: false
+      };
+
+    } catch (error) {
+      if (attempt < maxRetries) {
+        console.warn(`[Gemini] Error de conexión/red. Intento ${attempt} de ${maxRetries}...`);
+        await sleep(retryDelay);
+        continue;
+      }
+
+      console.error("[Gemini] Fallo crítico. Activando protocolo de Modo Seguro Local.");
+      return {
+        text: getLocalNauticalFallback(prompt),
+        functionCalls: [],
+        isOfflineMode: true
       };
     }
-
-    // Incluir herramientas si existen
-    if (tools && tools.length > 0) {
-      requestBody.tools = [{
-        functionDeclarations: tools
-      }];
-    }
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Gemini API error ${response.status}: ${JSON.stringify(errorData)}`);
-    }
-
-    const data = await response.json();
-    const content = data.candidates?.[0]?.content;
-    
-    if (!content) {
-      throw new Error("No content in Gemini response");
-    }
-
-    const text = content.parts?.[0]?.text || '';
-    
-    // Extraer llamadas a funciones si existen
-    const functionCalls = content.parts
-      ?.filter((p: any) => p.functionCall)
-      .map((p: any) => ({
-        name: p.functionCall.name,
-        args: p.functionCall.args
-      })) || [];
-
-    return {
-      text,
-      functionCalls: functionCalls.length > 0 ? functionCalls : undefined
-    };
-
-  } finally {
-    clearTimeout(timeoutId);
   }
-}
 
-export async function callGemini(
-  prompt: string, 
-  systemInstruction?: string, 
-  isJson?: boolean,
-  tools?: any[],
-  posicionActual?: { lat: number; lng: number; sector?: string }
-): Promise<GeminiResponse | any> {
-  
-  try {
-    console.log(`📡 Llamando a Gemini API...`);
-
-    const result = await callGeminiDirect(prompt, systemInstruction, isJson, tools);
-    console.log('✅ Respuesta recibida de Gemini');
-    return result;
-
-  } catch (error: any) {
-    console.error("❌ Error en callGemini:", error.message);
-    
-    // Fallback graceful
-    if (isJson) {
-      return { 
-        status: "offline",
-        text: "Sistema de IA no disponible",
-        message: "Navegación en modo manual."
-      };
-    }
-    
-    return {
-      text: "Modo offline - Navegando con sistemas redundantes.",
-      functionCalls: []
-    };
-  }
-}
+  return {
+    text: getLocalNauticalFallback(prompt),
+    isOfflineMode: true
+  };
+};

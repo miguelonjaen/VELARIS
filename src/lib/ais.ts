@@ -60,7 +60,7 @@ const velocityComponents = ({ sog, cog }: VesselVector) => {
 
 export const classifyAisRisk = (cpa: number, tcpa: number): AisRiskLevel => {
   if (tcpa < 0 || tcpa > 45) return 'safe';
-  if (cpa <= 0.2 && tcpa <= 20) return 'critical';
+  if (cpa <= 0.27 && tcpa <= 20) return 'critical'; // 0.27 NM ≈ 500m
   if (cpa <= 0.5 && tcpa <= 30) return 'warning';
   if (cpa <= 1.0 && tcpa <= 45) return 'watch';
   return 'safe';

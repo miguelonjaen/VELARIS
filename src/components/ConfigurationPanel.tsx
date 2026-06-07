@@ -1,7 +1,7 @@
 import React from 'react';
 import { Settings, Wifi, Compass, Gauge, ShieldAlert, Cpu, ShieldCheck, Activity, FolderOpen } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { SecurityThresholds } from '../types';
+import { SecurityThresholds } from '../shared/types';
 
 interface ConfigPanelProps {
   dataSource: Record<string, 'real' | 'simulated'>;

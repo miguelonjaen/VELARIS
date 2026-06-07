@@ -18,7 +18,7 @@ import {
   Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShipData, VesselStatus, ProcessedWeather, LogEntry } from '../types';
+import { ShipData, VesselStatus, ProcessedWeather, LogEntry } from '../shared/types';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 import { cn } from '../lib/utils';

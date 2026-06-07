@@ -4,6 +4,7 @@ import { VADEMECUM_SIGNALS, FLAGS } from '../constants';
 
 interface GuideVademecumProps {
   playSignal: (pattern: number[]) => void;
+  onClose?: () => void;
 }
 
 const GuideVademecum: React.FC<GuideVademecumProps> = ({ playSignal }) => {
