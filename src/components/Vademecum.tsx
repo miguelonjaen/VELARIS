@@ -615,13 +615,13 @@ const Vademecum: React.FC<VademecumProps> = ({ onClose }) => {
             <div className="grid grid-cols-1 gap-4">
               <div className="bg-red-950/20 border border-red-500/30 p-6 rounded-[2rem] shadow-xl">
                 <h3 className="text-sm font-black font-mono text-red-400 flex items-center gap-2 uppercase tracking-wide">
-                  🚨 MAYDAY — Peligro Grave e Inminente (Canal 16)
+                  🚨 MEDÉ — Peligro Grave e Inminente (Canal 16)
                 </h3>
                 <p className="text-xs text-slate-300 mt-2 font-mono leading-relaxed bg-black/40 p-4 rounded-xl border border-red-900/30">
                   <span className="text-red-400 font-bold">
                     Estructura Fonética:
                   </span>{" "}
-                  "MAYDAY, MAYDAY, MAYDAY. Aquí [Nombre del Buque] / Call Sign
+                  "MEDÉ, MEDÉ, MEDÉ. Aquí [Nombre del Buque] / Call Sign
                   [Indicativo]. Posición [Coordenadas o demora]. Naturaleza del
                   peligro: [Ej: Vía de agua descontrolada]. Cantidad de almas a
                   bordo: [Nº tripulantes]. Dispongo de balsas salvavidas.

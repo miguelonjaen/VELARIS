@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Activity, Compass, Gauge, LineChart, Settings, Wind } from 'lucide-react';
+import { Activity, Compass, Gauge, X, LineChart, Settings, Wind } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { WindInstrument } from './WindInstrument';
 
@@ -21,6 +21,7 @@ interface H5000WindHubProps {
   dtw: number;
   waypointName: string;
   eta?: string;
+  onClose?: () => void; // New prop for closing the panel
 }
 
 const normalize360 = (angle: number): number => ((angle % 360) + 360) % 360;
@@ -108,6 +109,7 @@ export const H5000WindHub: React.FC<H5000WindHubProps> = ({
   dtw,
   waypointName,
   eta,
+  onClose,
 }) => {
   const [pageId, setPageId] = useState<H5000PageId>('wind');
 
@@ -140,7 +142,12 @@ export const H5000WindHub: React.FC<H5000WindHubProps> = ({
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#050607] text-white">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#050607] text-white rounded-[24px]">
+      {onClose && (
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-500 hover:text-white transition-colors z-10">
+          <X size={16} />
+        </button>
+      )}
       <div className="flex-none border-b border-white/10 bg-black px-3 py-2">
         <div className="flex items-center justify-between gap-3">
           <div>

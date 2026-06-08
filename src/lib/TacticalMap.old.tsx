@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { MBTileLayer } from '../components/MBTileLayer';
 import { ShipData, UserProfile } from '@/shared/types';
-import { cn } from '../lib/utils';
+import { cn } from './utils';
 import { calculateVMG, calculateVesselPerformance } from './polarEngine';
 export const MBTILES_ZONES = [
   { id: 'portimao-gibraltar', name: 'Portimao - Gibraltar', center: [36.5, -6.5] as [number, number], zoom: 9, file: '/mapas/portimao-gibraltar.mbtiles' },

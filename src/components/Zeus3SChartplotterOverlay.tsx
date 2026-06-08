@@ -20,6 +20,8 @@ import {
   Zap,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { motion } from 'motion/react';
+import { SailSteerWidget } from './SailSteerWidget';
 
 type ZeusPageId = 'chart' | 'sailsteer' | 'race' | 'laylines' | 'windplot' | 'pilot' | 'weather' | 'charts';
 
@@ -81,9 +83,9 @@ const StatusPill = ({ label, active }: { label: string; active: boolean }) => (
 );
 
 const DataBox = ({ label, value, unit }: { label: string; value: string; unit?: string }) => (
-  <div className="min-w-[76px] border border-white/10 bg-black/65 px-2 py-1.5">
+  <div className="min-w-[76px] border border-white/10 bg-black/65 px-2 py-0.5">
     <p className="text-[7px] font-black uppercase tracking-[0.18em] text-slate-500">{label}</p>
-    <p className="font-mono text-lg font-black leading-none text-white">
+    <p className="font-mono text-base font-black leading-none text-white">
       {value}
       {unit && <span className="ml-1 text-[8px] text-slate-500">{unit}</span>}
     </p>
@@ -91,71 +93,37 @@ const DataBox = ({ label, value, unit }: { label: string; value: string; unit?: 
 );
 
 export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps> = ({
-  sog,
-  hdg,
-  cog,
-  tws,
-  twd,
-  twa,
-  depth,
-  dtw,
-  eta,
-  xte,
-  waypointName,
-  chartMode,
-  activeChartName,
-  aisEnabled,
-  windEnabled,
-  collisionFilter,
-  isNavigating,
-  autopilotMode,
-  activePage,
-  onSelectPage,
-  onOpenHud,
-  onOpenSystems,
-  onCycleChart,
-  onToggleAIS,
-  onToggleWind,
-  onToggleCollisionFilter,
-  onStartNavigation,
-  onEndNavigation,
-  onToggleAutopilot,
-  onZoomIn,
-  onZoomOut,
-  className,
-}) => {
+  sog, hdg, cog, tws, twd, twa, depth, dtw, eta, xte, waypointName,
+   chartMode, activeChartName, aisEnabled, windEnabled, collisionFilter,
+  isNavigating, autopilotMode, activePage, onSelectPage, onOpenHud,
+  onOpenSystems, onCycleChart, onToggleAIS, onToggleWind,
+  onToggleCollisionFilter, onStartNavigation, onEndNavigation,
+  onToggleAutopilot, onZoomIn, onZoomOut, className,
+  }) => {
   const selectedPage = pages.find((page) => page.id === activePage) || pages[0];
   const xteTone = Math.abs(xte) > 0.1 ? 'text-amber-300' : 'text-emerald-300';
 
   const handlePage = (page: (typeof pages)[number]) => {
     onSelectPage(page.id);
     if (typeof page.hudIndex === 'number') onOpenHud(page.hudIndex);
-    if (page.id === 'charts') onCycleChart();
-    if (page.id === 'pilot') onToggleAutopilot();
-    if (page.id === 'chart') onOpenHud(0);
+    if (page.id === 'charts') onCycleChart(); // This is now handled by ZeusSidebar
+    if (page.id === 'pilot') onToggleAutopilot(); // This is now handled by ZeusSidebar
+    if (page.id === 'chart') onOpenHud(0); // This is now handled by ZeusSidebar
   };
 
   return (
     <div className={cn('pointer-events-none absolute inset-0 z-[6400]', className)}>
       <div className="absolute inset-0 pointer-events-none border-[10px] border-[#111827]/85 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08),inset_0_0_40px_rgba(0,0,0,0.45)]" />
 
-      <header className="pointer-events-auto absolute left-6 right-24 top-4 flex items-center justify-between gap-3 border border-white/10 bg-[#07111e]/88 px-4 py-3 shadow-2xl backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-sm border border-cyan-400/40 bg-cyan-400/10 text-cyan-300">
-            <Navigation className="h-5 w-5" />
+      <header className="pointer-events-auto absolute left-6 right-24 top-4 flex items-center justify-between gap-2 border border-white/10 bg-[#07111e]/88 px-4 py-1.5 shadow-2xl backdrop-blur-md"> {/* Reduced padding and gap */}
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-sm border border-cyan-400/40 bg-cyan-400/10 text-cyan-300">
+            <Navigation className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white">ZEUS 3S COMMAND CENTER</p>
-            <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-slate-500">
-              {selectedPage.label} / {chartMode === 'mbtiles' ? activeChartName : 'STANDARD CHART'}
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white">SMARTSHIP-PRO COMMAND CENTER</p>
+            <p className="text-[7px] font-bold uppercase tracking-[0.2em] text-slate-500">TACTICAL NAVIGATION SYSTEM</p>
           </div>
-        </div>
-        <div className="hidden items-center gap-2 xl:flex">
-          <StatusPill label="AIS" active={aisEnabled} />
-          <StatusPill label="WIND" active={windEnabled} />
-          <StatusPill label="CPA" active={collisionFilter} />
-          <StatusPill label={autopilotMode.toUpperCase()} active={autopilotMode !== 'standby'} />
         </div>
         <div className="grid grid-cols-5 gap-2">
           <DataBox label="SOG" value={sog.toFixed(1)} unit="kt" />
@@ -166,6 +134,8 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
         </div>
       </header>
 
+      
+      
       <aside className="pointer-events-auto absolute bottom-24 right-4 top-24 flex w-16 flex-col items-center gap-2 border border-white/10 bg-[#07111e]/90 p-2 shadow-2xl backdrop-blur-md">
         <button onClick={onOpenSystems} className="flex h-12 w-12 items-center justify-center border border-white/10 bg-black/60 text-slate-300 hover:border-cyan-300 hover:text-cyan-200" title="Menu">
           <Menu className="h-5 w-5" />
@@ -194,59 +164,6 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
         </button>
       </aside>
 
-      <section className="pointer-events-auto absolute bottom-24 left-6 w-[310px] border border-white/10 bg-[#07111e]/88 p-3 shadow-2xl backdrop-blur-md">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-[9px] font-black uppercase tracking-[0.24em] text-cyan-300">{selectedPage.label}</p>
-          <p className="font-mono text-[10px] font-black text-slate-400">COG {Math.round(cog).toString().padStart(3, '0')}°</p>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <DataBox label="Waypoint" value={(waypointName || '---').slice(0, 8).toUpperCase()} />
-          <DataBox label="DTW" value={dtw.toFixed(1)} unit="nm" />
-          <DataBox label="ETA" value={eta || '--:--'} />
-          <div className="min-w-[76px] border border-white/10 bg-black/65 px-2 py-1.5">
-            <p className="text-[7px] font-black uppercase tracking-[0.18em] text-slate-500">XTE</p>
-            <p className={cn('font-mono text-lg font-black leading-none', xteTone)}>{xte.toFixed(2)}<span className="ml-1 text-[8px] text-slate-500">nm</span></p>
-          </div>
-          <DataBox label="TWA" value={Math.round(twa).toString()} unit="deg" />
-          <DataBox label="Mode" value={autopilotMode.toUpperCase()} />
-        </div>
-      </section>
-
-      <nav className="pointer-events-auto absolute bottom-4 left-6 right-24 grid grid-cols-8 gap-2 border border-white/10 bg-[#07111e]/90 p-2 shadow-2xl backdrop-blur-md">
-        {pages.map((page) => (
-          <button
-            key={page.id}
-            type="button"
-            onClick={() => handlePage(page)}
-            className={cn(
-              'flex h-14 flex-col items-center justify-center gap-1 border border-white/10 bg-black/60 text-[8px] font-black uppercase tracking-[0.12em] text-slate-400 transition-colors hover:border-cyan-300 hover:text-cyan-200',
-              activePage === page.id && 'border-cyan-300 bg-cyan-400/20 text-cyan-100',
-            )}
-          >
-            {page.icon}
-            <span>{page.label}</span>
-          </button>
-        ))}
-      </nav>
-
-      <div className="pointer-events-auto absolute left-6 top-24 flex gap-2">
-        <button onClick={() => onSelectPage('laylines')} className="flex items-center gap-2 border border-cyan-400/30 bg-cyan-400/15 px-3 py-2 text-[9px] font-black uppercase tracking-[0.18em] text-cyan-100">
-          <Route className="h-4 w-4" />
-          Laylines
-        </button>
-        <button onClick={() => onSelectPage('race')} className="flex items-center gap-2 border border-white/10 bg-black/60 px-3 py-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-300">
-          <Timer className="h-4 w-4" />
-          SailingTime
-        </button>
-        <button onClick={() => onSelectPage('weather')} className="flex items-center gap-2 border border-white/10 bg-black/60 px-3 py-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-300">
-          <Radio className="h-4 w-4" />
-          PredictWind
-        </button>
-        <button onClick={() => onSelectPage('pilot')} className="flex items-center gap-2 border border-white/10 bg-black/60 px-3 py-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-300">
-          <Zap className="h-4 w-4" />
-          Pilot
-        </button>
-      </div>
     </div>
   );
 };

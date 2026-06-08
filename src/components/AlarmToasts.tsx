@@ -12,11 +12,11 @@ interface AlarmToastsProps {
 
 export const AlarmToasts: React.FC<AlarmToastsProps> = ({ alarms, onRemove, isMuted, onMuteToggle }) => {
   return (
-    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[10000] flex flex-col gap-3 w-80 pointer-events-none">
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[10000] flex flex-col gap-3 w-40 pointer-events-none">
       <div className="flex justify-end mb-2 pointer-events-auto">
         <button 
           onClick={onMuteToggle}
-          className={`p-3 rounded-2xl backdrop-blur-md border flex items-center gap-2 transition-all ${
+          className={`px-3 py-1 rounded-xl backdrop-blur-md border flex items-center gap-2 transition-all ${
             isMuted 
               ? 'bg-slate-900/80 border-slate-700 text-slate-400' 
               : 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-lg shadow-amber-900/20'
@@ -24,8 +24,8 @@ export const AlarmToasts: React.FC<AlarmToastsProps> = ({ alarms, onRemove, isMu
           title={isMuted ? "Activar Alertas Sonoras" : "Silenciar Alertas"}
           id="btn-mute-watchdog"
         >
-          {isMuted ? <BellOff size={18} /> : <Zap size={18} className="animate-pulse" />}
-          <span className="text-[10px] font-black uppercase tracking-wider">
+          {isMuted ? <BellOff size={18} /> : <Zap size={12} className="animate-pulse" />}
+          <span className="text-[8px] font-black uppercase tracking-wider">
             {isMuted ? 'Muted' : 'Shield Active'}
           </span>
         </button>

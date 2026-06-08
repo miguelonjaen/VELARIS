@@ -116,6 +116,8 @@ import { NavigationDashboard } from './components/NavigationDashboard';
 import { FleetLayer } from './components/FleetLayer';
 import { WeatherLayer } from './WeatherLayer';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
+import { StatusBar } from "./components/layout/StatusBar";
+import { ZeusSidebar } from "./components/layout/ZeusSidebar";
 import { TacticalHUD } from './components/TacticalHUD'; // Asegúrate de que TacticalHUD esté importado
 import { Zeus3SChartplotterOverlay } from './components/Zeus3SChartplotterOverlay';
 import { calculateSwingRadius, analyzeAnchorTrend, formatAnchorLog } from './lib/anchorManager';
@@ -1591,11 +1593,41 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
   const [showControl, setShowControl] = useState(false);
   const [showSystems, setShowSystems] = useState(false);
   const [zeusPage, setZeusPage] = useState<'chart' | 'sailsteer' | 'race' | 'laylines' | 'windplot' | 'pilot' | 'weather' | 'charts'>('chart');
+  const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New state for weather panel
+  const [isLaylinesActive, setIsLaylinesActive] = useState(false); // New state for laylines
+  const [isSailSteerWidgetOpen, setIsSailSteerWidgetOpen] = useState(false); // New state for SailSteer widget
+
   const [autopilotMode, setAutopilotMode] = useState<'standby' | 'auto' | 'wind' | 'nav'>('standby');
 
   const openZeusHudPage = useCallback((page: number) => {
     setHudPageIndex(page);
     setShowControl(true);
+  }, []);
+
+  // Dummy Layline Calculation (Replace with actual logic)
+  const calculateLaylinePaths = useCallback((
+    currentLat: number, currentLng: number,
+    twd: number, tws: number, cog: number
+  ) => {
+    const optimalTackAngle = 45; // degrees off true wind for optimal upwind
+    const tackDistance = 5; // NM
+
+    // Convert degrees to radians
+    const toRadians = (deg: number) => deg * Math.PI / 180;
+
+    // Port Layline (e.g., 45 degrees off true wind on port side)
+    const portLaylineBearing = toRadians(twd - optimalTackAngle);
+    const portLaylineLat = currentLat + tackDistance * Math.cos(portLaylineBearing) / 60;
+    const portLaylineLng = currentLng + tackDistance * Math.sin(portLaylineBearing) / (60 * Math.cos(toRadians(currentLat)));
+
+    // Starboard Layline (e.g., 45 degrees off true wind on starboard side)
+    const stbdLaylineBearing = toRadians(twd + optimalTackAngle);
+    const stbdLaylineLat = currentLat + tackDistance * Math.cos(stbdLaylineBearing) / 60;
+    const stbdLaylineLng = currentLng + tackDistance * Math.sin(stbdLaylineBearing) / (60 * Math.cos(toRadians(currentLat)));
+
+    const portPath: [number, number][] = [[currentLat, currentLng], [portLaylineLat, portLaylineLng]];
+    const stbdPath: [number, number][] = [[currentLat, currentLng], [stbdLaylineLat, stbdLaylineLng]];
+    return { portPath, stbdPath };
   }, []);
 
   const toggleZeusAutopilot = useCallback(() => {
@@ -1606,6 +1638,18 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     });
   }, [setAdvisorMessage]);
 
+  // Auto-collapse SmartShip sidebar when navigation is active
+  useEffect(() => {
+    if (isTravesiaActive) {
+      setIsSidebarOpen(false);
+    } else {
+      // Auto-collapse when activeTab is 'control' (where the Zeus3SChartplotterOverlay is rendered)
+      const zeusControlledTabs = ['control'];
+      if (zeusControlledTabs.includes(activeTab)) {
+        setIsSidebarOpen(false);
+      }
+    }
+  }, [isTravesiaActive]);
   // Auto-maximize intel window on new AI message
   useEffect(() => {
     if (messages.length > 0 && messages[messages.length - 1].role === 'ai') {
@@ -3657,6 +3701,15 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
       {/* Main Area */}
       <main className="flex-1 flex flex-col bg-[#0a0f18] overflow-hidden relative">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] z-0" />
+
+        <StatusBar 
+          vmg={navPlan?.vmg || 0}
+          gpsStatus={dataSource.gps === 'real' ? 'fix' : 'searching'}
+          battery={batteryLevel}
+          shipName={selectedShip?.nombre || 'Nucleus Zero'}
+          // Derive from alarms state
+        />
+
         {/* Contenido Principal - Layout Adaptativo Fluido */}
         <div className={cn(
           "relative overflow-hidden transition-all duration-700 ease-in-out p-6 h-full"
@@ -3736,9 +3789,8 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
               <div className="absolute inset-0 flex flex-col">
                 <ErrorBoundary fallbackName="Mapa Táctico">
                   <div className="relative flex-1 bg-slate-950 select-none overflow-hidden">
-                   console.log('🚢 fleet:', fleet);
-console.log('📍 shipPosition:', shipPosition);
-                    <TacticalMap
+                   <TacticalMap
+                   isLaylinesActive={false}
   center={mapCenter}
   zoom={15}
   shipPosition={shipPosition}
@@ -3777,12 +3829,68 @@ console.log('📍 shipPosition:', shipPosition);
   onMapRightClick={handleMapRightClick}
   onDragStart={() => setIsAutoCenter(false)}
 >
+  {/* Flota */}
   <FleetLayer
     fleet={fleet}
     selectedShipId={selectedShipId}
     shipPosition={shipPosition}
     simulatedAisTargets={simulatedAisTargets}
   />
+
+  {/* Meteorología */}
+  <WeatherLayer
+    weather={weather}
+    plannedPath={plannedPath}
+  />
+
+  {/* Autoencuadre de ruta */}
+  {rutaActiva && rutaActiva.length >= 2 && (
+    <MapBoundsHandler
+      path={rutaActiva}
+      showControl={showControl}
+      showSystems={showSystems}
+    />
+  )}
+
+  {/* Ruta táctica */}
+  {rutaActiva && rutaActiva.length >= 2 && (
+    <Polyline
+      positions={rutaActiva}
+      color="#FF8C00"
+      weight={5}
+      opacity={0.9}
+    >
+      <Popup>Ruta Táctica</Popup>
+    </Polyline>
+  )}
+
+  {/* Laylines / Bordo sugerido */}
+  {tacticalData?.suggestedPath &&
+    tacticalData.suggestedPath.length >= 2 && (
+      <Polyline
+        positions={tacticalData.suggestedPath}
+        color="#22c55e"
+        weight={4}
+        opacity={0.9}
+        dashArray="12,10"
+      >
+        <Popup>Laylines / Bordo sugerido Zeus 3S</Popup>
+      </Polyline>
+    )}
+
+  {/* Ruta meteorológica */}
+  {plannedPath && plannedPath.length >= 2 && (
+    <Polyline
+      positions={plannedPath}
+      color="#00e5ff"
+      weight={5}
+      opacity={0.86}
+    >
+      <Popup>PredictWind / Ruta meteorológica</Popup>
+    </Polyline>
+  )}
+
+  {/* Zona AIS */}
   {shipPosition && (
     <Circle
       center={[shipPosition.lat, shipPosition.lng]}
@@ -3800,6 +3908,7 @@ console.log('📍 shipPosition:', shipPosition);
       }}
     />
   )}
+  
 </TacticalMap>
 
                 <Zeus3SChartplotterOverlay
@@ -3831,84 +3940,45 @@ console.log('📍 shipPosition:', shipPosition);
                   onToggleCollisionFilter={() => setLayersState(prev => ({ ...prev, collisionFilter: !prev.collisionFilter }))}
                   onStartNavigation={() => setShowSafetyModal(true)}
                   onEndNavigation={handleEndTravesia}
+                       
+                  
+                  
                   onToggleAutopilot={toggleZeusAutopilot}
                 />
                 
+                <ZeusSidebar 
+                  activePage={zeusPage}
+                  onSelect={(page) => setZeusPage(page as any)}
+                  onToggleMenu={() => setShowSystems(!showSystems)}
+                  isNavigating={isTravesiaActive}
+                  listaCartas={listaCartas}
+                  cartasActivas={cartasActivas}
+                  toggleCarta={toggleCarta}
+                  cartasOpacity={cartasOpacity}
+                  setCartasOpacity={setCartasOpacity}
+                  layersState={layersState}
+                  setLayersState={setLayersState}
+                  aisEnabled={layersState.showAIS} // Pass existing state
+                  windEnabled={layersState.showWind} // Pass existing state
+                  collisionFilter={layersState.collisionFilter} // Pass existing state
+                  autopilotMode={autopilotMode} // Pass existing state
+                  onToggleAIS={() => setLayersState(prev => ({ ...prev, showAIS: !prev.showAIS }))} // Pass toggle function
+                  onToggleWind={() => setLayersState(prev => ({ ...prev, showWind: !prev.showWind }))} // Pass toggle function
+                  onToggleCollisionFilter={() => setLayersState(prev => ({ ...prev, collisionFilter: !prev.collisionFilter }))} // Pass toggle function
+                  isWeatherPanelOpen={isWeatherPanelOpen}
+                  setIsWeatherPanelOpen={setIsWeatherPanelOpen}
+                  isLaylinesActive={isLaylinesActive}
+                  isSailSteerWidgetOpen={isSailSteerWidgetOpen}
+                  setIsSailSteerWidgetOpen={setIsSailSteerWidgetOpen}
+                  setIsLaylinesActive={setIsLaylinesActive}
+                  onToggleAutopilot={toggleZeusAutopilot} // Pass toggle function
+                />
 
                 {/* Columna de Acción: Integrada en el mapa */}
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 z-[500] flex flex-col gap-3">
-                    <button 
-                      onClick={() => {
-                        setHudPageIndex(3); 
-                        setShowControl(!showControl);
-                        // Force restore terminal if it was minimized when opening HUB
-                        if (isIntMin) setIntMin(true);
-                      }}
-                      className={cn(
-                        "w-14 h-24 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all border border-white/10 shadow-2xl backdrop-blur-md group overflow-hidden relative",
-                        showControl ? "bg-emerald-600 text-white" : "bg-cyan-600 text-white hover:bg-cyan-500"
-                      )}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <Navigation className={cn("w-6 h-6", isTravesiaActive ? "animate-pulse" : "")} />
-                      <span className="text-[7px] font-black uppercase tracking-[0.2em] leading-tight text-center px-1">
-                        HUB
-                      </span>
-                    </button>
-
-                    <button 
-                      onClick={() => setShowSystems(!showSystems)}
-                      className={cn(
-                        "w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border border-white/10 shadow-2xl backdrop-blur-md",
-                        showSystems ? "bg-amber-600 text-white" : "bg-slate-800 text-slate-400 hover:text-white"
-                      )}
-                    >
-                      <Settings className="w-5 h-5 text-amber-400 animate-pulse" />
-                      <span className="text-[8px] font-black uppercase tracking-[0.1em] text-center">COMMAND</span>
-                    </button>
-
-                    {!isTravesiaActive ? (
-                      <button 
-                        onClick={() => setShowSafetyModal(true)}
-                        className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border border-emerald-500/30 bg-emerald-600 text-white shadow-2xl backdrop-blur-md hover:bg-emerald-500 group overflow-hidden relative"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <Navigation className="w-5 h-5 animate-pulse" />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-center">TRAVESÍA</span>
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={handleEndTravesia}
-                        className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border border-red-500/30 bg-red-600 text-white shadow-2xl backdrop-blur-md hover:bg-red-500 group overflow-hidden relative"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <AlertTriangle className="w-5 h-5" />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-center">ARRIBAR</span>
-                      </button>
-                    )}
-
-                    {[
-                      { id: 'logbook', icon: Navigation, label: 'Bitácora', color: 'bg-slate-800', active: (activeTab as string) === 'logbook', onClick: () => setActiveTab('logbook') },
-                      { id: 'mob', icon: LifeBuoy, label: 'MOB', color: 'bg-red-600', active: mobActive, onClick: handleMOB },
-                      { id: 'lights', icon: Sun, label: 'Luces', color: 'bg-slate-800', active: lightsOn, onClick: handleToggleLights },
-                      { id: 'anchor', icon: Anchor, label: 'Fondeo', color: 'bg-slate-800', active: isAnchorWatchActive, onClick: () => isAnchorWatchActive ? handleDeactivateAnchorWatch() : handleActivateAnchorWatch() }
-                    ].map(btn => (
-                      <button 
-                        key={btn.id} onClick={btn.onClick}
-                        className={cn(
-                          "w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border border-white/10 shadow-2xl backdrop-blur-md",
-                          btn.active ? "bg-cyan-600 text-white" : `${btn.color} text-slate-400 hover:text-white`
-                        )}
-                      >
-                        <btn.icon className="w-5 h-5" />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-center">{btn.label}</span>
-                      </button>
-                    ))}
-                  </div>
-              </div>
               
 
               {/* Control Toggle y Cartas (Bottom Left del Mapa) - REMOVED BY USER REQUEST */}
+            </div>
             </ErrorBoundary>
           </div>
 

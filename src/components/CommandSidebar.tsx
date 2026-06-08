@@ -19,7 +19,7 @@ interface CommandSidebarProps {
 export const CommandSidebar: React.FC<CommandSidebarProps> = ({
   isSidebarOpen,
   setIsSidebarOpen,
-  activeTab,
+  activeTab, // Keep activeTab prop
   setActiveTab,
   userProfile,
   t,
@@ -28,7 +28,7 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
   setLang
 }) => {
   const menuItems = [
-    { id: 'control', icon: Command, label: t.command_center },
+    { id: 'control', icon: Command, label: t.command_center }, // Keep control tab
     { id: 'fleet', icon: Anchor, label: t.fleet_ops },
     { id: 'logbook', icon: Book, label: t.logbook },
     { id: 'inventory', icon: Box, label: t.inventory },
@@ -39,9 +39,9 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
   ];
 
   return (
-    <aside className={cn(
-      "glass-panel z-[9000] flex flex-col transition-all duration-500 ease-in-out border-r border-white/5",
-      isSidebarOpen ? "w-72" : "w-20"
+    <aside className={cn( // Adjusted width for collapsed state
+      "glass-panel z-[9000] flex flex-col transition-all duration-300 ease-in-out border-r border-white/5", // Transition duration
+      isSidebarOpen ? "w-72" : "w-[72px]" // Collapsed width between 72px and 80px
     )}>
       <div className="p-4 flex items-center justify-between border-b border-white/5 h-16">
         {isSidebarOpen ? (
@@ -73,7 +73,7 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
             )}
           >
             <item.icon className={cn("w-4 h-4", activeTab === item.id ? "text-cyan-400 animate-pulse" : "")} />
-            {isSidebarOpen && <span className="font-bold text-[9px] tracking-widest uppercase truncate">{item.label}</span>}
+              {isSidebarOpen && <span className="font-bold text-[9px] tracking-widest uppercase truncate">{item.label}</span>} {/* Conditionally render text */}
             {activeTab === item.id && <div className="absolute left-0 top-1/4 bottom-1/4 w-0.5 bg-cyan-500 rounded-r-full" />}
           </button>
         ))}

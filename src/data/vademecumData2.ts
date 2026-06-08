@@ -1110,7 +1110,7 @@ export const VADEMECUM_DATA: Record<string, VademecumItem[]> = {
       category: "radio",
       description: "Frecuencia internacional de emergencia de onda media.",
       protocol:
-        "Usada para MAYDAY y comunicaciones de larga distancia. Requiere equipo SSB (bandas laterales).",
+        "Usada para MEDÉ y comunicaciones de larga distancia. Requiere equipo SSB (bandas laterales).",
       utility:
         "Emergencias en alta mar. Rango: 100-300 NM según condiciones. Obsoleta en algunos buques modernos.",
     },
@@ -1155,15 +1155,15 @@ export const VADEMECUM_DATA: Record<string, VademecumItem[]> = {
         "Llamadas buque a buque. Rango: ~20 NM.",
     },
     {
-      id: "mayday",
-      title: "Procedimiento MAYDAY",
+      id: "MEDÉ",
+      title: "Procedimiento MEDÉ",
       category: "radio",
       description:
         "Señal de máxima emergencia para comunicar peligro de vida inminente.",
       protocol:
-        "Pronunciado 3 veces: MAYDAY-MAYDAY-MAYDAY. Transmitir en VHF Canal 16 o SSB 2182 kHz.",
+        "Pronunciado 3 veces: MEDÉ-MEDÉ-MEDÉ. Transmitir en VHF Canal 16 o SSB 2182 kHz.",
       utility:
-        'Respuesta obligatoria. Todos los buques escuchan. Procedimiento: 1) MAYDAY×3 2) Identificación 3) Posición 4) Naturaleza del peligro 5) Número de personas 6) Equipo de seguridad.',
+        'Respuesta obligatoria. Todos los buques escuchan. Procedimiento: 1) MEDÉ×3 2) Identificación 3) Posición 4) Naturaleza del peligro 5) Número de personas 6) Equipo de seguridad.',
     },
     {
       id: "pan-pan",
@@ -1171,7 +1171,7 @@ export const VADEMECUM_DATA: Record<string, VademecumItem[]> = {
       category: "radio",
       description: "Señal de urgencia — Situación seria pero controlada.",
       protocol:
-        "Pronunciado 3 veces: PAN-PAN-PAN. Usar cuando MAYDAY no es apropiado pero hay urgencia.",
+        "Pronunciado 3 veces: PAN-PAN-PAN. Usar cuando MEDÉ no es apropiado pero hay urgencia.",
       utility:
         "Ej: Fallo de motor, mala estabilidad, etc. Todos escuchan pero no es máxima prioridad.",
     },

@@ -308,7 +308,7 @@ export const RADIO_FREQUENCIES: RadioFrequency[] = [
 export const MARITIME_PRIORITIES: MaritimePriority[] = [
   {
     order: 1,
-    signal: 'MAYDAY MAYDAY MAYDAY',
+    signal: 'MEDÉ MEDÉ MEDÉ',
     meaning: 'Emergencia extrema - vida en peligro',
     action: 'Responder inmediatamente con recursos de rescate',
     urgency: 'Crítica'

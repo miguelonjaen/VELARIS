@@ -38,7 +38,7 @@ export const TacticalTerminal: React.FC<TacticalTerminalProps> = ({
   useEffect(() => {
     if (messages.length > prevMessagesLength.current) {
       if (isAutoScrollEnabled && messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' }); 
       }
     }
     prevMessagesLength.current = messages.length;
@@ -46,33 +46,51 @@ export const TacticalTerminal: React.FC<TacticalTerminalProps> = ({
 
   return (
     <div className={cn(
-      "absolute top-6 left-6 z-[1000] w-80 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-cyan-500/30 overflow-hidden shadow-2xl flex flex-col transition-all duration-300",
-      isIntMin ? "h-12" : "max-h-[85%] h-[600px]"
+      "absolute z-[1000] overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.5)] flex flex-col transition-all duration-500 border border-cyan-500/30",
+      isIntMin 
+        ? "bottom-24 left-6 h-8 w-[260px] rounded-full bg-[#050607]/90 backdrop-blur-md border-cyan-500/20"
+        : "top-6 left-6 max-h-[85%] h-[600px] w-80 rounded-2xl bg-[#0a0f18]/95 backdrop-blur-xl"
     )}>
       <div 
-        className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5 cursor-pointer select-none"
+        className={cn(
+          "flex items-center cursor-pointer select-none h-full",
+          isIntMin ? "px-4 justify-start gap-3" : "px-4 py-3 bg-white/5 border-b border-white/5 justify-between"
+        )}
         onClick={() => setIsIntMin(!isIntMin)}
       >
-        <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">
-          <Terminal className="w-3.5 h-3.5" /> SmartSHIP
-        </span>
-        <div className="flex gap-2">
-          <button 
-            className="text-slate-500 hover:text-white transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClearHistory();
-            }}
-            title="Clear History"
-          >
-            <History size={14} />
-          </button>
-          <button className="text-slate-500 hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); setIsIntMin(!isIntMin); }}>
-            <motion.div animate={{ rotate: isIntMin ? 0 : 180 }} transition={{ duration: 0.3 }}>
-              <ChevronDown size={14} />
-            </motion.div>
-          </button>
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          <div className={cn(
+            "w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]",
+            isIntMin && "animate-pulse"
+          )} />
+          {isIntMin ? (
+            <span className="text-[9px] font-black text-cyan-400 tracking-[0.1em] uppercase">
+              &gt; NÚCLEO IA OPERATIVO
+            </span>
+          ) : (
+            <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">TERMINAL TÁCTICO IA</span>
+          )}
         </div>
+
+        {!isIntMin && (
+          <div className="flex gap-2">
+            <button
+              className="text-slate-500 hover:text-white transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClearHistory();
+              }}
+              title="Clear History"
+            >
+              <History size={14} />
+            </button>
+            <button className="text-slate-500 hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); setIsIntMin(!isIntMin); }}>
+              <motion.div animate={{ rotate: 180 }} transition={{ duration: 0.3 }}>
+                <ChevronDown size={14} />
+              </motion.div>
+            </button>
+          </div>
+        )}
       </div>
       {!isIntMin && (
         <div ref={terminalRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-black/20">
