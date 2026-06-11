@@ -128,6 +128,9 @@ import InventoryManager from './components/InventoryManager';
 import packageJson from '../package.json';
 import { CHANGELOG, getLatestVersion } from './config/changelog';
 import { ChangelogModal } from './components/ChangelogModal';
+import SailSteerWidget from './components/SailSteerWidget';
+import { getUpwindAngle } from './components/utils/polar';
+import { AISStreamService } from './services/aisStreamService';
 
 const Vademecum = lazy(() => import('./components/Vademecum'));
 
@@ -147,6 +150,7 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
       
       // 1. Limpiamos el nombre de la capa que viene del click para comparar de forma flexible
       // Quitamos la palabra "Carta:", espacios y lo pasamos a minúsculas
+      console.log('AIS API:', import.meta.env.VITE_AISSTREAM_API_KEY);
       console.log(`⚓ Capa seleccionada en el puente: ${e.name}`);
       const cleanEventName = e.name.replace(/carta:/i, '').trim().toLowerCase();
       
@@ -294,7 +298,58 @@ function App() {
   // --- CONTROL DE NOVEDADES (CHANGELOG) ---
   const [showChangelog, setShowChangelog] = useState(false);
   const [changelogData, setChangelogData] = useState(getLatestVersion());
+  useEffect(() => {
 
+  if (!window.smartshipAPI?.onAISMessage) return;
+
+  const unsubscribe =
+    window.smartshipAPI.onAISMessage((msg: any) => {
+
+      if (msg.MessageType !== 'PositionReport') return;
+
+      const report = msg.Message?.PositionReport;
+      const meta = msg.MetaData;
+
+      if (!report || !meta) return;
+
+      setAisTargets((prev: any[]) => {
+
+        const filtered = prev.filter(
+          target => target.mmsi !== meta.MMSI
+        );
+
+        const freshTargets = filtered.filter(
+          t => Date.now() - (t.timestamp || 0) < 10 * 60 * 1000
+        );
+
+        return [
+          ...freshTargets,
+          {
+            id: String(meta.MMSI),
+            mmsi: meta.MMSI,
+            nombre: meta.ShipName || `MMSI ${meta.MMSI}`,
+            lat: report.Latitude,
+            lng: report.Longitude,
+            sog: report.Sog,
+            cog: report.Cog,
+            heading:
+              report.TrueHeading === 511
+                ? report.Cog
+                : report.TrueHeading,
+            source: 'AISSTREAM',
+            timestamp: Date.now()
+          }
+        ];
+      });
+
+    });
+
+  return () => {
+    unsubscribe?.();
+  };
+
+}, []);
+  
   useEffect(() => {
     const currentVersion = packageJson.version;
     const lastRunVersion = localStorage.getItem('smartship_last_version');
@@ -306,6 +361,7 @@ function App() {
       localStorage.setItem('smartship_last_version', currentVersion);
     }
   }, []);
+  
 
   const [listaCartas, setListaCartas] = useState<any[]>([]);
 // 🗺️ CONTROL DE CAPAS DESPLEGABLES
@@ -520,6 +576,8 @@ function App() {
     () => aisTargets.map(target => enrichAisTarget(ownShipVector, target)),
     [aisTargets, ownShipVector]
   );
+ useEffect(() => {
+  }, [aisTargets]);
   // --- ALMIRANTE NOTIFICATION SYSTEM ---
   const [adviceQueue, setAdviceQueue] = useState<{ message: string; priority: any; commentWithAi: boolean }[]>([]);
   const isAdviceProcessingRef = useRef(false);
@@ -1476,19 +1534,13 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
       console.error('Error logging Lights toggle:', err);
     }
   };
-  // AIS System - TERMINATED BY ADMIRAL ORDER
   useEffect(() => {
-    // connectAIS Disabled to prevent console errors
-    /*
-    const AISSTREAM_KEY = import.meta.env.VITE_AISSTREAM_API_KEY;
-    ...
-    */
-    console.log('SISTEMA: Conexión AIS desactivada por orden directa.');
-  }, []);
+  console.log('AISStream activo');
+}, []);
 
   // Simulation: Depth and AIS (Keep for simulation if no real AIS)
   useEffect(() => {
-    if (import.meta.env.VITE_AISSTREAM_API_KEY) return; // Skip simulation if real AIS is on
+     if (import.meta.env.VITE_AISSTREAM_API_KEY) return; // Skip simulation if real AIS is on
     const interval = setInterval(() => {
       // Depth fluctuates normally, but every now and then it drops (simulation)
       setDepth(prev => {
@@ -1501,8 +1553,13 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
         return next;
       });
 
-      // AIS Simulation: Randomly add a target nearby if navigating
-      if (isTravesiaActive && Math.random() > 0.8 && aisTargets.length < 3) {
+      // AIS Simulation desactivada cuando AISStream está activo
+if (
+  !import.meta.env.VITE_AISSTREAM_API_KEY &&
+  isTravesiaActive &&
+  Math.random() > 0.8 &&
+  aisTargets.length < 3
+) {
         const baseLat = shipPosition?.lat || 36.7215;
         const baseLng = shipPosition?.lng || -3.5235;
         const offsetLat = (Math.random() - 0.5) * 0.04;
@@ -1517,10 +1574,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
           cog: Math.floor(Math.random() * 360)
         }]);
         setSensorQuality(prev => markSensorUpdated(prev, ['ais'], 'simulated'));
-      } else if (aisTargets.length > 0 && Math.random() > 0.4) {
-          // Slowly clear targets
-          setAisTargets(prev => prev.slice(1));
-      }
+      } 
     }, 5000);
     return () => clearInterval(interval);
   }, [isTravesiaActive, aisTargets.length, depth, shipPosition]);
@@ -1607,10 +1661,36 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
   // Dummy Layline Calculation (Replace with actual logic)
   const calculateLaylinePaths = useCallback((
     currentLat: number, currentLng: number,
-    twd: number, tws: number, cog: number
+    twd: number, tws: number, sog:number
   ) => {
-    const optimalTackAngle = 45; // degrees off true wind for optimal upwind
-    const tackDistance = 5; // NM
+    const optimalTackAngle = getUpwindAngle(tws);
+    const tackDistance = Math.max(8, sog * 4);
+    const calculateBearing = (
+  lat1:number,
+  lon1:number,
+  lat2:number,
+  lon2:number
+) => {
+
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
+
+  const x =
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.sin(lat2 * Math.PI / 180) -
+    Math.sin(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.cos(dLon);
+
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+};
+
+
+// const bestTack =
+  //portDiff < stbdDiff
+   // ? 'PORT'
+    //: 'STARBOARD';
 
     // Convert degrees to radians
     const toRadians = (deg: number) => deg * Math.PI / 180;
@@ -2832,7 +2912,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
       .from('avatares')
       .getPublicUrl(fileName);
 
-    console.log("URL de Avatar Generada:", publicUrl);
+    
 
     // Forced update to database immediately
     const { error: updateError } = await supabase
@@ -2846,7 +2926,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
       console.error("Error al actualizar foto_perfil_url:", updateError);
       setAdvisorMessage(`Error al guardar URL de avatar: ${updateError.message}`);
     } else {
-      console.log("URL guardada exitosamente en la tabla usuarios:", publicUrl);
+      
       
       // Add a cache-busting timestamp to the URL to force browser refresh
       const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
@@ -3233,8 +3313,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
         lng: -3.5235
       };
 
-      console.log('Enviando objeto a Supabase:', shipToInsert);
-      
+            
       const { error } = await vesselRepository.insertVessel(shipToInsert);
 
       if (error) {
@@ -3716,69 +3795,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
         )}>
           {activeTab === 'control' ? (
             <div className="h-full w-full rounded-[2.5rem] overflow-hidden glass-panel relative neon-glow">
-              {/* Intelligence Window */}
-              <div className={cn(
-                "absolute top-6 left-6 z-[1000] w-80 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-cyan-500/30 overflow-hidden shadow-2xl flex flex-col transition-all duration-300",
-                isIntMin ? "h-12" : "max-h-[85%] h-[600px]"
-              )}>
-                <div 
-                  className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5 cursor-pointer select-none"
-                  onClick={() => setIntMin(!isIntMin)}
-                >
-                  <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">
-                    <Terminal className="w-3.5 h-3.5" /> SmartSHIP
-                  </span>
-                  <div className="flex gap-2">
-                    <button 
-                      className="text-slate-500 hover:text-white transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMessages([]);
-                      }}
-                      title="Clear History"
-                    >
-                      <History size={14} />
-                    </button>
-                    <button 
-                      className="text-slate-500 hover:text-white transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIntMin(!isIntMin);
-                      }}
-                    >
-                      {isIntMin ? (
-                        <motion.div initial={{ rotate: 180 }} animate={{ rotate: 0 }}><ChevronDown size={14} /></motion.div>
-                      ) : (
-                        <motion.div initial={{ rotate: 0 }} animate={{ rotate: 180 }}><ChevronDown size={14} /></motion.div>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                {!isIntMin && (
-                  <div 
-                    ref={terminalRef} 
-                    onScroll={handleScroll} 
-                    className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-black/20"
-                  >
-                    {messages.map((msg, idx) => (
-                      <div 
-                        key={idx} 
-                        className={cn(
-                          "text-xs font-mono break-words p-2 rounded-lg", 
-                          msg.role === 'ai' 
-                            ? (msg.isOfflineMode ? "text-amber-400 bg-amber-500/5 border-l-2 border-amber-500/40" : "text-emerald-400 bg-emerald-500/5") 
-                            : "text-cyan-400 bg-cyan-500/5 border-l border-cyan-500/30"
-                        )}
-                      >
-                        {msg.role === 'ai' ? (
-                          <>{msg.isOfflineMode && <span className="text-[8px] font-black text-amber-500 block mb-1">IA LOCAL / SERVIDOR SATURADO</span>}IA_OFFICER: {msg.text}</>
-                        ) : `> ${msg.text}`}
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
-                )}
-              </div>
+              
               <TacticalTerminal 
                 messages={messages}
                 onClearHistory={() => setMessages([])}
@@ -3831,11 +3848,11 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
 >
   {/* Flota */}
   <FleetLayer
-    fleet={fleet}
-    selectedShipId={selectedShipId}
-    shipPosition={shipPosition}
-    simulatedAisTargets={simulatedAisTargets}
-  />
+  fleet={fleet}
+  selectedShipId={selectedShipId}
+  shipPosition={shipPosition}
+  simulatedAisTargets={tacticalAisTargets}
+/>
 
   {/* Meteorología */}
   <WeatherLayer
@@ -3920,6 +3937,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
                   twa={((weather?.windDir || 0) - (selectedShip?.cog || 0) + 360) % 360}
                   depth={depth}
                   dtw={navPlan.distanceNM || 0}
+                  btw={navPlan.btw}
                   eta={navPlan.eta}
                   xte={navPlan.xte || 0}
                   waypointName={navPlan.targetName || navigationDestination || '---'}
@@ -3940,6 +3958,8 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
                   onToggleCollisionFilter={() => setLayersState(prev => ({ ...prev, collisionFilter: !prev.collisionFilter }))}
                   onStartNavigation={() => setShowSafetyModal(true)}
                   onEndNavigation={handleEndTravesia}
+                  isSailSteerWidgetOpen={isSailSteerWidgetOpen}
+                  onCloseSailSteerWidget={() => setIsSailSteerWidgetOpen(false)}
                        
                   
                   
@@ -3960,6 +3980,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
                   setLayersState={setLayersState}
                   aisEnabled={layersState.showAIS} // Pass existing state
                   windEnabled={layersState.showWind} // Pass existing state
+                  aisTargets={tacticalAisTargets}
                   collisionFilter={layersState.collisionFilter} // Pass existing state
                   autopilotMode={autopilotMode} // Pass existing state
                   onToggleAIS={() => setLayersState(prev => ({ ...prev, showAIS: !prev.showAIS }))} // Pass toggle function

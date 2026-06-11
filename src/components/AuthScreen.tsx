@@ -20,10 +20,6 @@ const AuthScreen = () => {
       const sEmail = localStorage.getItem('smartship_email_dev');
       const sPass = localStorage.getItem('smartship_pass_dev');
       
-      console.log("🔍 Intentando leer de la memoria física...");
-      console.log("Valor Email:", sEmail);
-      console.log("Valor Pass:", sPass ? "****" : "null");
-
       if (sEmail) setEmail(sEmail);
       if (sPass) setPassword(sPass);
     };

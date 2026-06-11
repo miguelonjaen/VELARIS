@@ -15,7 +15,9 @@ import 'leaflet/dist/leaflet.css';
 import { Gauge, Navigation as NavIcon } from 'lucide-react';
 import { cn } from '@lib/utils';
 
-console.log('TACTICAL MAP ACTIVO');
+if (import.meta.env.DEV) {
+  console.log('TACTICAL MAP ACTIVO');
+}
 
 interface TacticalMapProps {
   center: [number, number];
@@ -29,8 +31,9 @@ interface TacticalMapProps {
   onMapRightClick: (e: any) => void;
   onDragStart: () => void;
   isLaylinesActive: boolean; // New prop
-  portLaylinePath?: [number, number][]; // New prop
-  stbdLaylinePath?: [number, number][]; // New prop
+  portLaylinePath?: [number, number][];
+  stbdLaylinePath?: [number, number][];
+  collisionFilter?: boolean;
   children?: React.ReactNode;
   
 }
@@ -64,7 +67,7 @@ const InternalEvents = ({ onMapClick, onMapRightClick, onDragStart }: any) => {
 
 export const TacticalMap: React.FC<TacticalMapProps> = ({
   center, zoom, shipPosition, shipName, navPlan, targetDestination, currentPath, onMapClick, onMapRightClick, onDragStart,
-  isLaylinesActive, portLaylinePath, stbdLaylinePath, children
+  isLaylinesActive, portLaylinePath, stbdLaylinePath, collisionFilter, children
 }) => {
   return (
     <div
@@ -139,7 +142,17 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         )}
 
         {currentPath.length > 0 && <Polyline positions={currentPath} color="#3b82f6" weight={3} opacity={0.6} />}
-        
+        {shipPosition && targetDestination && (
+  <Polyline
+    positions={[
+      [shipPosition.lat, shipPosition.lng],
+      [targetDestination.lat, targetDestination.lng]
+    ]}
+    color="#ff00ff"
+    weight={3}
+    dashArray="6,4"
+  />
+)}
         {targetDestination && (
           <Marker position={[targetDestination.lat, targetDestination.lng]} icon={L.divIcon({ className: 'target-dest-icon', html: '<div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-bounce">📍</div>', iconSize: [32, 32], iconAnchor: [16, 32] })}>
             <Popup className="custom-popup">
@@ -151,36 +164,12 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             </Popup>
           </Marker>
         )}
+{/* AIS Táctico temporalmente deshabilitado */}
 
-        {/* AIS Táctico (Task 5) - Mejorado */}
-        {/* Assuming children contains AIS targets from FleetLayer */}
-        {React.Children.map(children, child => {
-          if (React.isValidElement(child) && (child.type as any).displayName === 'FleetLayer') {
-            const fleetLayerProps = child.props as any;
-            return React.cloneElement(child, {
-              ...fleetLayerProps,
-              // Override AIS rendering if needed, or ensure FleetLayer handles it
-              // For now, assume FleetLayer's AIS rendering is enhanced
-              renderAISTarget: (target: any) => (
-                <Marker
-                  key={target.id || target.mmsi}
-                  position={[target.lat, target.lng]}
-                  icon={L.divIcon({
-                    className: `ais-target-${target.mmsi} ${target.isCollisionRisk ? 'animate-pulse' : ''}`,
-                    html: `<div class="relative"><svg width="24" height="24" viewBox="0 0 24 24" style="transform: rotate(${target.cog}deg); fill: ${target.isCollisionRisk ? '#ef4444' : '#fbbf24'}; stroke: #000; stroke-width: 1;"><path d="M12 2L4 21L12 17L20 21L12 2Z"/></svg></div>`,
-                    iconSize: [24, 24], iconAnchor: [12, 12]
-                  })}
-                >
-                  <Popup><div className="bg-slate-950 border border-slate-800 rounded-xl p-3 w-48 text-white shadow-2xl"><div className="flex justify-between items-start mb-2 border-b border-white/10 pb-2"><div><h4 className="text-xs font-black uppercase text-cyan-400 leading-none">{target.nombre || 'AIS TARGET'}</h4><p className="text-[8px] text-slate-500 font-mono mt-1">MMSI: {target.mmsi}</p></div><span className={cn("text-[7px] font-bold px-1 rounded uppercase", target.status === 'Navegando' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400')}>{target.status || 'Navegando'}</span></div><div className="grid grid-cols-2 gap-2 mb-2"><div><p className="text-[7px] text-slate-500 uppercase font-bold">COG / SOG</p><p className="text-[10px] font-mono font-black">{target.cog}° / {target.sog}kt</p></div><div><p className="text-[7px] text-slate-500 uppercase font-bold">Tipo</p><p className="text-[10px] font-black">{target.tipo || 'Desconocido'}</p></div></div>{target.cpa !== undefined && (<div className={cn("mt-2 p-1.5 rounded-lg text-center", target.isCollisionRisk ? "bg-red-500/20 border border-red-500/30" : "bg-white/5")}><p className="text-[7px] uppercase font-black text-slate-400">Punto Máx. Aproximación</p><p className={cn("text-xs font-mono font-black", target.isCollisionRisk ? "text-red-400" : "text-emerald-400")}>{target.cpa.toFixed(0)}m / {target.tcpa?.toFixed(1)} min</p></div>)}</div></Popup>
-                </Marker>
-              )
-            });
-          }
-          return child;
-        })}
-
-        {children}
-      </MapContainer>
+{children}
+</MapContainer>
     </div>
   );
 };
+
+export default TacticalMap;

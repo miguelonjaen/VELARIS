@@ -3,7 +3,18 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('smartshipAPI', {
   // Telemetría en tiempo real
   onVesselUpdate: (callback) => ipcRenderer.on('vessel-update', (_, data) => callback(data)),
-  
+
+  // AIS REAL
+  onAISMessage: (callback) => {
+
+  const listener = (_, data) => callback(data);
+
+  ipcRenderer.on('ais-message', listener);
+
+  return () => {
+    ipcRenderer.removeListener('ais-message', listener);
+  };
+},
   // Alertas tácticas del motor de IA
   onTacticalAdvice: (callback) => ipcRenderer.on('tactical-advice', (_, advices) => callback(advices)),
 
@@ -19,4 +30,5 @@ contextBridge.exposeInMainWorld('smartshipAPI', {
   // Utilidades de la App
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  
 });

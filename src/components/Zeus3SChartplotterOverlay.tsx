@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
-import { SailSteerWidget } from './SailSteerWidget';
+import  SailSteerWidget  from './SailSteerWidget';
 
 type ZeusPageId = 'chart' | 'sailsteer' | 'race' | 'laylines' | 'windplot' | 'pilot' | 'weather' | 'charts';
 
@@ -34,6 +34,7 @@ interface Zeus3SChartplotterOverlayProps {
   twa: number;
   depth: number;
   dtw: number;
+  btw: number;
   eta?: string;
   xte: number;
   waypointName: string;
@@ -55,9 +56,12 @@ interface Zeus3SChartplotterOverlayProps {
   onStartNavigation: () => void;
   onEndNavigation: () => void;
   onToggleAutopilot: () => void;
+    isSailSteerWidgetOpen: boolean;
+  onCloseSailSteerWidget: () => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   className?: string;
+  
 }
 
 const pages: Array<{ id: ZeusPageId; label: string; icon: React.ReactNode; hudIndex?: number }> = [
@@ -93,15 +97,18 @@ const DataBox = ({ label, value, unit }: { label: string; value: string; unit?: 
 );
 
 export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps> = ({
-  sog, hdg, cog, tws, twd, twa, depth, dtw, eta, xte, waypointName,
+  sog, hdg, cog, tws, twd, twa, depth, dtw, btw, eta, xte, waypointName,
    chartMode, activeChartName, aisEnabled, windEnabled, collisionFilter,
   isNavigating, autopilotMode, activePage, onSelectPage, onOpenHud,
   onOpenSystems, onCycleChart, onToggleAIS, onToggleWind,
   onToggleCollisionFilter, onStartNavigation, onEndNavigation,
-  onToggleAutopilot, onZoomIn, onZoomOut, className,
+  onToggleAutopilot, onZoomIn, onZoomOut, className,  isSailSteerWidgetOpen,
+  onCloseSailSteerWidget,
   }) => {
   const selectedPage = pages.find((page) => page.id === activePage) || pages[0];
   const xteTone = Math.abs(xte) > 0.1 ? 'text-amber-300' : 'text-emerald-300';
+  const vmg =
+  sog * Math.cos((twa * Math.PI) / 180);
 
   const handlePage = (page: (typeof pages)[number]) => {
     onSelectPage(page.id);
@@ -115,7 +122,7 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
     <div className={cn('pointer-events-none absolute inset-0 z-[6400]', className)}>
       <div className="absolute inset-0 pointer-events-none border-[10px] border-[#111827]/85 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08),inset_0_0_40px_rgba(0,0,0,0.45)]" />
 
-      <header className="pointer-events-auto absolute left-6 right-24 top-4 flex items-center justify-between gap-2 border border-white/10 bg-[#07111e]/88 px-4 py-1.5 shadow-2xl backdrop-blur-md"> {/* Reduced padding and gap */}
+      <header className="pointer-events-auto absolute left-56 right-24 top-4 flex items-center justify-between gap-2 border border-white/10 bg-[#07111e]/88 px-4 py-1.5 shadow-2xl backdrop-blur-md"> {/* Reduced padding and gap */}
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-sm border border-cyan-400/40 bg-cyan-400/10 text-cyan-300">
             <Navigation className="h-4 w-4" />
@@ -127,13 +134,72 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
         </div>
         <div className="grid grid-cols-5 gap-2">
           <DataBox label="SOG" value={sog.toFixed(1)} unit="kt" />
-          <DataBox label="HDG" value={Math.round(hdg).toString().padStart(3, '0')} unit="deg" />
-          <DataBox label="TWS" value={tws.toFixed(1)} unit="kt" />
-          <DataBox label="TWD" value={Math.round(twd).toString().padStart(3, '0')} unit="deg" />
-          <DataBox label="DEPTH" value={depth.toFixed(1)} unit="m" />
+<DataBox label="HDG" value={Math.round(hdg).toString().padStart(3,'0')} unit="deg" />
+<DataBox label="DTW" value={dtw.toFixed(1)} unit="nm" />
+<DataBox label="ETA" value={eta || '--:--'} />
+<DataBox label="DEPTH" value={depth.toFixed(1)} unit="m" />
         </div>
       </header>
+      <div className="absolute top-[62px] left-[300px] z-[6500] pointer-events-none">
+  <div className="bg-[#07111e]/92 backdrop-blur-md border border-cyan-500/20 rounded-xl px-4 py-1.5 w-[360px] shadow-xl">
 
+    
+    <div className="grid grid-cols-5 gap-4">
+
+      <div>
+        <div className="text-[8px] text-slate-500 uppercase">WP</div>
+        <div className="text-xs font-bold text-white truncate max-w-[90px]">
+          {waypointName || '---'}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-[8px] text-slate-500 uppercase">DTW</div>
+        <div className="text-xs font-bold text-white">
+          {dtw.toFixed(1)} nm
+        </div>
+      </div>
+
+      <div>
+        <div className="text-[8px] text-slate-500 uppercase">ETA</div>
+        <div className="text-xs font-bold text-white">
+          {eta || '--:--'}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-[8px] text-slate-500 uppercase">XTE</div>
+        <div className="text-xs font-bold text-white">
+          {xte.toFixed(2)}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-[8px] text-slate-500 uppercase">MODE</div>
+        <div className="text-xs font-bold text-cyan-300">
+          {autopilotMode.toUpperCase()}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+<SailSteerWidget
+  isOpen={isSailSteerWidgetOpen}
+  onClose={onCloseSailSteerWidget}
+  hdg={hdg}
+  cog={cog}
+  twa={twa}
+  tws={tws}
+  twd={twd}
+  btw={btw}
+  waypointBearing={btw}
+  waypointName={waypointName}
+  isNavigating={isNavigating}
+  sog={sog}
+  vmg={vmg}
+/>
       
       
       <aside className="pointer-events-auto absolute bottom-24 right-4 top-24 flex w-16 flex-col items-center gap-2 border border-white/10 bg-[#07111e]/90 p-2 shadow-2xl backdrop-blur-md">

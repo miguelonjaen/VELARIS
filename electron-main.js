@@ -5,6 +5,8 @@ const path = require('path');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 const packageJson = require('./package.json');
+require('dotenv').config();
+const { connectAIS } = require('./aisBridge');
 
 // Importación de servicios core (ahora en la raíz)
 const { NMEAService } = require('./NMEAService.ts');
@@ -167,6 +169,12 @@ app.whenReady().then(() => {
   setupAutoUpdater();
   createWindow();
   initializeServices(mainWindow);
+   if (process.env.VITE_AISSTREAM_API_KEY) {
+    connectAIS(
+      mainWindow,
+      process.env.VITE_AISSTREAM_API_KEY
+    );
+  }
 });
 
 app.on('window-all-closed', () => {

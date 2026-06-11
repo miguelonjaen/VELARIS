@@ -3,6 +3,8 @@ import { Marker, Popup, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import { ShipData } from '@/shared/types';
 import { Wind, Zap, LayoutDashboard, Ship as ShipIcon, Anchor } from 'lucide-react';
+import { Polyline } from 'react-leaflet';
+import { calculateDistanceNM } from '../lib/aisMath';
 
 interface FleetLayerProps {
   fleet: ShipData[];
@@ -22,7 +24,9 @@ const getShipIcon = (tipo?: string, size: string = "w-5 h-5") => {
     case 'Semirrígida': return <Anchor className={className} />;
     default: return <ShipIcon className={className} />;
   }
+  
 };
+
 
 const getShipEmoji = (tipo?: string) => {
   switch (tipo) {
@@ -52,18 +56,13 @@ export const FleetLayer: React.FC<FleetLayerProps> = ({
   shipPosition,
   simulatedAisTargets,
 }) => {
-  console.log('🚢 FleetLayer:', fleet);
-
+  
+  
 return (
   <>
     {/* Marcadores de la Flota (Unidades Propias) */}
     {fleet.map(ship => {
-      console.log('🚢 Ship:', ship);
-      console.log(
-  'POS',
-  ship.nombre,
-  [ship.lat || 36.7215, ship.lng || -3.5235]
-);
+             
 
       return (
         <Marker
@@ -114,6 +113,131 @@ return (
         </Marker>
        );
     })}
+    {/* AIS Reales */}
+{simulatedAisTargets.map((target) => {
+  const tcpaMinutes = target.tcpa ?? 0;
+
+const tcpaDisplay =
+  tcpaMinutes < 0
+    ? 'PASSED'
+    : tcpaMinutes >= 60
+      ? `${Math.floor(tcpaMinutes / 60)}h ${Math.round(tcpaMinutes % 60)}m`
+      : `${Math.round(tcpaMinutes)} min`;
+
+  const predictionMinutes = 30;
+  const riskColor =
+    target.risk === 'danger'
+      ? '#ef4444'
+      : target.risk === 'caution'
+      ? '#f59e0b'
+      : '#22c55e';
+  const distance =
+  shipPosition
+    ? calculateDistanceNM(
+        shipPosition.lat,
+        shipPosition.lng,
+        target.lat,
+        target.lng
+      )
+    : 0;
+
+  const distanceNm =
+    target.sog * (predictionMinutes / 60);
+
+  const cogRad =
+    (target.cog * Math.PI) / 180;
+    const bowOffset = 0.00008;
+
+const startLat =
+  target.lat +
+  bowOffset * Math.cos(cogRad);
+
+const startLng =
+  target.lng +
+  bowOffset * Math.sin(cogRad);
+
+  const futureLat =
+    target.lat +
+    (distanceNm * Math.cos(cogRad)) / 60;
+
+  const futureLng =
+    target.lng +
+    (distanceNm * Math.sin(cogRad)) /
+      (60 * Math.cos(target.lat * Math.PI / 180));
+
+  return (
+    <React.Fragment key={target.mmsi}>
+
+      <Polyline
+  positions={[
+    [startLat, startLng],
+    [futureLat, futureLng]
+  ]}
+  color={riskColor}
+  weight={2}
+  opacity={0.7}
+/>
+
+      <Marker
+        position={[target.lat, target.lng]}
+        icon={L.divIcon({
+          className: 'ais-target',
+          html: `
+            <div
+              style="
+                transform: rotate(${target.cog}deg);
+                transform-origin:center;
+                width:32px;
+                height:32px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                filter: drop-shadow(0 0 6px #ff00ff);
+              "
+            >
+              <svg width="26" height="26" viewBox="0 0 24 24">
+                <path
+                  d="M12 2 L18 20 L12 17 L6 20 Z"
+                  fill="${riskColor}"
+                  stroke="#ffffff"
+                  stroke-width="0.8"
+                />
+              </svg>
+            </div>
+          `,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        })}
+      >
+        <Popup>
+  <div>
+    <b>{target.nombre}</b>
+
+    <br />
+    MMSI: {target.mmsi}
+
+    <br />
+    DIST: {(target.distancia ?? 0).toFixed(2)} nm
+    <br />
+    CPA: {target.cpa?.toFixed(2) ?? '--'} nm
+    <br />
+<br />
+RISK: {target.risk ?? 'SAFE'}
+
+    <br />
+    TCPA: {tcpaDisplay}
+    <br />
+    SOG: {target.sog} kt
+
+    <br />
+    COG: {target.cog}°
+  </div>
+</Popup>
+      </Marker>
+
+    </React.Fragment>
+  );
+})}
       {/* Indicador de Riesgo de Colisión (Zona de Seguridad AIS) */}
       {shipPosition && (
         <Circle 
