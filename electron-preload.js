@@ -30,5 +30,14 @@ contextBridge.exposeInMainWorld('smartshipAPI', {
   // Utilidades de la App
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  on: (channel, callback) => {
+  ipcRenderer.on(channel, (_, data) =>
+    callback(data)
+  );
+},
+
+removeListener: (channel, callback) => {
+  ipcRenderer.removeListener(channel, callback);
+},
   
 });

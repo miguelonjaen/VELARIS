@@ -14,6 +14,7 @@ export class MapService {
   private genAI: GoogleGenerativeAI | null = null;
 
   constructor() {
+    console.log('MAPSERVICE CARGADO');
     this.app = express();
     this.app.use(cors());
     this.app.use(express.json());
@@ -27,6 +28,37 @@ export class MapService {
 
   private setupEndpoints() {
     this.app.get('/health', (_req, res) => res.send('OK'));
+    this.app.get('/test', (_req, res) => {
+  console.log('TEST LLAMADO');
+  res.send('TEST OK');
+});
+    this.app.get('/api/charts', (_req, res) => {
+      console.log('API CHARTS LLAMADA');
+
+  if (!this.currentChartsPath) {
+    return res.json([]);
+  }
+
+  try {
+
+    const files = fs
+      .readdirSync(this.currentChartsPath)
+      .filter(file =>
+        file.toLowerCase().endsWith('.mbtiles')
+      );
+
+    return res.json(files);
+
+  } catch (error) {
+
+    log.error('Error leyendo cartas:', error);
+
+    return res.status(500).json({
+      error: 'No se pudieron leer las cartas'
+    });
+  }
+
+});
 
     this.app.get('/tiles/:filename/:z/:x/:y', (req, res) => {
       const { filename, z, x, y } = req.params;
@@ -55,6 +87,8 @@ export class MapService {
 
     this.app.post('/api/settings/charts-path', (req, res) => {
       const { path: newPath } = req.body;
+      console.log('API CHARTS LLAMADA');
+      console.log('RUTA CARTAS:', this.currentChartsPath);
       this.currentChartsPath = newPath;
       log.info(`📂 Repositorio de cartas actualizado a: ${newPath}`);
       res.json({ success: true });

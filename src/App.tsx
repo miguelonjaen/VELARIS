@@ -1009,6 +1009,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
   };
 
   // Firestore sync effect - Robust Auth Check
+  /*
   useEffect(() => {
     // Escucha de autenticación de Firebase para asegurar permisos correctos
     const authUnsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -1059,6 +1060,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
 
     return () => authUnsubscribe();
   }, [isLoggedIn]);
+  */
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [captainPreferences] = useState<string>("Siempre mantente a 1 milla de la costa si es posible. Prioriza rutas con calado superior a 5 metros.");
   const [advisorMessage, setAdvisorMessage] = useState('');
@@ -2831,17 +2833,16 @@ if (
         (payload) => {
           const newData = payload.new as VesselStatus;
           setVesselStatus(newData);
-          if (newData.is_navigating !== isTravesiaActive) {
-            setIsTravesiaActive(newData.is_navigating);
+                     setIsTravesiaActive(newData.is_navigating);
           }
-        }
+        
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedShipId, supabase, isTravesiaActive]);
+  }, [selectedShipId]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
