@@ -133,7 +133,7 @@ import { getUpwindAngle } from './components/utils/polar';
 import { AISStreamService } from './services/aisStreamService';
 
 const Vademecum = lazy(() => import('./components/Vademecum'));
-
+const [simulationSpeed, setSimulationSpeed] = useState(1);
 declare global {
   interface Window {
     smartshipAPI: any;
@@ -3740,6 +3740,8 @@ if (
               setThresholds={setThresholds}
               cartasPath={cartasPath}
               onCambiarCarpeta={handleCambiarCarpeta}
+              simulationSpeed={simulationSpeed}
+              setSimulationSpeed={setSimulationSpeed}
             />
           </div>
         );
