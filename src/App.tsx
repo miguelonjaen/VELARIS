@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react';
-import { 
-  TileLayer, 
+import {
+  TileLayer,
   Marker,
-  Polyline, 
+  Polyline,
   useMap,
   useMapEvents,
   Popup,
@@ -12,18 +12,18 @@ import {
 } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { 
-  Ship, 
+import {
+  Ship,
   Wind,
-  Navigation, 
-  LogOut, 
-  Plus, 
-  Wrench, 
-  Box, 
-  Search, 
-  Zap, 
-  ShieldAlert, 
-  ChevronDown, 
+  Navigation,
+  LogOut,
+  Plus,
+  Wrench,
+  Box,
+  Search,
+  Zap,
+  ShieldAlert,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Volume2,
@@ -133,7 +133,7 @@ import { getUpwindAngle } from './components/utils/polar';
 import { AISStreamService } from './services/aisStreamService';
 
 const Vademecum = lazy(() => import('./components/Vademecum'));
-const [simulationSpeed, setSimulationSpeed] = useState(1);
+
 declare global {
   interface Window {
     smartshipAPI: any;
@@ -146,14 +146,14 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
 
   useEffect(() => {
     const onOverlayAdd = (e: any) => {
-      console.log(`⚓ Capa seleccionada en el puente: ${e.name}`); // Para ver el nombre exacto en consola
-      
+      //console.log(`⚓ Capa seleccionada en el puente: ${e.name}`); // Para ver el nombre exacto en consola
+
       // 1. Limpiamos el nombre de la capa que viene del click para comparar de forma flexible
       // Quitamos la palabra "Carta:", espacios y lo pasamos a minúsculas
       console.log('AIS API:', import.meta.env.VITE_AISSTREAM_API_KEY);
       console.log(`⚓ Capa seleccionada en el puente: ${e.name}`);
       const cleanEventName = e.name.replace(/carta:/i, '').trim().toLowerCase();
-      
+
       // 2. Buscamos la carta en tu array de datos
       const chart = charts.find((c: any) => {
         const cleanChartName = c.name.replace('.mbtiles', '').trim().toLowerCase();
@@ -169,17 +169,18 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
 
         if (!isNaN(minLat) && !isNaN(minLon) && !isNaN(maxLat) && !isNaN(maxLon)) {
           console.log(`🗺️ [ÉXITO] Saltando a los límites de la carta local: ${chart.name}`);
-          
+
           // 3. Forzamos el encuadre inmediato sin animaciones intermedias
-          map.fitBounds([[minLat, minLon], [maxLat, maxLon]], { 
-            padding: [50, 50], 
+          map.fitBounds([[minLat, minLon], [maxLat, maxLon]], {
+            padding: [50, 50],
             maxZoom: 14,      // Zoom perfecto para ver la costa
             animate: false,   // Evita que pase por el mapa mundial
-                        duration: 0 
+            duration: 0
           });
           return;
         }
       }
+
 
       // 🛟 FALLBACK DE RESPALDO: Si la comparación falló pero sabemos que es una carta local,
       // o si estás probando la app, el mapa te lleva directo a tu zona base de Motril
@@ -187,10 +188,10 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
         console.log("⚓ Aplicando ruta directa por defecto a la costa de Motril.");
         map.setView([36.72, -3.52], 13, { animate: false });
       }
-    // 1. FORZADO DE ZOOM NÁUTICO: Desactivamos cualquier intento de Leaflet
+      // 1. FORZADO DE ZOOM NÁUTICO: Desactivamos cualquier intento de Leaflet
       // de alejar el mapa al plano mundial. Al activar la carta, congelamos
       // la vista en un zoom óptimo de navegación (Zoom 13 o 14).
-      
+
       // Intentamos centrar en las coordenadas base de Motril, manteniendo tu rango seguro
       map.setView([36.72, -3.52], 14, { animate: false });
 
@@ -202,7 +203,7 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
 
       console.log("🎯 Vista protegida: Bloqueado el salto al mapa mundial.");
     };
-    
+
     map.on('overlayadd', onOverlayAdd);
     return () => { map.off('overlayadd', onOverlayAdd); };
   }, [map, charts]);
@@ -240,10 +241,10 @@ const MapBoundsHandler = ({ path, showControl, showSystems }: { path: [number, n
         const bounds = L.latLngBounds(path);
         const paddingLeft = showControl ? 380 : 80;
         const paddingRight = showSystems ? 480 : 80;
-        map.fitBounds(bounds, { 
-          paddingTopLeft: [paddingLeft, 100], 
-          paddingBottomRight: [paddingRight, 100], 
-          maxZoom: 16 
+        map.fitBounds(bounds, {
+          paddingTopLeft: [paddingLeft, 100],
+          paddingBottomRight: [paddingRight, 100],
+          maxZoom: 16
         });
       } catch (err) { console.warn('MapBoundsHandler Error:', err); }
     }
@@ -262,15 +263,15 @@ interface MapEventsHandlerProps {
   handleMapRightClick: (e: any) => void;
 }
 
-const MapEventsHandler: React.FC<MapEventsHandlerProps> = ({ 
-  showShipForm, 
-  activeTab, 
-  setNewShip, 
-  setAdvisorMessage, 
-  setDestination, 
-  setNavigationDestination, 
-  navPlan, 
-  handleMapRightClick 
+const MapEventsHandler: React.FC<MapEventsHandlerProps> = ({
+  showShipForm,
+  activeTab,
+  setNewShip,
+  setAdvisorMessage,
+  setDestination,
+  setNavigationDestination,
+  navPlan,
+  handleMapRightClick
 }) => {
   useMapEvents({
     click: (e) => {
@@ -298,58 +299,62 @@ function App() {
   // --- CONTROL DE NOVEDADES (CHANGELOG) ---
   const [showChangelog, setShowChangelog] = useState(false);
   const [changelogData, setChangelogData] = useState(getLatestVersion());
+  const [simulationSpeed, setSimulationSpeed] = useState(1);
+  const [vesselStatus, setVesselStatus] = useState<VesselStatus | null>(null);
+  const [simulationWaypointIndex, setSimulationWaypointIndex] = useState(1);
+
   useEffect(() => {
 
-  if (!window.smartshipAPI?.onAISMessage) return;
+    if (!window.smartshipAPI?.onAISMessage) return;
 
-  const unsubscribe =
-    window.smartshipAPI.onAISMessage((msg: any) => {
+    const unsubscribe =
+      window.smartshipAPI.onAISMessage((msg: any) => {
 
-      if (msg.MessageType !== 'PositionReport') return;
+        if (msg.MessageType !== 'PositionReport') return;
 
-      const report = msg.Message?.PositionReport;
-      const meta = msg.MetaData;
+        const report = msg.Message?.PositionReport;
+        const meta = msg.MetaData;
 
-      if (!report || !meta) return;
+        if (!report || !meta) return;
 
-      setAisTargets((prev: any[]) => {
+        setAisTargets((prev: any[]) => {
 
-        const filtered = prev.filter(
-          target => target.mmsi !== meta.MMSI
-        );
+          const filtered = prev.filter(
+            target => target.mmsi !== meta.MMSI
+          );
 
-        const freshTargets = filtered.filter(
-          t => Date.now() - (t.timestamp || 0) < 10 * 60 * 1000
-        );
+          const freshTargets = filtered.filter(
+            t => Date.now() - (t.timestamp || 0) < 10 * 60 * 1000
+          );
 
-        return [
-          ...freshTargets,
-          {
-            id: String(meta.MMSI),
-            mmsi: meta.MMSI,
-            nombre: meta.ShipName || `MMSI ${meta.MMSI}`,
-            lat: report.Latitude,
-            lng: report.Longitude,
-            sog: report.Sog,
-            cog: report.Cog,
-            heading:
-              report.TrueHeading === 511
-                ? report.Cog
-                : report.TrueHeading,
-            source: 'AISSTREAM',
-            timestamp: Date.now()
-          }
-        ];
+          return [
+            ...freshTargets,
+            {
+              id: String(meta.MMSI),
+              mmsi: meta.MMSI,
+              nombre: meta.ShipName || `MMSI ${meta.MMSI}`,
+              lat: report.Latitude,
+              lng: report.Longitude,
+              sog: report.Sog,
+              cog: report.Cog,
+              heading:
+                report.TrueHeading === 511
+                  ? report.Cog
+                  : report.TrueHeading,
+              source: 'AISSTREAM',
+              timestamp: Date.now()
+            }
+          ];
+        });
+
       });
 
-    });
+    return () => {
+      unsubscribe?.();
+    };
 
-  return () => {
-    unsubscribe?.();
-  };
+  }, []);
 
-}, []);
-  
   useEffect(() => {
     const currentVersion = packageJson.version;
     const lastRunVersion = localStorage.getItem('smartship_last_version');
@@ -361,10 +366,10 @@ function App() {
       localStorage.setItem('smartship_last_version', currentVersion);
     }
   }, []);
-  
+
 
   const [listaCartas, setListaCartas] = useState<any[]>([]);
-// 🗺️ CONTROL DE CAPAS DESPLEGABLES
+  // 🗺️ CONTROL DE CAPAS DESPLEGABLES
   const [isLayersMenuOpen, setIsLayersMenuOpen] = useState<boolean>(false);
   const [cartasActivas, setCartasActivas] = useState<Record<string, boolean>>({});
   const [cartasOpacity, setCartasOpacity] = useState<Record<string, number>>({});
@@ -506,12 +511,12 @@ function App() {
       alert(`Error al cambiar carpeta: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
-  
-    // --------------------------------------------------
+
+  // --------------------------------------------------
   // --- DECK ALPHA: ESTADOS CONSOLIDADOS (Saneamiento de 85 errores) ---
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  
+
   // Capas del Mapa
   const [layersState, setLayersState] = useState({
     showAIS: true,
@@ -525,7 +530,7 @@ function App() {
   const t = translations[lang];
   const [messages, setMessages] = useState<any[]>([]);
   const [shipPosition, setShipPosition] = useState<{ lat: number; lng: number } | null>({ lat: 36.7215, lng: -3.5235 });
-  
+
   const [fleet, setFleet] = useState<ShipData[]>([]);
   const [selectedShipId, setSelectedShipId] = useState<string | null>(null);
 
@@ -538,7 +543,7 @@ function App() {
     const found = fleet.find(s => String(s.id) === String(selectedShipId));
     return found || fleet[0];
   }, [fleet, selectedShipId]);
-  
+
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isTravesiaActive, setIsTravesiaActive] = useState(false);
   const [weather, setWeather] = useState<ProcessedWeather>({ temp: 22, wind: 12, windDir: 0, condition: 'Despejado', seaState: 'Calma', humidity: 60, pressure: 1013, visibility: 10000, waveHeight: 0.5, tideLevel: 0.5 });
@@ -576,7 +581,7 @@ function App() {
     () => aisTargets.map(target => enrichAisTarget(ownShipVector, target)),
     [aisTargets, ownShipVector]
   );
- useEffect(() => {
+  useEffect(() => {
   }, [aisTargets]);
   // --- ALMIRANTE NOTIFICATION SYSTEM ---
   const [adviceQueue, setAdviceQueue] = useState<{ message: string; priority: any; commentWithAi: boolean }[]>([]);
@@ -586,9 +591,9 @@ function App() {
     setAdviceQueue(prev => [...prev, { message, priority, commentWithAi }]);
   }, []);
 
-    // --- SMART SHIP SHIELD: ALARMS & WATCHDOG (CENTRALIZADO) ---
+  // --- SMART SHIP SHIELD: ALARMS & WATCHDOG (CENTRALIZADO) ---
   const {
-    alarms, alarmHistory, thresholds, setThresholds, 
+    alarms, alarmHistory, thresholds, setThresholds,
     isAlertMuted, setIsAlertMuted, removeAlarm, removeAlarmByType, addAlarm
   } = useSmartShield({
     userProfile,
@@ -615,7 +620,7 @@ function App() {
     sog: simulatedSog,
     cog: selectedShip?.cog || 0
   }) : null, [shipPosition, simulatedSog, selectedShip]);
-  
+
   const simulatedAisTargets = useAIS(ownAISData);
 
   // --- MOTOR TÁCTICO DE POLARES Y ENRUTAMIENTO ---
@@ -646,7 +651,7 @@ function App() {
   // --- FUNCIONES AUXILIARES DE NAVEGACIÓN ---
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     // Retorna una distancia ficticia en millas náuticas para que compile el ETA del barco
-    return 10; 
+    return 10;
   };
   // --- MANEJADORES DE CLICKS EN EL MAPA ---
   const handleMapClick = useCallback((e: any) => {
@@ -713,7 +718,7 @@ function App() {
 
   const handleTacticalOrder = async (order: string) => {
     if (!order.trim() || isProcessing) return;
-    
+
     // --- INTERCEPTOR DE COMANDOS LOCALES DEL SISTEMA ---
     const command = order.toLowerCase().trim();
     if (['changelog', 'novedades', 'version', 'actualizaciones'].includes(command)) {
@@ -728,11 +733,13 @@ function App() {
 
     // Conciencia Situacional Profunda para el Núcleo Nucleus AI
     const currentInventory = selectedShip?.inventory?.map(i => `${i.nombre}: ${i.cantidad_actual}${i.unidad ? ' ' + i.unidad : ''}`).join(', ') || 'Optimizado';
-    
+
     // DETECCIÓN DE DESTINO EN EL TEXTO
     if (order.toLowerCase().includes('pon rumbo a') || order.toLowerCase().includes('ir a') || order.toLowerCase().includes('navegar hacia')) {
       const portFound = PORT_LIST.find(p => order.toLowerCase().includes(p.name.toLowerCase()));
+      
       if (portFound) {
+        console.log('⚓ Puerto detectado:', portFound.name);
         updateNavigationPlan(portFound.coords, portFound.name);
       } else {
         // Intento de extraer coordenadas si el Almirante las proporciona
@@ -748,9 +755,9 @@ function App() {
     const statusAtScale = isTravesiaActive ? 'EN OPERACIÓN (TRAVESÍA ACTIVA)' : 'EN REPOSO (ATRACADO)';
     const captainName = userProfile?.name || 'Comandante';
     // 1. Saneamos la búsqueda asegurando que comparamos Strings puros (evita fallos de tipo UUID)
-const activeShip = fleet.find(s => String(s.id) === String(selectedShipId || selectedShip?.id)) || selectedShip || fleet[0];
+    const activeShip = fleet.find(s => String(s.id) === String(selectedShipId || selectedShip?.id)) || selectedShip || fleet[0];
     // 2. Control de nombre por si viene vacío
-const shipName = activeShip?.nombre || 'Nucleus Zero';
+    const shipName = activeShip?.nombre || 'Nucleus Zero';
 
     const systemPrompt = `
       ASISTENTE DE COMANDO PRO-NAUTIC (PROTOCOLO NUCLEUS):
@@ -803,10 +810,10 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
         shipName, isTravesiaActive, position: shipPosition
       }).catch(err => console.error("Error saving user message log:", err));
     }
-    
+
     setInput('');
     setIsProcessing(true);
-    
+
     try {
       const result = await callGemini(order, systemPrompt, false, NAV_TOOLS);
       const aiText = typeof result === 'string' ? result : result.text || 'Orden procesada.';
@@ -828,11 +835,11 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
           }
         }
       }
-      
-      const aiResponseMsg = { 
-        id: crypto.randomUUID(), 
-        role: 'ai', 
-        text: aiText, 
+
+      const aiResponseMsg = {
+        id: crypto.randomUUID(),
+        role: 'ai',
+        text: aiText,
         timestamp: new Date(),
         isOfflineMode: typeof result === 'object' ? result.isOfflineMode : false
       };
@@ -852,8 +859,8 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
 
       // Log de error en Supabase
       if (userProfile) {
-        logRepository.logAiOrder(userProfile.id, selectedShip?.id || null, order, "ERROR_SISTEMA: " + (error instanceof Error ? error.message : String(error)), { 
-          error: true, categoria: 'error_ai' 
+        logRepository.logAiOrder(userProfile.id, selectedShip?.id || null, order, "ERROR_SISTEMA: " + (error instanceof Error ? error.message : String(error)), {
+          error: true, categoria: 'error_ai'
         }).catch(err => console.error("Error saving error log:", err));
       }
     } finally {
@@ -877,6 +884,10 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     wind: 'simulated',
     ais: 'simulated'
   });
+  const isSimulationMode =
+    Object.values(dataSource).every(
+      v => v === 'simulated'
+    );
   const [fleetTab, setFleetTab] = useState<'datos' | 'mantenimiento'>('datos');
   const [isNightMode, setIsNightMode] = useState(() => {
     // Load night mode preference from localStorage on mount
@@ -896,6 +907,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
 
   // --- NMEA REAL-TIME INTEGRATION ---
   useEffect(() => {
+    //console.log(  'SIMULADOR',  isSimulationMode,  rutaActiva.length,  shipPosition);
     const handleTelemetry = (data: any) => {
       if (!data?.type) return;
 
@@ -906,8 +918,21 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
 
       switch (data.type) {
         case 'GPS':
-          setShipPosition({ lat: data.lat, lng: data.lng });
+
+          if (!isSimulationMode) {
+            console.log(
+              'SIM',
+              shipPosition,
+              simulationWaypointIndex
+            );
+            setShipPosition({
+              lat: data.lat,
+              lng: data.lng
+            });
+          }
+
           setSimulatedSog(data.sog);
+
           markRealSensors(['gps', 'heading', 'sog']);
           if (selectedShipId) {
             setFleet(prev => prev.map(s => s.id === selectedShipId ? { ...s, cog: data.cog, sog: data.sog } : s));
@@ -947,7 +972,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     if (api && typeof api.on === 'function' && typeof api.removeListener === 'function') {
       // Correct signature for ipcRenderer.on
       api.on('vessel-telemetry', handleTelemetry);
-      
+
       return () => {
         api.removeListener('vessel-telemetry', handleTelemetry);
       };
@@ -968,6 +993,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     return () => clearInterval(interval);
   }, [dataSource]);
 
+
   // Night Mode effect: Apply/remove night-mode class and persist preference
   useEffect(() => {
     if (isNightMode) {
@@ -978,6 +1004,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     localStorage.setItem('smartship_night_mode', JSON.stringify(isNightMode));
   }, [isNightMode]);
 
+
   const handleShipSelection = async (shipId: string | null) => {
     if (!userProfile || !shipId) {
       setSelectedShipId(null);
@@ -986,16 +1013,16 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
 
     // Optimistic UI Update
     setSelectedShipId(shipId);
-    
+
     try {
       const { error } = await vesselRepository.setActiveVessel(userProfile.id, shipId);
       if (error) throw error;
 
       setUserProfile(prev => prev ? ({ ...prev, barco_activo_id: shipId }) : null);
-      
+
       const boatName = fleet.find(s => s.id === shipId)?.nombre || 'Unidad';
       setAdvisorMessage(`ORDEN EJECUTADA: ${boatName} es ahora el Buque de Operaciones activo. Base de datos sincronizada.`);
-      
+
       // Actualizar flota localmente para reflejar el cambio de is_active inmediatamente
       setFleet(prev => prev.map(s => ({
         ...s,
@@ -1095,6 +1122,74 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
   const [anchorDistHistory, setAnchorHistory] = useState<number[]>([]);
   const [navData, setNavData] = useState<{ btw: number; dtw: number; xte: number; waypointName: string; isAnchorActive: boolean; anchorDistance: number; swingRadius: number; eta?: string }>({ btw: 145, dtw: 12.4, xte: 0.02, waypointName: 'ISLA_NEGRA', isAnchorActive: false, anchorDistance: 0, swingRadius: 0 });
 
+  // MOTOR DE NAVEGACIÓN SIMULADA
+
+  useEffect(() => {
+    // console.log('SIMULADOR', isSimulationMode, rutaActiva.length, shipPosition);
+
+    if (!isSimulationMode) return;
+
+    if (!isTravesiaActive) return;
+
+    if (!shipPosition) return;
+
+    if (rutaActiva.length < 2) return;
+
+    const interval = setInterval(() => {
+      // console.log(  'TARGET',  rutaActiva[simulationWaypointIndex]);
+
+      const target = rutaActiva[simulationWaypointIndex];
+
+      if (!target) return;
+
+      const targetLat = target[0];
+      const targetLng = target[1];
+
+      const dLat = targetLat - shipPosition.lat;
+      const dLng = targetLng - shipPosition.lng;
+
+      const distance = Math.sqrt(
+        dLat * dLat +
+        dLng * dLng
+      );
+      if (!isTravesiaActive) return;
+
+      if (distance < 0.001) {
+
+        if (simulationWaypointIndex >= rutaActiva.length - 1) {
+
+          console.log('🏁 DESTINO ALCANZADO');
+
+          handleEndTravesia();
+
+          return;
+        }
+
+        setSimulationWaypointIndex(prev => prev + 1);
+
+        return;
+      }
+
+      const factor = 0.01 * simulationSpeed;
+      //console.log(  'MOVIENDO',  shipPosition,  '→',  target);
+
+      setShipPosition({
+        lat: shipPosition.lat + dLat * factor,
+        lng: shipPosition.lng + dLng * factor
+      });
+
+    }, 1000);
+
+    return () => clearInterval(interval);
+
+  }, [
+    isSimulationMode,
+    shipPosition,
+    rutaActiva,
+    simulationWaypointIndex,
+    isTravesiaActive,
+    simulationSpeed
+  ]);
 
   // --- KERNEL PANIC RECOVERY ---
   useEffect(() => {
@@ -1113,7 +1208,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
       if (adviceQueue.length > 0 && !isAdvisorProcessing && !isAdviceProcessingRef.current) {
         isAdviceProcessingRef.current = true;
         const next = adviceQueue[0];
-        
+
         setAdvisorText({
           text: next.message,
           priority: next.priority,
@@ -1217,8 +1312,8 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     const windJump = Math.abs(weather.wind - lastWindRef.current);
     if (windJump > 5 || weather.wind > 25) {
       notifyAdmiral(
-        weather.wind > 25 
-          ? `CONDICIONES ADVERSAS: Viento superior a 25 kts.` 
+        weather.wind > 25
+          ? `CONDICIONES ADVERSAS: Viento superior a 25 kts.`
           : `CAMBIO BRUSCO EN VIENTO: Variación detectada (${windJump.toFixed(1)} kts).`,
         weather.wind > 25 ? 'critical' : 'warning',
         true
@@ -1276,7 +1371,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     if (shipPosition) {
       const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
       const isSailboat = activeShip?.tipo_barco?.toLowerCase().includes('velero') || activeShip?.type?.toLowerCase().includes('sail');
-      
+
       // Waypoints: Motril (Start) -> South (Safety) -> SW (Coast) -> Adra (Port)
       const waypoints: [number, number][] = [
         [shipPosition.lat, shipPosition.lng],         // Motril Start
@@ -1284,25 +1379,25 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
         [36.690, -3.200],                             // Mid-Coast Safety
         [36.744, -3.015]                              // Adra Port
       ];
-      
+
       // Haversine para distancia total
       const calculateDistance = (p1: [number, number], p2: [number, number]) => {
         const R = 6371; // km
         const dLat = (p2[0] - p1[0]) * Math.PI / 180;
         const dLon = (p2[1] - p1[1]) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(p1[0] * Math.PI / 180) * Math.cos(p2[0] * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(p1[0] * Math.PI / 180) * Math.cos(p2[0] * Math.PI / 180) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return (R * c) * 0.539957; // convertir a MN
       };
-      
+
       let totalDist = 0;
       for (let i = 0; i < waypoints.length - 1; i++) {
-        totalDist += calculateDistance(waypoints[i], waypoints[i+1]);
+        totalDist += calculateDistance(waypoints[i], waypoints[i + 1]);
       }
       setTripDistance(totalDist);
-      
+
       // Wind optimization logic for Sailboats (Tacking logic remains similar but uses 'waypoints')
       setRutaActiva(waypoints);
       setAdvisorMessage(`Ruta Marítima a Adra: ${totalDist.toFixed(1)} mn. ETA: 2h 15m. Trayectoria segura fuera de costa.`);
@@ -1312,7 +1407,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
   useEffect(() => {
     if (navigationDestination?.toLowerCase().includes('adra')) {
       trazarRutaAdra();
-    } else {
+    } else if (!isSimulationMode) {
       setRutaActiva([]);
     }
   }, [navigationDestination, shipPosition?.lat, shipPosition?.lng, isNavigationAuto ? weather?.windDir : null, isNavigationAuto ? weather?.wind : null]);
@@ -1344,7 +1439,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     }
 
     console.log('SISTEMA OPERATIVO: Conexión con el núcleo de inteligencia Gemini establecida.');
-    
+
     // Force panel visibility and show "Thinking" message
     setIsAdvisorOpen(true);
     setIsAdvisorProcessing(true);
@@ -1357,7 +1452,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
 
     try {
       // 1. Gather Data (FORCED MOCK DATA FOR TESTING)
-      const battery = 12.8; 
+      const battery = 12.8;
       const fuelValue = engineData.fuel || 100;
       const waterValue = 90;
       const windValue = weather.wind || 12;
@@ -1367,14 +1462,14 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
         .from('inventario')
         .select('*')
         .eq('barco_id', selectedShipId);
-      
+
       const itemsBelowMinimum = inventoryData?.filter(item => item.cantidad_actual < item.cantidad_minima) || [];
 
       // Weather fallback logic
       const weatherContext = `Despejado, 22°C, Viento ${windValue}kts`;
 
       const systemInstruction = "Eres el núcleo de inteligencia del SmartShip. Eres experto en navegación, meteorología y logística náutica. Tu tono es el de un oficial leal, culto y eficiente. Responde siempre de forma concisa para que el texto quepa en la Advisor Bar.";
-      
+
       const prompt = `Almirante en el puente. Analiza situación actual:
       ${weatherContext}
       Viento: ${windValue}kts / 0°
@@ -1384,7 +1479,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
       IMPORTANTE: El barco tiene tanques llenos y sistemas al 100%. Genera un informe de situación marinero, profesional y breve (máximo 2 frases).`;
 
       const report = await callGemini(prompt, systemInstruction);
-      
+
       setIsAdvisorProcessing(false);
       const reportText = typeof report === 'string' ? report : JSON.stringify(report);
       setAdvisorMessage(reportText);
@@ -1453,7 +1548,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
     try {
       const prompt = `Analiza: ${msg}. Responde como el núcleo táctico del SmartShip. Sé conciso y profesional.`;
       const responseText = await callGemini(prompt);
-      
+
       setAdvisorMessage(responseText.text);
       setAdvisorText({
         text: responseText.text,
@@ -1482,13 +1577,13 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
   const handleMOB = async () => {
     const newState = !mobActive;
     setMobActive(newState);
-    
+
     if (newState) {
       setAdvisorMessage('¡ALERTA MOB ACTIVADA! Registrando posición y activando protocolo de rescate.');
-      
+
       const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
       const barcoId = activeShip?.id || null;
-      
+
       try {
         const { error } = await supabase.from('bitacora').insert([{
           barco_id: barcoId,
@@ -1502,7 +1597,7 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
           created_at: new Date().toISOString(),
           is_auto: true
         }]);
-        
+
         if (!error) console.log('App: MOB Event registered in bitacora');
       } catch (err) {
         console.error('Error logging MOB:', err);
@@ -1515,10 +1610,10 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
   const handleToggleLights = async () => {
     const newState = !lightsOn;
     setLightsOn(newState);
-    
+
     const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
     const barcoId = activeShip?.id || null;
-    
+
     try {
       const { error } = await supabase.from('bitacora').insert([{
         barco_id: barcoId,
@@ -1530,38 +1625,38 @@ const shipName = activeShip?.nombre || 'Nucleus Zero';
         created_at: new Date().toISOString(),
         is_auto: true
       }]);
-      
+
       if (!error) console.log('App: Lights Event registered in bitacora');
     } catch (err) {
       console.error('Error logging Lights toggle:', err);
     }
   };
   useEffect(() => {
-  console.log('AISStream activo');
-}, []);
+    console.log('AISStream activo');
+  }, []);
 
   // Simulation: Depth and AIS (Keep for simulation if no real AIS)
   useEffect(() => {
-     if (import.meta.env.VITE_AISSTREAM_API_KEY) return; // Skip simulation if real AIS is on
+    if (import.meta.env.VITE_AISSTREAM_API_KEY) return; // Skip simulation if real AIS is on
     const interval = setInterval(() => {
       // Depth fluctuates normally, but every now and then it drops (simulation)
       setDepth(prev => {
         const next = Math.max(0.5, prev + (Math.random() - 0.5) * 0.8);
         return next;
       });
-      
+
       setDepthHistory(prev => {
         const next = [...prev.slice(1), { time: Date.now(), depth: depth }];
         return next;
       });
 
       // AIS Simulation desactivada cuando AISStream está activo
-if (
-  !import.meta.env.VITE_AISSTREAM_API_KEY &&
-  isTravesiaActive &&
-  Math.random() > 0.8 &&
-  aisTargets.length < 3
-) {
+      if (
+        !import.meta.env.VITE_AISSTREAM_API_KEY &&
+        isTravesiaActive &&
+        Math.random() > 0.8 &&
+        aisTargets.length < 3
+      ) {
         const baseLat = shipPosition?.lat || 36.7215;
         const baseLng = shipPosition?.lng || -3.5235;
         const offsetLat = (Math.random() - 0.5) * 0.04;
@@ -1576,7 +1671,7 @@ if (
           cog: Math.floor(Math.random() * 360)
         }]);
         setSensorQuality(prev => markSensorUpdated(prev, ['ais'], 'simulated'));
-      } 
+      }
     }, 5000);
     return () => clearInterval(interval);
   }, [isTravesiaActive, aisTargets.length, depth, shipPosition]);
@@ -1619,10 +1714,10 @@ if (
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isTripRunning) {
-        interval = setInterval(() => {
-            setTrip1(prev => prev + 0.01);
-            setTrip2(prev => prev + 0.01);
-        }, 3000);
+      interval = setInterval(() => {
+        setTrip1(prev => prev + 0.01);
+        setTrip2(prev => prev + 0.01);
+      }, 3000);
     }
     return () => clearInterval(interval);
   }, [isTripRunning]);
@@ -1635,12 +1730,12 @@ if (
     else if (action === 'stop') setIsTripRunning(false);
     else if (action === 'reset') { setTrip1(0); setTrip2(0); }
 
-      if (barcoId) {
-        const payload = {
-          viaje_1_nm: trip1,
-          viaje_2_nm: trip2
-        };
-        await supabase.from('barcos').update(payload).eq('id', barcoId);
+    if (barcoId) {
+      const payload = {
+        viaje_1_nm: trip1,
+        viaje_2_nm: trip2
+      };
+      await supabase.from('barcos').update(payload).eq('id', barcoId);
     }
   };
 
@@ -1663,35 +1758,35 @@ if (
   // Dummy Layline Calculation (Replace with actual logic)
   const calculateLaylinePaths = useCallback((
     currentLat: number, currentLng: number,
-    twd: number, tws: number, sog:number
+    twd: number, tws: number, sog: number
   ) => {
     const optimalTackAngle = getUpwindAngle(tws);
     const tackDistance = Math.max(8, sog * 4);
     const calculateBearing = (
-  lat1:number,
-  lon1:number,
-  lat2:number,
-  lon2:number
-) => {
+      lat1: number,
+      lon1: number,
+      lat2: number,
+      lon2: number
+    ) => {
 
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
 
-  const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
+      const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
 
-  const x =
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.sin(lat2 * Math.PI / 180) -
-    Math.sin(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
-    Math.cos(dLon);
+      const x =
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.sin(lat2 * Math.PI / 180) -
+        Math.sin(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.cos(dLon);
 
-  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-};
+      return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    };
 
 
-// const bestTack =
-  //portDiff < stbdDiff
-   // ? 'PORT'
+    // const bestTack =
+    //portDiff < stbdDiff
+    // ? 'PORT'
     //: 'STARBOARD';
 
     // Convert degrees to radians
@@ -1750,7 +1845,7 @@ if (
 
       if (term.scrollTop + term.clientHeight >= term.scrollHeight - 5) {
         isWaitingAtBottom.current = true;
-        
+
         // Wait 15 seconds
         setTimeout(() => {
           if (term) term.scrollTop = 0; // Vuelve al principio
@@ -1842,9 +1937,9 @@ if (
       return;
     }
 
-    if (shipPosition && lastMilestonePos && 
-        !isNaN(shipPosition.lat) && !isNaN(shipPosition.lng) && 
-        !isNaN(lastMilestonePos[0]) && !isNaN(lastMilestonePos[1])) {
+    if (shipPosition && lastMilestonePos &&
+      !isNaN(shipPosition.lat) && !isNaN(shipPosition.lng) &&
+      !isNaN(lastMilestonePos[0]) && !isNaN(lastMilestonePos[1])) {
       const distanceSinceLastMilestone = calculateDistanceNM(
         lastMilestonePos[0], lastMilestonePos[1],
         shipPosition.lat, shipPosition.lng
@@ -1855,7 +1950,7 @@ if (
         const totalDistance = tripDistance + distanceSinceLastMilestone;
         setTripDistance(totalDistance);
         setLastMilestonePos([shipPosition.lat, shipPosition.lng]);
-        
+
         // Calculate average speed for this segment
         const timeElapsedHours = (new Date().getTime() - startTime.getTime()) / (1000 * 60 * 60);
         const avgSpeed = timeElapsedHours > 0 ? (totalDistance / timeElapsedHours).toFixed(1) : '0.0';
@@ -1872,13 +1967,13 @@ if (
   // Breadcrumb trail for free navigation
   useEffect(() => {
     if (!isTravesiaActive || !shipPosition || isNaN(shipPosition.lat) || isNaN(shipPosition.lng)) return;
-    
+
     // Only add if position changed significantly to avoid massive arrays
     setCurrentPath(prev => {
       if (prev.length === 0) return [[shipPosition.lat, shipPosition.lng]];
       const last = prev[prev.length - 1];
       if (isNaN(last[0]) || isNaN(last[1])) return prev;
-      
+
       const dist = calculateDistanceNM(last[0], last[1], shipPosition.lat, shipPosition.lng);
       if (!isNaN(dist) && dist > 0.01) { // 0.01 NM ~ 18 meters
         return [...prev, [shipPosition.lat, shipPosition.lng]];
@@ -1896,6 +1991,7 @@ if (
     const barcoIdReal = activeShip?.id || effectiveShipId || null;
 
     try {
+
       // 1. Bitacora Entry for Arrival
       await saveTechnicalLog(
         'Arribada',
@@ -1922,6 +2018,8 @@ if (
 
       // REACTIVIDAD: Limpiar UI inmediatamente
       setIsTravesiaActive(false);
+      setRutaActiva([]);
+      setSimulationWaypointIndex(1);
       setNavigationDestination('');
       setPlannedPath([]);
       setCurrentPath([]);
@@ -1929,7 +2027,7 @@ if (
       setStartTime(null);
       setIsEngineOn(false);
       setAdvisorMessage('Travesía finalizada y registrada correctamente.');
-      
+
       // Force refresh logs because of the new Arribada entry and update
       // setLogEntries will be handled by saveTechnicalLog optimistically for the Arribada entry
     } catch (err: any) {
@@ -2001,19 +2099,19 @@ if (
     setLoadingWeather(true);
     try {
       const API_KEY = import.meta.env.VITE_OPENWEATHERMAP_API_KEY;
-      
+
       if (!API_KEY || API_KEY === 'YOUR_API_KEY' || API_KEY.length < 10) {
         throw new Error("API_KEY_INVALID");
       }
 
       const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${API_KEY}&units=metric&lang=es`);
-      
+
       if (!response.ok) throw new Error(`HTTP_ERROR_${response.status}`);
-      
+
       const data: WeatherResponse = await response.json();
       if (data.main && data.wind && data.weather) {
         const windKnots = Math.round(data.wind.speed * 1.94384);
-        
+
         let seaState = 'Calma';
         if (windKnots < 1) seaState = 'Calma';
         else if (windKnots < 4) seaState = 'Mar rizada';
@@ -2188,12 +2286,12 @@ if (
         manual_pdf: s.manual_pdf
       }));
       setFleet(formattedShips);
-      
+
       // Conectar buque activo persistente (Prioridad: is_active -> barco_activo_id -> first)
       if (formattedShips.length > 0) {
         const activeByColumn = formattedShips.find(s => s.is_active);
         const activeByProfile = formattedShips.find(s => s.id === userProfile?.barco_activo_id);
-        
+
         if (activeByColumn) {
           setSelectedShipId(activeByColumn.id);
         } else if (activeByProfile) {
@@ -2223,17 +2321,17 @@ if (
           if (waterConsumed > 0) {
             // Update ship inventory (separate table now as requested)
             const { data: items } = await vesselRepository.getInventory(barcoIdReal);
-            
+
             if (items) {
               const waterItem = items.find(item => item.nombre.toLowerCase().includes('agua'));
               if (waterItem) {
-                await vesselRepository.updateInventoryItem(waterItem.id, { 
-                  cantidad_actual: (waterItem.cantidad_actual || 0) - waterConsumed 
+                await vesselRepository.updateInventoryItem(waterItem.id, {
+                  cantidad_actual: (waterItem.cantidad_actual || 0) - waterConsumed
                 });
               }
             }
           }
-            
+
           // Log alert if fuel < 15%
           if (finalStatus.fuel_level < 15) {
             await saveLogEntry("Alerta de Combustible", "Nivel de reserva alcanzado. Repostar necesario.", "SISTEMA CRÍTICO");
@@ -2251,10 +2349,10 @@ if (
   const handleMotor = async () => {
     if (propulsionMode === 'MOTOR') return;
     setPropulsionMode('MOTOR');
-    
+
     // Si la travesía está activa y hay motor encendido, se registra el evento
     const effectiveShipId = selectedShipId || selectedBarco?.id;
-    
+
     await forceSaveLog(
       'Propulsión: MOTOR',
       'Cambio a propulsión por MOTOR - Sistema de propulsión acoplado',
@@ -2269,7 +2367,7 @@ if (
   const handleVela = async () => {
     if (propulsionMode === 'VELA') return;
     setPropulsionMode('VELA');
-    
+
     await forceSaveLog(
       'Propulsión: VELA',
       'Cambio a propulsión por VELA - Aprovechando energía eólica',
@@ -2287,8 +2385,8 @@ if (
   };
 
   async function saveTechnicalLog(
-    titulo: string, 
-    descripcion: string, 
+    titulo: string,
+    descripcion: string,
     categoria: string = 'Técnico',
     tipo_navegacion?: 'Libre' | 'Planificada',
     destino_planificado?: string,
@@ -2298,16 +2396,16 @@ if (
     try {
       const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
       const barcoIdReal = activeShip?.id || selectedShipId || null;
-      
+
       const capitanId = userProfile?.id || null;
-      
+
       const newEntry: any = {
         barco_id: barcoIdReal,
         capitan_id: capitanId,
         titulo,
         descripcion,
         categoria,
-        tipo_evento: categoria, 
+        tipo_evento: categoria,
         ubicacion_texto: 'Navegación en curso',
         horas_motor: vesselStatus?.engine_hours || 0,
         created_at: new Date().toISOString(),
@@ -2331,7 +2429,7 @@ if (
       const { data, error } = await logRepository.insertEntry(newEntry);
 
       if (error) throw error;
-      
+
       if (data && data.length > 0) {
         // Replace temp entry with real one from DB
         setLogEntries(prev => prev.map(e => e.id.toString().startsWith('temp-') ? data[0] : e));
@@ -2358,7 +2456,7 @@ if (
     const interval = setInterval(async () => {
       try {
         const { generateTacticalAlerts, formatTacticalAdvisory } = await import('./lib/tacticalAlertSystem');
-        
+
         const telemetry = {
           lat: activeShip.lat || 0,
           lng: activeShip.lng || 0,
@@ -2372,7 +2470,7 @@ if (
         };
 
         const alerts = generateTacticalAlerts(telemetry);
-        
+
         if (alerts.length > 0) {
           const advisory = formatTacticalAdvisory(alerts);
           setAdvisorMessage(advisory.message);
@@ -2437,7 +2535,7 @@ if (
           text: `[SYS]: ALERTA DE SONDA. Profundidad crítica: ${currentDepth.toFixed(1)}m. Riesgo de encallamiento.`,
           priority: 'critical'
         };
-      } 
+      }
       // 2. High Wind
       else if (weather.wind > 25) {
         newAdvice = {
@@ -2464,7 +2562,7 @@ if (
         setAdvisorText(newAdvice);
         setIsAdvisorOpen(true); // Auto-open for warnings/critical
         setHasNewAdvice(true);
-        
+
         // Log critical alerts for traceability
         if (newAdvice.priority === 'critical' || newAdvice.priority === 'warning') {
           saveTechnicalLog(
@@ -2520,9 +2618,9 @@ if (
       const result = await callGemini(prompt, undefined, true);
 
       if (result.route && Array.isArray(result.route)) {
-        const validRoute = result.route.filter((p: any) => 
-          Array.isArray(p) && p.length >= 2 && 
-          typeof p[0] === 'number' && !isNaN(p[0]) && 
+        const validRoute = result.route.filter((p: any) =>
+          Array.isArray(p) && p.length >= 2 &&
+          typeof p[0] === 'number' && !isNaN(p[0]) &&
           typeof p[1] === 'number' && !isNaN(p[1])
         );
 
@@ -2530,7 +2628,7 @@ if (
           setPlannedPath(validRoute);
           setAiBriefing(result.briefing);
           setAdvisorMessage(`Ruta meteorológica generada. ${result.briefing}`);
-          
+
           const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
           const barcoIdReal = activeShip ? activeShip.id : (selectedShipId || '00000000-0000-0000-0000-000000000000');
 
@@ -2555,7 +2653,7 @@ if (
           if (!rutaError && rutaData) {
             setActiveRouteId(rutaData.id);
           }
-          
+
           // Registro en Bitácora
           await supabase.from('bitacora').insert([{
             barco_id: barcoIdReal,
@@ -2580,10 +2678,10 @@ if (
   const handleRouteLoaded = async (route: GPXRoute) => {
     setCurrentRoute(route);
     setWaypointIndex(0);
-    
+
     if (route.waypoints.length > 0) {
       setCurrentWaypoint(route.waypoints[0]);
-      
+
       // Auto-navigate to first waypoint
       const firstWp = route.waypoints[0];
       updateNavigationPlan(
@@ -2609,7 +2707,7 @@ if (
 
     const nextIdx = waypointIndex + 1;
     const nextWp = currentRoute.waypoints[nextIdx];
-    
+
     setWaypointIndex(nextIdx);
     setCurrentWaypoint(nextWp);
 
@@ -2670,11 +2768,11 @@ if (
   const handleNavigateToDestination = async (coords: { lat: number; lng: number }) => {
     const name = `Punto Táctico (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
     updateNavigationPlan(coords, name);
-    
+
     // Generar ruta óptima y esperar a que se complete para iniciar
     setAdvisorMessage('Calculando derrota óptima e iniciando travesía...');
     await generateAIRoute(name);
-    
+
     // Iniciar travesía (esto puede abrir el selector de guardia/seguridad)
     handleStartTravesia('IA');
   };
@@ -2685,7 +2783,7 @@ if (
 
   const handleStartTravesia = async (modo: 'Libre' | 'IA', levels?: { fuel_level: number; water_level: number }, crew?: any[]) => {
     console.log('App: handleStartTravesia called', { modo, userProfile, selectedShipId, levels, crew });
-    
+
     const activeCrew = crew && crew.length > 0 ? crew : (userProfile ? [{
       id: 'captain-' + userProfile.id,
       nombre: userProfile.name,
@@ -2707,7 +2805,8 @@ if (
 
   const proceedWithStartTravesia = async (modo: 'Libre' | 'IA', levels?: { fuel_level: number; water_level: number }, startingOfficerId?: string) => {
     console.log('App: proceedWithStartTravesia called', { modo, levels, startingOfficerId });
-    
+
+
     const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
     const barcoIdReal = activeShip?.id || null;
 
@@ -2715,1717 +2814,1732 @@ if (
     setStartTime(new Date());
     setTripDistance(0);
     setCurrentPath([]);
-    const modeText = modo === 'IA' ? 'Planificada' : 'Libre';
-    setNavigationMode(modeText as any);
-    setTipoTravesia(modo === 'IA' ? 'asistida' : 'libre');
+    if (
+      Object.values(dataSource).every(v => v === 'simulated') &&
+      shipPosition &&
+      navPlan.targetCoords
+    ) {
 
-    // REGISTRO DE BITÁCORA ENRIQUECIDO - REQUERIMIENTO ALMIRANTE
-    if (navPlan.targetCoords) {
-      await saveTechnicalLog(
-        'INICIO DE DERROTA ASISTIDA',
-        `Misión iniciada. Origen: Motril. Destino: ${navPlan.targetName}. Distancia: ${navPlan.distanceNM} NM. ETA: ${navPlan.eta}. Sistemas en línea.`,
-        'Navegación',
-        'Planificada',
-        navPlan.targetName
-      );
-    } else {
-      await saveTechnicalLog(
-        'NAVEGACIÓN LIBRE',
-        `Misión iniciada en modo libre. Posición inicial: ${shipPosition?.lat.toFixed(4)}, ${shipPosition?.lng.toFixed(4)}. Rumbo operativo fijado.`,
-        'Navegación',
-        'Libre'
-      );
-    }
-    
-    if (selectedShipId) {
-       try {
-         const statusUpdate: any = { is_navigating: true };
-         if (levels) {
-           statusUpdate.fuel_level = levels.fuel_level;
-           statusUpdate.water_level = levels.water_level;
-         }
-         
-         await supabase
-          .from('vessel_status')
-          .update(statusUpdate)
-          .eq('barco_id', selectedShipId);
-       } catch (e) {
-         console.warn('App: Failed to update vessel_status, continuing anyway:', e);
-       }
-    }
+      setSimulationWaypointIndex(1);
 
-    setIsSafetyChecklistComplete(true);
-    setShowSafetyModal(false);
-    setShowWatchSelection(false);
-    setIsExplainingAiRoute(false);
-    setActiveTab('control');
-    
-    const motrilPos = { lat: 36.7215, lng: -3.5235 };
-    setShipPosition(motrilPos);
+      setRutaActiva([
+        [shipPosition.lat, shipPosition.lng],
+        [navPlan.targetCoords.lat, navPlan.targetCoords.lng]
+      ]);
 
-    try {
-      // Solo generar entrada automática si es PLANIFICADA (IA)
-      if (modo === 'IA') {
-        await forceSaveLog(
-          'Iniciar Travesía Planificada',
-          `Zarpando de Puerto de Salida: Motril -> Destino: ${navigationDestination || 'Ibiza'}. Navegación Asistida activa.`,
+
+
+      const modeText = modo === 'IA' ? 'Planificada' : 'Libre';
+      setNavigationMode(modeText as any);
+      setTipoTravesia(modo === 'IA' ? 'asistida' : 'libre');
+
+      // REGISTRO DE BITÁCORA ENRIQUECIDO - REQUERIMIENTO ALMIRANTE
+      if (navPlan.targetCoords) {
+        await saveTechnicalLog(
+          'INICIO DE DERROTA ASISTIDA',
+          `Misión iniciada. Origen: Motril. Destino: ${navPlan.targetName}. Distancia: ${navPlan.distanceNM} NM. ETA: ${navPlan.eta}. Sistemas en línea.`,
           'Navegación',
           'Planificada',
-          navigationDestination || undefined,
-          true,
-          activeRouteId || undefined
+          navPlan.targetName
         );
       } else {
-        // En libre, solo mencionamos que se ha activado el sistema
-        setAdvisorMessage('Sistemas tácticos activados. Modo Navegación Libre.');
-      }
-
-      await supabase
-        .from('barcos')
-        .update({ 
-          lat: motrilPos.lat, 
-          lng: motrilPos.lng,
-          en_navegacion: true,
-          ultima_actividad: new Date().toISOString()
-        })
-        .eq('id', barcoIdReal);
-    } catch (err: unknown) {
-      console.error('Error in handleStartTravesia:', err);
-      alert('Error al guardar en base de datos navigation status');
-    }
-  };
-
-  useEffect(() => {
-    if (!selectedShipId) return;
-
-    const barcoIdReal = selectedShipId;
-
-    console.log('App: Fetching vessel_status for barco_id', barcoIdReal);
-    supabase
-      .from('vessel_status')
-      .select('*')
-      .eq('barco_id', barcoIdReal)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('App: Error fetching vessel_status', error);
-        }
-        if (data) {
-          console.log('App: vessel_status data', data);
-          setVesselStatus(data);
-          if (data.is_navigating !== isTravesiaActive) {
-            setIsTravesiaActive(data.is_navigating);
-          }
-        }
-      });
-
-    // Real-time subscription
-    const channel = supabase
-      .channel(`vessel_status_global_${barcoIdReal}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'vessel_status',
-          filter: `barco_id=eq.${barcoIdReal}`
-        },
-        (payload) => {
-          const newData = payload.new as VesselStatus;
-          setVesselStatus(newData);
-                     setIsTravesiaActive(newData.is_navigating);
-          }
-        
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedShipId]);
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userProfile) return;
-    setIsUpdatingProfile(true);
-
-    const updateData = {
-      id: userProfile!.id,
-      email: userProfile!.email,
-      nombre: profileForm.nombre_completo || 'Capitán',
-      nombre_completo: profileForm.nombre_completo,
-      telefono: profileForm.telefono,
-      licencia_nautica: profileForm.licencia_nautica,
-      dni_nie: profileForm.dni_nie,
-      fecha_nacimiento: profileForm.fecha_nacimiento || null,
-      foto_perfil_url: profileForm.foto_perfil_url,
-      nacionalidad: profileForm.nacionalidad,
-      direccion: profileForm.direccion,
-      poblacion: profileForm.poblacion,
-      codigo_postal: profileForm.codigo_postal,
-      provincia: profileForm.provincia,
-      contacto_emergencia_nombre: profileForm.contacto_emergencia_nombre,
-      contacto_emergencia_telefono: profileForm.contacto_emergencia_telefono,
-      grupo_sanguineo: profileForm.grupo_sanguineo,
-      observaciones_medicas: profileForm.observaciones_medicas,
-      rol: userProfile.role || 'capitan',
-      updated_at: new Date().toISOString()
-    };
-
-    console.log('--- PERSISTENCIA TÁCTICA: GUARDANDO PERFIL ---');
-    console.log('Datos a enviar:', updateData);
-
-    const { error } = await supabase
-      .from('usuarios')
-      .upsert(updateData, { onConflict: 'id' });
-
-    if (error) {
-      console.error('ERROR DE PERSISTENCIA (Supabase):', error);
-      setAdvisorMessage(`FALLO EN LA BASE DE DATOS: ${error.message}`);
-      alert(`Error crítico al guardar: ${error.message}\nCódigo: ${error.code}`);
-    } else {
-      console.log('PERFIL GUARDADO EXITOSAMENTE');
-      setAdvisorMessage('¡Sistemas de persistencia OK! Perfil sincronizado en la nube.');
-      await fetchProfile(userProfile.id);
-    }
-    setIsUpdatingProfile(false);
-  };
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userProfile) return;
-
-    setIsUpdatingProfile(true);
-    // Filename as requested: avatar_${userProfile!.id}.png
-    const fileName = `avatar_${userProfile!.id}.png`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatares')
-      .upload(fileName, file, { upsert: true });
-
-    if (uploadError) {
-      setAdvisorMessage(`Error al subir avatar: ${uploadError.message}`);
-      setIsUpdatingProfile(false);
-      return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('avatares')
-      .getPublicUrl(fileName);
-
-    
-
-    // Forced update to database immediately
-    const { error: updateError } = await supabase
-      .from('usuarios')
-      .update({ 
-        foto_perfil_url: publicUrl 
-      })
-      .eq('id', userProfile.id);
-
-    if (updateError) {
-      console.error("Error al actualizar foto_perfil_url:", updateError);
-      setAdvisorMessage(`Error al guardar URL de avatar: ${updateError.message}`);
-    } else {
-      
-      
-      // Add a cache-busting timestamp to the URL to force browser refresh
-      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
-      
-      setProfileForm(prev => ({ ...prev, foto_perfil_url: cacheBustedUrl }));
-      setAdvisorMessage('Avatar actualizado y sincronizado en todos los sistemas.');
-      
-      // Update global state immediately with cache-busting
-      setUserProfile(prev => prev ? ({ ...prev, photoUrl: cacheBustedUrl, foto_perfil_url: cacheBustedUrl }) : null);
-      
-      // Also fetch from server to be sure
-      await fetchProfile(userProfile.id); 
-    }
-    setIsUpdatingProfile(false);
-  };
-
-  useEffect(() => {
-    if (selectedShipId) {
-      // fetchLogEntries is now handled in Logbook component
-    }
-  }, [selectedShipId]);
-
-    // Sync engineData with selectedShip levels
-  useEffect(() => {
-    if (selectedShip) {
-      setEngineData(prev => ({
-        ...prev,
-        fuel: selectedShip.fuel_level ?? prev.fuel,
-        water: selectedShip.water_level ?? prev.water
-      }));
-    }
-  }, [selectedShip]);
-
-  // --- MONITOR TÁCTICO DE FONDEO ---
-  useEffect(() => {
-    if (!isAnchorWatchActive || !anchorPosition || !shipPosition) return;
-
-    const monitorInterval = setInterval(async () => {
-      const distToAnchor = calculateDistanceNM(
-        shipPosition.lat, shipPosition.lng, 
-        anchorPosition.lat, anchorPosition.lng
-      ) * 1852; // Convertir a metros
-
-      const radius = calculateSwingRadius(anchorSettings.depth, anchorSettings.chain, anchorSettings.margin);
-      
-      setSwingRadius(radius);
-      setCurrentAnchorDistance(distToAnchor);
-
-      setAnchorHistory(prev => {
-        const newHistory = [...prev, distToAnchor].slice(-30);
-        const trend = analyzeAnchorTrend(newHistory, radius);
-        setAnchorTrend(trend);
-        return newHistory;
-      });
-
-      if (anchorTrend === 'drifting') {
-        notifyAdmiral(`ALERTA DE GARREO: El buque está desplazándose fuera del radio de borneo (${distToAnchor.toFixed(0)}m).`, 'critical');
-      }
-
-      // Registro Automático cada 10 minutos o cambio de viento brusco
-      const trend = "linear";
-      setAnchorSettings(prev => ({ ...prev, trend })); // Actualizar la tendencia de garreo
-      if (Date.now() % 600000 < 5000) {
         await saveTechnicalLog(
-          'Log de Fondeo',
-          formatAnchorLog(selectedShip?.nombre || 'Buque', anchorSettings.depth, anchorSettings.chain, weather.wind, distToAnchor),
-          'Seguridad'
+          'NAVEGACIÓN LIBRE',
+          `Misión iniciada en modo libre. Posición inicial: ${shipPosition?.lat.toFixed(4)}, ${shipPosition?.lng.toFixed(4)}. Rumbo operativo fijado.`,
+          'Navegación',
+          'Libre'
         );
       }
 
-      setNavData(prev => ({
-        ...prev,
-        isAnchorActive: true,
-        anchorDistance: distToAnchor,
-        swingRadius: radius
-      }));
+      if (selectedShipId) {
+        try {
+          const statusUpdate: any = { is_navigating: true };
+          if (levels) {
+            statusUpdate.fuel_level = levels.fuel_level;
+            statusUpdate.water_level = levels.water_level;
+          }
 
-    }, 5000);
-
-    return () => clearInterval(monitorInterval);
-  }, [isAnchorWatchActive, anchorPosition, shipPosition, anchorSettings, weather.wind, anchorTrend, selectedShip?.nombre]);
-
-  useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        fetchProfile(session.user.id);
-        fetchFleet(session.user.id);
-      } else {
-        setIsInitialLoading(false);
+          await supabase
+            .from('vessel_status')
+            .update(statusUpdate)
+            .eq('barco_id', selectedShipId);
+        } catch (e) {
+          console.warn('App: Failed to update vessel_status, continuing anyway:', e);
+        }
       }
-    });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        fetchProfile(session.user.id);
-        // Load fleet on login - FORCED MOTRIL POSITION
-        fetchFleet(session.user.id);
-      } else {
-        setIsLoggedIn(false);
-        setUserProfile(null);
-        setIsInitialLoading(false);
+      setIsSafetyChecklistComplete(true);
+      setShowSafetyModal(false);
+      setShowWatchSelection(false);
+      setIsExplainingAiRoute(false);
+      setActiveTab('control');
+
+      const motrilPos = { lat: 36.7215, lng: -3.5235 };
+      setShipPosition(motrilPos);
+
+      try {
+        // Solo generar entrada automática si es PLANIFICADA (IA)
+        if (modo === 'IA') {
+          await forceSaveLog(
+            'Iniciar Travesía Planificada',
+            `Zarpando de Puerto de Salida: Motril -> Destino: ${navigationDestination || 'Ibiza'}. Navegación Asistida activa.`,
+            'Navegación',
+            'Planificada',
+            navigationDestination || undefined,
+            true,
+            activeRouteId || undefined
+          );
+        } else {
+          // En libre, solo mencionamos que se ha activado el sistema
+          setAdvisorMessage('Sistemas tácticos activados. Modo Navegación Libre.');
+        }
+
+        await supabase
+          .from('barcos')
+          .update({
+            lat: motrilPos.lat,
+            lng: motrilPos.lng,
+            en_navegacion: true,
+            ultima_actividad: new Date().toISOString()
+          })
+          .eq('id', barcoIdReal);
+      } catch (err: unknown) {
+        console.error('Error in handleStartTravesia:', err);
+        alert('Error al guardar en base de datos navigation status');
       }
-    });
+    };
+    };
 
-    return () => subscription.unsubscribe();
-  }, []);
+    useEffect(() => {
+      if (!selectedShipId) return;
 
-  const [vesselStatus, setVesselStatus] = useState<VesselStatus | null>(null);
+      const barcoIdReal = selectedShipId;
 
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await userRepository.getProfile(userId);
-
-    if (error) {
-      console.error('Error fetching profile:', error);
-      // Fallback: If auth exists but profile fetch failed, try to use auth data anyway
-      // to avoid locking out the user completely
-      const authUser = (await supabase.auth.getUser()).data.user;
-      if (authUser) {
-        setUserProfile({
-          id: authUser.id,
-          email: authUser.email || '',
-          name: authUser.user_metadata?.nombre || authUser.user_metadata?.full_name || 'Capitán',
-          role: 'capitan',
-          plan_tactico: 'basico',
-          suscripcion_activa: true,
-          plan_nivel: 'gratis',
-          photoUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.email}`
+      console.log('App: Fetching vessel_status for barco_id', barcoIdReal);
+      supabase
+        .from('vessel_status')
+        .select('*')
+        .eq('barco_id', barcoIdReal)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('App: Error fetching vessel_status', error);
+          }
+          if (data) {
+            console.log('App: vessel_status data', data);
+            setVesselStatus(data);
+            if (data.is_navigating !== isTravesiaActive) {
+              setIsTravesiaActive(data.is_navigating);
+            }
+          }
         });
-        setIsLoggedIn(true);
+
+      // Real-time subscription
+      const channel = supabase
+        .channel(`vessel_status_global_${barcoIdReal}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'vessel_status',
+            filter: `barco_id=eq.${barcoIdReal}`
+          },
+          (payload) => {
+            const newData = payload.new as VesselStatus;
+            setVesselStatus(newData);
+            setIsTravesiaActive(newData.is_navigating);
+          }
+
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }, [selectedShipId]);
+
+    const handleUpdateProfile = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!userProfile) return;
+      setIsUpdatingProfile(true);
+
+      const updateData = {
+        id: userProfile!.id,
+        email: userProfile!.email,
+        nombre: profileForm.nombre_completo || 'Capitán',
+        nombre_completo: profileForm.nombre_completo,
+        telefono: profileForm.telefono,
+        licencia_nautica: profileForm.licencia_nautica,
+        dni_nie: profileForm.dni_nie,
+        fecha_nacimiento: profileForm.fecha_nacimiento || null,
+        foto_perfil_url: profileForm.foto_perfil_url,
+        nacionalidad: profileForm.nacionalidad,
+        direccion: profileForm.direccion,
+        poblacion: profileForm.poblacion,
+        codigo_postal: profileForm.codigo_postal,
+        provincia: profileForm.provincia,
+        contacto_emergencia_nombre: profileForm.contacto_emergencia_nombre,
+        contacto_emergencia_telefono: profileForm.contacto_emergencia_telefono,
+        grupo_sanguineo: profileForm.grupo_sanguineo,
+        observaciones_medicas: profileForm.observaciones_medicas,
+        rol: userProfile.role || 'capitan',
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('--- PERSISTENCIA TÁCTICA: GUARDANDO PERFIL ---');
+      console.log('Datos a enviar:', updateData);
+
+      const { error } = await supabase
+        .from('usuarios')
+        .upsert(updateData, { onConflict: 'id' });
+
+      if (error) {
+        console.error('ERROR DE PERSISTENCIA (Supabase):', error);
+        setAdvisorMessage(`FALLO EN LA BASE DE DATOS: ${error.message}`);
+        alert(`Error crítico al guardar: ${error.message}\nCódigo: ${error.code}`);
       } else {
-        setIsLoggedIn(false);
+        //console.log('PERFIL GUARDADO EXITOSAMENTE');
+        setAdvisorMessage('¡Sistemas de persistencia OK! Perfil sincronizado en la nube.');
+        await fetchProfile(userProfile.id);
       }
-      setIsInitialLoading(false);
-      return;
-    }
+      setIsUpdatingProfile(false);
+    };
 
-    if (data) {
-      setUserProfile({
-        id: data.id,
-        email: data.email,
-        name: data.nombre || 'Capitán',
-        role: data.rol || 'capitan',
-        barco_activo_id: data.barco_activo_id,
-        plan_tactico: data.suscripciones?.[0]?.plan_tactico || 'basico',
-        photoUrl: data.foto_perfil_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.email}`,
-        suscripcion_activa: true,
-        plan_nivel: 'gratis',
-        ...data
-      });
-      if (data.barco_activo_id) {
-        setSelectedShipId(data.barco_activo_id);
-      }
-      setIsLoggedIn(true);
-    } else {
-      // Data is null but no error? Could happen if no row matches
-      const authUser = (await supabase.auth.getUser()).data.user;
-      if (authUser) {
-        setUserProfile({
-          id: authUser.id,
-          email: authUser.email || '',
-          name: authUser.user_metadata?.nombre || authUser.user_metadata?.full_name || 'Capitán',
-          role: 'capitan',
-          plan_tactico: 'basico',
-          suscripcion_activa: true,
-          plan_nivel: 'gratis',
-          photoUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.email}`
-        });
-        setIsLoggedIn(true);
-      }
-    }
-    setIsInitialLoading(false);
-  };
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !userProfile) return;
 
-  // Fetch active route on ship selection
-  useEffect(() => {
-    const fetchActiveRoute = async () => {
-      // 0. Safety Check - MUST have a valid ship ID
-      if (!selectedShipId || fleet.length === 0) {
-        setIsTravesiaActive(false);
+      setIsUpdatingProfile(true);
+      // Filename as requested: avatar_${userProfile!.id}.png
+      const fileName = `avatar_${userProfile!.id}.png`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatares')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) {
+        setAdvisorMessage(`Error al subir avatar: ${uploadError.message}`);
+        setIsUpdatingProfile(false);
         return;
       }
 
-      const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
-      const barcoIdReal = activeShip?.id;
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatares')
+        .getPublicUrl(fileName);
 
-      if (!barcoIdReal) return;
 
-      // 1. Check active routes
-      const { data: routeData } = await logRepository.getActiveRuta(barcoIdReal);
-      
-      if (routeData) {
-        setPlannedPath(routeData.waypoints);
-        setActiveRouteId(routeData.id);
-      }
 
-      // 2. Check ANY active log in bitacora (MASTER SOURCE OF TRUTH)
-      const { data: activeLog, error: bitacoraError } = await logRepository.getActiveLog(barcoIdReal);
+      // Forced update to database immediately
+      const { error: updateError } = await supabase
+        .from('usuarios')
+        .update({
+          foto_perfil_url: publicUrl
+        })
+        .eq('id', userProfile.id);
 
-      if (bitacoraError) {
-        console.error('App: bitacora fetch error:', bitacoraError);
-      }
-
-      if (activeLog) {
-        setIsTravesiaActive(true);
-        if (activeLog.destino_planificado) {
-           setNavigationDestination(activeLog.destino_planificado);
-           setTargetDestination({ lat: 38.9067, lng: 1.4206 }); // Fallback to Ibiza for visualization
-        }
-        if (activeLog.tipo_navegacion) {
-          setNavigationMode(activeLog.tipo_navegacion as any);
-        }
+      if (updateError) {
+        console.error("Error al actualizar foto_perfil_url:", updateError);
+        setAdvisorMessage(`Error al guardar URL de avatar: ${updateError.message}`);
       } else {
-        setIsTravesiaActive(false);
-        setNavigationDestination('');
+
+
+        // Add a cache-busting timestamp to the URL to force browser refresh
+        const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+
+        setProfileForm(prev => ({ ...prev, foto_perfil_url: cacheBustedUrl }));
+        setAdvisorMessage('Avatar actualizado y sincronizado en todos los sistemas.');
+
+        // Update global state immediately with cache-busting
+        setUserProfile(prev => prev ? ({ ...prev, photoUrl: cacheBustedUrl, foto_perfil_url: cacheBustedUrl }) : null);
+
+        // Also fetch from server to be sure
+        await fetchProfile(userProfile.id);
       }
+      setIsUpdatingProfile(false);
     };
-    fetchActiveRoute();
-  }, [selectedShipId, fleet.length]); // Better dependencies to avoid loops
 
-  const morningReportTriggeredRef = useRef(false);
+    useEffect(() => {
+      if (selectedShipId) {
+        // fetchLogEntries is now handled in Logbook component
+      }
+    }, [selectedShipId]);
 
-  useEffect(() => {
-    if (isLoggedIn && userProfile?.id && selectedShipId) {
-      if (morningReportTriggeredRef.current) return;
-      
-      // Fetch user's ships
-      fetchFleet(userProfile.id);
+    // Sync engineData with selectedShip levels
+    useEffect(() => {
+      if (selectedShip) {
+        setEngineData(prev => ({
+          ...prev,
+          fuel: selectedShip.fuel_level ?? prev.fuel,
+          water: selectedShip.water_level ?? prev.water
+        }));
+      }
+    }, [selectedShip]);
 
-      if (userProfile.role === 'admin') {
-        userRepository.getAllUsers().then(({ data, error }) => {
-          if (error && (error.message.includes('permission') || error.code === '42501')) {
-            setAdvisorMessage('Almirante, no tiene permisos para ver la lista de usuarios.');
-          }
-          if (data) setAllUsers(data);
+    // --- MONITOR TÁCTICO DE FONDEO ---
+    useEffect(() => {
+      if (!isAnchorWatchActive || !anchorPosition || !shipPosition) return;
+
+      const monitorInterval = setInterval(async () => {
+        const distToAnchor = calculateDistanceNM(
+          shipPosition.lat, shipPosition.lng,
+          anchorPosition.lat, anchorPosition.lng
+        ) * 1852; // Convertir a metros
+
+        const radius = calculateSwingRadius(anchorSettings.depth, anchorSettings.chain, anchorSettings.margin);
+
+        setSwingRadius(radius);
+        setCurrentAnchorDistance(distToAnchor);
+
+        setAnchorHistory(prev => {
+          const newHistory = [...prev, distToAnchor].slice(-30);
+          const trend = analyzeAnchorTrend(newHistory, radius);
+          setAnchorTrend(trend);
+          return newHistory;
         });
-        
-        // Fetch all ships with captain emails for admin
-        vesselRepository.getAllVessels().then(({ data, error }) => {
-          if (error) {
-            if (error.message.includes('permission') || error.code === '42501') {
-              setAdvisorMessage('Almirante, no tiene permisos para ver la flota global.');
-            }
-            return;
-          }
-          if (data) {
-            const formattedAllShips: (ShipData & { capitan_email?: string })[] = data.map((s: any) => ({
-              id: s.id,
-              name: s.nombre,
-              brand: s.marca,
-              model: s.modelo,
-              registration: s.matricula,
-              length: s.eslora,
-              beam: s.manga,
-              draft: s.calado,
-              capitan_id: s.capitan_id,
-              user_id: s.capitan_id,
-              capitan_email: s.usuarios?.email,
-              tipo_barco: s.tipo_barco,
-              foto_url: s.foto_url,
-              lat: s.lat || 36.7215,
-              lng: s.lng || -3.5235,
-              type: s.tipo_barco || 'Motor',
-              // Add missing required fields for ShipData
-              nombre: s.nombre,
-              modelo: s.modelo,
-              marca: s.marca,
-              matricula: s.matricula,
-              eslora: s.eslora,
-              manga: s.manga,
-              calado: s.calado,
-              potencia_cv: s.potencia_cv || 0,
-              numero_serie_casco: s.numero_serie_casco || '',
-              fecha_itb: s.fecha_itb || '',
-              fecha_seguro: s.fecha_seguro || '',
-              fuel_level: s.fuel_level,
-              water_level: s.water_level
-            }));
-            setAllShips(formattedAllShips);
-          }
-        });
-      }
 
-      // Advisor Greeting & Morning Report
-      if (userProfile.role === 'admin') {
-        setAdvisorMessage(`Bienvenido de nuevo, Almirante ${userProfile.name.split(' ')[0]}.`);
-      } else {
-        setAdvisorMessage(`¡Buenos días, Capitán ${userProfile.name}!`);
-      }
-      
-      // Force Morning Report
-      morningReportTriggeredRef.current = true;
-      generateMorningReport();
-    }
-  }, [isLoggedIn, userProfile?.id, selectedShipId]);
-
-  useEffect(() => {
-    if (userProfile?.role === 'almirante') {
-      const andaluciaIndex = MBTILES_ZONES.findIndex(z => z.id === 'andalucia');
-      if (andaluciaIndex !== -1) {
-        setChartMode('mbtiles');
-        setMbtileIndex(andaluciaIndex);
-        setMapCenter(MBTILES_ZONES[andaluciaIndex].center);
-      }
-    }
-  }, [userProfile?.role]);
-
-  const [showShipForm, setShowShipForm] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [shipPhoto, setShipPhoto] = useState<File | null>(null);
-  const [editShipPhoto, setEditShipPhoto] = useState<File | null>(null);
-  const [newShip, setNewShip] = useState({
-    nombre: '', marca: '', modelo: '', matricula: '', eslora: '', manga: '', calado: '', tipo_barco: 'Velero',
-    mmsi: '', ais: '', ultimo_mantenimiento_motor: null as string | null, ultima_revision_balsa: null as string | null,
-    lat: 36.7215, lng: -3.5235
-  });
-
-  const handleAddShip = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userProfile) return;
-
-    // Verificar sesión antes de subir
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setAdvisorMessage('Almirante, la sesión ha expirado. Por favor, vuelva a entrar.');
-      return;
-    }
-
-    const canAddShip = (userProfile?.role === 'almirante' || userProfile?.role === 'admin') || 
-                      (userProfile?.plan_nivel === 'oro') || 
-                      (userProfile?.plan_nivel === 'plata' && fleet.length < 5) || 
-                      (userProfile?.plan_nivel === 'gratis' && fleet.length < 1);
-
-    if (!canAddShip) {
-      setAdvisorMessage('Límite de flota alcanzado para su plan actual. Actualice para añadir más unidades.');
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      let foto_url = null;
-
-      if (shipPhoto) {
-        try {
-          const fileName = `barcos/${session.user.id}/${Date.now()}-${shipPhoto.name}`;
-          const { error: uploadError } = await supabase.storage
-            .from('fotos-barco')
-            .upload(fileName, shipPhoto, { upsert: true });
-
-          if (uploadError) {
-            console.error('Error de Storage:', uploadError);
-            setAdvisorMessage('Almirante, fallo en el sistema de imágenes. Registrando solo datos técnicos...');
-          } else {
-            const { data: { publicUrl } } = supabase.storage
-              .from('fotos-barco')
-              .getPublicUrl(fileName);
-            foto_url = publicUrl;
-          }
-        } catch (storageErr) {
-          console.error('Excepción en Storage:', storageErr);
-          setAdvisorMessage('Almirante, el hangar de fotos no responde. Procediendo con el registro de datos.');
+        if (anchorTrend === 'drifting') {
+          notifyAdmiral(`ALERTA DE GARREO: El buque está desplazándose fuera del radio de borneo (${distToAnchor.toFixed(0)}m).`, 'critical');
         }
-      }
-      
-      const shipToInsert = {
-        nombre: newShip.nombre,
-        marca: newShip.marca,
-        modelo: newShip.modelo,
-        matricula: newShip.matricula,
-        eslora: parseFloat(newShip.eslora),
-        manga: parseFloat(newShip.manga),
-        calado: parseFloat(newShip.calado),
-        tipo_barco: newShip.tipo_barco,
-        mmsi: newShip.mmsi || null,
-        ais: newShip.ais || null,
-        ultimo_mantenimiento_motor: newShip.ultimo_mantenimiento_motor || null,
-        ultima_revision_balsa: newShip.ultima_revision_balsa || null,
-        foto_url: foto_url,
-        capitan_id: session.user.id,
-        // FORCED MOTRIL POSITION
-        lat: 36.7215,
-        lng: -3.5235
-      };
 
-            
-      const { error } = await vesselRepository.insertVessel(shipToInsert);
-
-      if (error) {
-        if (error.message.includes('permission') || error.code === '42501') {
-          setAdvisorMessage('Almirante, no tiene permisos para ver esta unidad (Tabla Barcos).');
+        // Registro Automático cada 10 minutos o cambio de viento brusco
+        const trend = "linear";
+        setAnchorSettings(prev => ({ ...prev, trend })); // Actualizar la tendencia de garreo
+        if (Date.now() % 600000 < 5000) {
+          await saveTechnicalLog(
+            'Log de Fondeo',
+            formatAnchorLog(selectedShip?.nombre || 'Buque', anchorSettings.depth, anchorSettings.chain, weather.wind, distToAnchor),
+            'Seguridad'
+          );
         }
-        throw error;
-      }
 
-      setShowShipForm(false);
-      setNewShip({ 
-        nombre: '', marca: '', modelo: '', matricula: '', eslora: '', manga: '', calado: '', tipo_barco: 'Velero',
-        mmsi: '', ais: '', ultimo_mantenimiento_motor: null, ultima_revision_balsa: null,
-        lat: 36.7215, lng: -3.5235
+        setNavData(prev => ({
+          ...prev,
+          isAnchorActive: true,
+          anchorDistance: distToAnchor,
+          swingRadius: radius
+        }));
+
+      }, 5000);
+
+      return () => clearInterval(monitorInterval);
+    }, [isAnchorWatchActive, anchorPosition, shipPosition, anchorSettings, weather.wind, anchorTrend, selectedShip?.nombre]);
+
+    useEffect(() => {
+      // Check initial session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          fetchProfile(session.user.id);
+          fetchFleet(session.user.id);
+        } else {
+          setIsInitialLoading(false);
+        }
       });
-      setShipPhoto(null);
-      
-      // Refresh fleet using centralized function
-      if (userProfile?.id) {
-        fetchFleet(userProfile.id);
-      }
-    } catch (err: unknown) {
-      console.error('Error en registro:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-      if (!errorMessage.includes('permission')) {
-        alert('Error al registrar barco: ' + errorMessage);
-      }
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
-  const getShipIcon = (tipo?: string, size: string = "w-5 h-5") => {
-    const className = `${size} text-cyan-400`;
-    switch (tipo) {
-      case 'Velero': return <Wind className={className} />;
-      case 'Motora': return <Zap className={className} />;
-      case 'Catamarán': return <LayoutDashboard className={className} />;
-      case 'Yate': return <Ship className={className} />;
-      case 'Semirrígida': return <Anchor className={className} />;
-      default: return <Ship className={className} />;
-    }
-  };
-
-  const getShipEmoji = (tipo?: string) => {
-    switch (tipo) {
-      case 'Velero': return '⛵';
-      case 'Motora': return '🚤';
-      case 'Catamarán': return '🛥️';
-      case 'Yate': return '🚢';
-      case 'Semirrígida': return '🛶';
-      default: return '⚓';
-    }
-  };
-
-  const getDefaultShipImage = (tipo?: string) => {
-    switch (tipo) {
-      case 'Velero': return 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000&auto=format&fit=crop';
-      case 'Motora': return 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=1000&auto=format&fit=crop';
-      case 'Catamarán': return 'https://images.unsplash.com/photo-1516939884455-1445c8652f83?q=80&w=1000&auto=format&fit=crop';
-      case 'Yate': return 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?q=80&w=1000&auto=format&fit=crop';
-      case 'Semirrígida': return 'https://images.unsplash.com/photo-1544551763-47a0159c9638?q=80&w=1000&auto=format&fit=crop';
-      default: return 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=1000&auto=format&fit=crop';
-    }
-  };
-
-  const handleCaptureLocation = () => {
-    // Static capture for Motril
-    setNewShip(prev => ({ ...prev, lat: 36.7215, lng: -3.5235 }));
-    setAdvisorMessage(`Ubicación capturada (Motril): 36.7215, -3.5235`);
-  };
-
-  const fetchMantenimiento = async (barcoId: string | number) => {
-    try {
-      const { data, error } = await supabase
-        .from('mantenimiento')
-        .select('*')
-        .eq('barco_id', barcoId)
-        .order('fecha', { ascending: false });
-      if (error) throw error;
-      if (data) setHistorial(data);
-    } catch (err: any) {
-      console.error('Error fetching maintenance:', err);
-    }
-  };
-
-  const handleDeleteShip = async (shipId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este barco? Esta acción es irreversible y se perderán todos sus datos asociados.')) return;
-    
-    try {
-      const { error } = await vesselRepository.deleteVessel(shipId);
-
-      if (error) throw error;
-
-      setAdvisorMessage('Embarcación dada de baja de la flota con éxito.');
-      if (selectedShipId === shipId) {
-        handleShipSelection(null);
-        setSelectedBarco(null);
-      }
-      fetchFleet(userProfile!.id);
-    } catch (err: any) {
-      console.error('Error deleting ship:', err);
-      if (err.message?.includes('foreign key constraint')) {
-        setAdvisorMessage(`Error: No se puede borrar el barco porque tiene registros asociados (Bitácora/Mantenimiento). Contacte con administración para borrado en cascada.`);
-      } else {
-        setAdvisorMessage(`Fallo al eliminar barco: ${err.message}`);
-      }
-    }
-  };
-
-  const saveFichaTecnica = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const effectiveShipId = selectedBarco?.id || selectedShipId;
-    if (!effectiveShipId || !selectedBarco) {
-      alert('Error: No se ha detectado el ID del barco.');
-      return;
-    }
-
-    setIsUploading(true);
-    let finalPhotoUrl = selectedBarco.foto_url || '';
-
-    try {
-      if (editShipPhoto) {
-        const fileExt = editShipPhoto.name.split('.').pop();
-        const fileName = `${effectiveShipId}/${Date.now()}_${editShipPhoto.name}`;
-        const filePath = `barcos/${fileName}`;
-
-        if (selectedBarco.foto_url) {
-          try {
-            const oldPath = selectedBarco.foto_url.split('/public/fotos-barco/').pop();
-            if (oldPath) {
-              await supabase.storage.from('fotos-barco').remove([oldPath]);
-            }
-          } catch (err) {
-            console.error('Error deleting old photo:', err);
-          }
+      // Listen for auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          fetchProfile(session.user.id);
+          // Load fleet on login - FORCED MOTRIL POSITION
+          fetchFleet(session.user.id);
+        } else {
+          setIsLoggedIn(false);
+          setUserProfile(null);
+          setIsInitialLoading(false);
         }
+      });
 
-        const { error: uploadError } = await supabase.storage
-          .from('fotos-barco')
-          .upload(filePath, editShipPhoto);
+      return () => subscription.unsubscribe();
+    }, []);
 
-        if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('fotos-barco')
-          .getPublicUrl(filePath);
-        
-        finalPhotoUrl = publicUrl;
-      }
-
-      // USANDO ESTADOS REACT DIRECTAMENTE (Eliminando FormData)
-      const updates = {
-        mmsi: selectedBarco.mmsi,
-        ais: selectedBarco.ais,
-        ultimo_mantenimiento_motor: selectedBarco.ultimo_mantenimiento_motor ?? undefined,
-        ultima_revision_balsa: selectedBarco.ultima_revision_balsa ?? undefined,
-        ultima_revision_extintores: selectedBarco.ultima_revision_extintores ?? undefined,
-        eslora: selectedBarco.eslora,
-        documentacion_url: selectedBarco.documentacion_url,
-        manual_pdf: selectedBarco.manual_pdf,
-        fuel_level: selectedBarco.fuel_level,
-        water_level: selectedBarco.water_level,
-        docs_certificado_navegabilidad: selectedBarco.docs_certificado_navegabilidad,
-        docs_permiso_navegacion: selectedBarco.docs_permiso_navegacion,
-        docs_seguro_vigente: selectedBarco.docs_seguro_vigente,
-        docs_itb_vigente: selectedBarco.docs_itb_vigente,
-        docs_dni_tripulacion: selectedBarco.docs_dni_tripulacion,
-        docs_titulacion_patron: selectedBarco.docs_titulacion_patron,
-        docs_leb_mmsi: selectedBarco.docs_leb_mmsi,
-        url_certificado_navegabilidad: selectedBarco.url_certificado_navegabilidad,
-        url_permiso_navegacion: selectedBarco.url_permiso_navegacion,
-        url_seguro: selectedBarco.url_seguro,
-        url_itb: selectedBarco.url_itb,
-        url_dni_tripulacion: selectedBarco.url_dni_tripulacion,
-        url_titulacion_patron: selectedBarco.url_titulacion_patron,
-        url_leb_mmsi: selectedBarco.url_leb_mmsi,
-        foto_url: finalPhotoUrl
-      };
-      
-      const { error } = await vesselRepository.updateVessel(effectiveShipId, updates);
+    const fetchProfile = async (userId: string) => {
+      const { data, error } = await userRepository.getProfile(userId);
 
       if (error) {
-        alert('Error al guardar en base de datos: ' + error.message);
+        console.error('Error fetching profile:', error);
+        // Fallback: If auth exists but profile fetch failed, try to use auth data anyway
+        // to avoid locking out the user completely
+        const authUser = (await supabase.auth.getUser()).data.user;
+        if (authUser) {
+          setUserProfile({
+            id: authUser.id,
+            email: authUser.email || '',
+            name: authUser.user_metadata?.nombre || authUser.user_metadata?.full_name || 'Capitán',
+            role: 'capitan',
+            plan_tactico: 'basico',
+            suscripcion_activa: true,
+            plan_nivel: 'gratis',
+            photoUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.email}`
+          });
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+        setIsInitialLoading(false);
+        return;
+      }
+
+      if (data) {
+        setUserProfile({
+          id: data.id,
+          email: data.email,
+          name: data.nombre || 'Capitán',
+          role: data.rol || 'capitan',
+          barco_activo_id: data.barco_activo_id,
+          plan_tactico: data.suscripciones?.[0]?.plan_tactico || 'basico',
+          photoUrl: data.foto_perfil_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.email}`,
+          suscripcion_activa: true,
+          plan_nivel: 'gratis',
+          ...data
+        });
+        if (data.barco_activo_id) {
+          setSelectedShipId(data.barco_activo_id);
+        }
+        setIsLoggedIn(true);
       } else {
-        setAdvisorMessage('Ficha técnica actualizada correctamente.');
-        setEditShipPhoto(null);
-        // Actualizar el objeto seleccionado localmente para reflejar los cambios de inmediato
-        if (selectedBarco && selectedBarco.id === effectiveShipId) {
-          setSelectedBarco({
-            ...selectedBarco,
-            ...updates,
-            foto_url: finalPhotoUrl
+        // Data is null but no error? Could happen if no row matches
+        const authUser = (await supabase.auth.getUser()).data.user;
+        if (authUser) {
+          setUserProfile({
+            id: authUser.id,
+            email: authUser.email || '',
+            name: authUser.user_metadata?.nombre || authUser.user_metadata?.full_name || 'Capitán',
+            role: 'capitan',
+            plan_tactico: 'basico',
+            suscripcion_activa: true,
+            plan_nivel: 'gratis',
+            photoUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.email}`
+          });
+          setIsLoggedIn(true);
+        }
+      }
+      setIsInitialLoading(false);
+    };
+
+    // Fetch active route on ship selection
+    useEffect(() => {
+      const fetchActiveRoute = async () => {
+        // 0. Safety Check - MUST have a valid ship ID
+        if (!selectedShipId || fleet.length === 0) {
+          setIsTravesiaActive(false);
+          return;
+        }
+
+        const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
+        const barcoIdReal = activeShip?.id;
+
+        if (!barcoIdReal) return;
+
+        // 1. Check active routes
+        const { data: routeData } = await logRepository.getActiveRuta(barcoIdReal);
+
+        if (routeData) {
+          setPlannedPath(routeData.waypoints);
+          setActiveRouteId(routeData.id);
+        }
+
+        // 2. Check ANY active log in bitacora (MASTER SOURCE OF TRUTH)
+        const { data: activeLog, error: bitacoraError } = await logRepository.getActiveLog(barcoIdReal);
+
+        if (bitacoraError) {
+          console.error('App: bitacora fetch error:', bitacoraError);
+        }
+
+        if (activeLog) {
+          setIsTravesiaActive(true);
+          if (activeLog.destino_planificado) {
+            setNavigationDestination(activeLog.destino_planificado);
+            setTargetDestination({ lat: 38.9067, lng: 1.4206 }); // Fallback to Ibiza for visualization
+          }
+          if (activeLog.tipo_navegacion) {
+            setNavigationMode(activeLog.tipo_navegacion as any);
+          }
+        } else {
+          setIsTravesiaActive(false);
+          setNavigationDestination('');
+        }
+      };
+      fetchActiveRoute();
+    }, [selectedShipId, fleet.length]); // Better dependencies to avoid loops
+
+    const morningReportTriggeredRef = useRef(false);
+
+    useEffect(() => {
+      if (isLoggedIn && userProfile?.id && selectedShipId) {
+        if (morningReportTriggeredRef.current) return;
+
+        // Fetch user's ships
+        fetchFleet(userProfile.id);
+
+        if (userProfile.role === 'admin') {
+          userRepository.getAllUsers().then(({ data, error }) => {
+            if (error && (error.message.includes('permission') || error.code === '42501')) {
+              setAdvisorMessage('Almirante, no tiene permisos para ver la lista de usuarios.');
+            }
+            if (data) setAllUsers(data);
+          });
+
+          // Fetch all ships with captain emails for admin
+          vesselRepository.getAllVessels().then(({ data, error }) => {
+            if (error) {
+              if (error.message.includes('permission') || error.code === '42501') {
+                setAdvisorMessage('Almirante, no tiene permisos para ver la flota global.');
+              }
+              return;
+            }
+            if (data) {
+              const formattedAllShips: (ShipData & { capitan_email?: string })[] = data.map((s: any) => ({
+                id: s.id,
+                name: s.nombre,
+                brand: s.marca,
+                model: s.modelo,
+                registration: s.matricula,
+                length: s.eslora,
+                beam: s.manga,
+                draft: s.calado,
+                capitan_id: s.capitan_id,
+                user_id: s.capitan_id,
+                capitan_email: s.usuarios?.email,
+                tipo_barco: s.tipo_barco,
+                foto_url: s.foto_url,
+                lat: s.lat || 36.7215,
+                lng: s.lng || -3.5235,
+                type: s.tipo_barco || 'Motor',
+                // Add missing required fields for ShipData
+                nombre: s.nombre,
+                modelo: s.modelo,
+                marca: s.marca,
+                matricula: s.matricula,
+                eslora: s.eslora,
+                manga: s.manga,
+                calado: s.calado,
+                potencia_cv: s.potencia_cv || 0,
+                numero_serie_casco: s.numero_serie_casco || '',
+                fecha_itb: s.fecha_itb || '',
+                fecha_seguro: s.fecha_seguro || '',
+                fuel_level: s.fuel_level,
+                water_level: s.water_level
+              }));
+              setAllShips(formattedAllShips);
+            }
           });
         }
-        fetchFleet(userProfile?.id || '');
+
+        // Advisor Greeting & Morning Report
+        if (userProfile.role === 'admin') {
+          setAdvisorMessage(`Bienvenido de nuevo, Almirante ${userProfile.name.split(' ')[0]}.`);
+        } else {
+          setAdvisorMessage(`¡Buenos días, Capitán ${userProfile.name}!`);
+        }
+
+        // Force Morning Report
+        morningReportTriggeredRef.current = true;
+        generateMorningReport();
       }
-    } catch (err: any) {
-      console.error('Error saving technical file:', err);
-      alert('Error al guardar en base de datos: ' + err.message);
-    } finally {
-      setIsUploading(false);
-    }
-  };
+    }, [isLoggedIn, userProfile?.id, selectedShipId]);
 
-  const addMantenimiento = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const effectiveShipId = selectedShipId;
-    if (!effectiveShipId) {
-      alert('Seleccione un barco primero.');
-      return;
-    }
+    useEffect(() => {
+      if (userProfile?.role === 'almirante') {
+        const andaluciaIndex = MBTILES_ZONES.findIndex(z => z.id === 'andalucia');
+        if (andaluciaIndex !== -1) {
+          setChartMode('mbtiles');
+          setMbtileIndex(andaluciaIndex);
+          setMapCenter(MBTILES_ZONES[andaluciaIndex].center);
+        }
+      }
+    }, [userProfile?.role]);
 
-    const formData = new FormData(e.currentTarget);
-    const tarea = formData.get('tarea') as string;
-    const fecha = formData.get('fecha') as string;
-    const horas = formData.get('horas_motor_mantenimiento') ? Number(formData.get('horas_motor_mantenimiento')) : null;
-    
-    try {
-      // CORRECCIÓN: Solo enviar barco_id y datos de tarea (Eliminado capitan_id)
-      const { error } = await supabase
-        .from('mantenimiento')
-        .insert([{
-          tarea,
-          fecha,
-          horas_motor_mantenimiento: horas,
-          barco_id: effectiveShipId
-        }]);
+    const [showShipForm, setShowShipForm] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [shipPhoto, setShipPhoto] = useState<File | null>(null);
+    const [editShipPhoto, setEditShipPhoto] = useState<File | null>(null);
+    const [newShip, setNewShip] = useState({
+      nombre: '', marca: '', modelo: '', matricula: '', eslora: '', manga: '', calado: '', tipo_barco: 'Velero',
+      mmsi: '', ais: '', ultimo_mantenimiento_motor: null as string | null, ultima_revision_balsa: null as string | null,
+      lat: 36.7215, lng: -3.5235
+    });
 
-      if (error) throw error;
+    const handleAddShip = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!userProfile) return;
 
-      setAdvisorMessage('Tarea de mantenimiento registrada.');
-      fetchMantenimiento(effectiveShipId);
-      (e.target as HTMLFormElement).reset();
-    } catch (err: any) {
-      console.error('Error registering task:', err);
-      alert('Error al guardar tarea: ' + err.message);
-    }
-  };
+      // Verificar sesión antes de subir
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setAdvisorMessage('Almirante, la sesión ha expirado. Por favor, vuelva a entrar.');
+        return;
+      }
+
+      const canAddShip = (userProfile?.role === 'almirante' || userProfile?.role === 'admin') ||
+        (userProfile?.plan_nivel === 'oro') ||
+        (userProfile?.plan_nivel === 'plata' && fleet.length < 5) ||
+        (userProfile?.plan_nivel === 'gratis' && fleet.length < 1);
+
+      if (!canAddShip) {
+        setAdvisorMessage('Límite de flota alcanzado para su plan actual. Actualice para añadir más unidades.');
+        return;
+      }
+
+      setIsUploading(true);
+
+      try {
+        let foto_url = null;
+
+        if (shipPhoto) {
+          try {
+            const fileName = `barcos/${session.user.id}/${Date.now()}-${shipPhoto.name}`;
+            const { error: uploadError } = await supabase.storage
+              .from('fotos-barco')
+              .upload(fileName, shipPhoto, { upsert: true });
+
+            if (uploadError) {
+              console.error('Error de Storage:', uploadError);
+              setAdvisorMessage('Almirante, fallo en el sistema de imágenes. Registrando solo datos técnicos...');
+            } else {
+              const { data: { publicUrl } } = supabase.storage
+                .from('fotos-barco')
+                .getPublicUrl(fileName);
+              foto_url = publicUrl;
+            }
+          } catch (storageErr) {
+            console.error('Excepción en Storage:', storageErr);
+            setAdvisorMessage('Almirante, el hangar de fotos no responde. Procediendo con el registro de datos.');
+          }
+        }
+
+        const shipToInsert = {
+          nombre: newShip.nombre,
+          marca: newShip.marca,
+          modelo: newShip.modelo,
+          matricula: newShip.matricula,
+          eslora: parseFloat(newShip.eslora),
+          manga: parseFloat(newShip.manga),
+          calado: parseFloat(newShip.calado),
+          tipo_barco: newShip.tipo_barco,
+          mmsi: newShip.mmsi || null,
+          ais: newShip.ais || null,
+          ultimo_mantenimiento_motor: newShip.ultimo_mantenimiento_motor || null,
+          ultima_revision_balsa: newShip.ultima_revision_balsa || null,
+          foto_url: foto_url,
+          capitan_id: session.user.id,
+          // FORCED MOTRIL POSITION
+          lat: 36.7215,
+          lng: -3.5235
+        };
 
 
-  const handleAiRouteSubmit = async () => {
-    if (!aiRoutePrompt.trim()) return;
-    setIsAiProcessing(true);
-    
-    // Save prompt as destination fallback
-    setNavigationDestination(aiRoutePrompt.length > 30 ? aiRoutePrompt.substring(0, 30) + '...' : aiRoutePrompt);
+        const { error } = await vesselRepository.insertVessel(shipToInsert);
 
-    const mockBriefing = (prompt: string) => 
-      `Almirante, la ruta hacia "${prompt}" ha sido validada. Las condiciones son favorables. Proceda con el checklist de seguridad para iniciar la navegación asistida.`;
+        if (error) {
+          if (error.message.includes('permission') || error.code === '42501') {
+            setAdvisorMessage('Almirante, no tiene permisos para ver esta unidad (Tabla Barcos).');
+          }
+          throw error;
+        }
 
-    try {
-      const prompt = `Actúa como un Almirante navegante experto. El usuario quiere realizar la siguiente travesía: "${aiRoutePrompt}". 
+        setShowShipForm(false);
+        setNewShip({
+          nombre: '', marca: '', modelo: '', matricula: '', eslora: '', manga: '', calado: '', tipo_barco: 'Velero',
+          mmsi: '', ais: '', ultimo_mantenimiento_motor: null, ultima_revision_balsa: null,
+          lat: 36.7215, lng: -3.5235
+        });
+        setShipPhoto(null);
+
+        // Refresh fleet using centralized function
+        if (userProfile?.id) {
+          fetchFleet(userProfile.id);
+        }
+      } catch (err: unknown) {
+        console.error('Error en registro:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+        if (!errorMessage.includes('permission')) {
+          alert('Error al registrar barco: ' + errorMessage);
+        }
+      } finally {
+        setIsUploading(false);
+      }
+    };
+
+    const getShipIcon = (tipo?: string, size: string = "w-5 h-5") => {
+      const className = `${size} text-cyan-400`;
+      switch (tipo) {
+        case 'Velero': return <Wind className={className} />;
+        case 'Motora': return <Zap className={className} />;
+        case 'Catamarán': return <LayoutDashboard className={className} />;
+        case 'Yate': return <Ship className={className} />;
+        case 'Semirrígida': return <Anchor className={className} />;
+        default: return <Ship className={className} />;
+      }
+    };
+
+    const getShipEmoji = (tipo?: string) => {
+      switch (tipo) {
+        case 'Velero': return '⛵';
+        case 'Motora': return '🚤';
+        case 'Catamarán': return '🛥️';
+        case 'Yate': return '🚢';
+        case 'Semirrígida': return '🛶';
+        default: return '⚓';
+      }
+    };
+
+    const getDefaultShipImage = (tipo?: string) => {
+      switch (tipo) {
+        case 'Velero': return 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000&auto=format&fit=crop';
+        case 'Motora': return 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=1000&auto=format&fit=crop';
+        case 'Catamarán': return 'https://images.unsplash.com/photo-1516939884455-1445c8652f83?q=80&w=1000&auto=format&fit=crop';
+        case 'Yate': return 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?q=80&w=1000&auto=format&fit=crop';
+        case 'Semirrígida': return 'https://images.unsplash.com/photo-1544551763-47a0159c9638?q=80&w=1000&auto=format&fit=crop';
+        default: return 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=1000&auto=format&fit=crop';
+      }
+    };
+
+    const handleCaptureLocation = () => {
+      // Static capture for Motril
+      setNewShip(prev => ({ ...prev, lat: 36.7215, lng: -3.5235 }));
+      setAdvisorMessage(`Ubicación capturada (Motril): 36.7215, -3.5235`);
+    };
+
+    const fetchMantenimiento = async (barcoId: string | number) => {
+      try {
+        const { data, error } = await supabase
+          .from('mantenimiento')
+          .select('*')
+          .eq('barco_id', barcoId)
+          .order('fecha', { ascending: false });
+        if (error) throw error;
+        if (data) setHistorial(data);
+      } catch (err: any) {
+        console.error('Error fetching maintenance:', err);
+      }
+    };
+
+    const handleDeleteShip = async (shipId: string) => {
+      if (!window.confirm('¿Está seguro de que desea eliminar este barco? Esta acción es irreversible y se perderán todos sus datos asociados.')) return;
+
+      try {
+        const { error } = await vesselRepository.deleteVessel(shipId);
+
+        if (error) throw error;
+
+        setAdvisorMessage('Embarcación dada de baja de la flota con éxito.');
+        if (selectedShipId === shipId) {
+          handleShipSelection(null);
+          setSelectedBarco(null);
+        }
+        fetchFleet(userProfile!.id);
+      } catch (err: any) {
+        console.error('Error deleting ship:', err);
+        if (err.message?.includes('foreign key constraint')) {
+          setAdvisorMessage(`Error: No se puede borrar el barco porque tiene registros asociados (Bitácora/Mantenimiento). Contacte con administración para borrado en cascada.`);
+        } else {
+          setAdvisorMessage(`Fallo al eliminar barco: ${err.message}`);
+        }
+      }
+    };
+
+    const saveFichaTecnica = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const effectiveShipId = selectedBarco?.id || selectedShipId;
+      if (!effectiveShipId || !selectedBarco) {
+        alert('Error: No se ha detectado el ID del barco.');
+        return;
+      }
+
+      setIsUploading(true);
+      let finalPhotoUrl = selectedBarco.foto_url || '';
+
+      try {
+        if (editShipPhoto) {
+          const fileExt = editShipPhoto.name.split('.').pop();
+          const fileName = `${effectiveShipId}/${Date.now()}_${editShipPhoto.name}`;
+          const filePath = `barcos/${fileName}`;
+
+          if (selectedBarco.foto_url) {
+            try {
+              const oldPath = selectedBarco.foto_url.split('/public/fotos-barco/').pop();
+              if (oldPath) {
+                await supabase.storage.from('fotos-barco').remove([oldPath]);
+              }
+            } catch (err) {
+              console.error('Error deleting old photo:', err);
+            }
+          }
+
+          const { error: uploadError } = await supabase.storage
+            .from('fotos-barco')
+            .upload(filePath, editShipPhoto);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('fotos-barco')
+            .getPublicUrl(filePath);
+
+          finalPhotoUrl = publicUrl;
+        }
+
+        // USANDO ESTADOS REACT DIRECTAMENTE (Eliminando FormData)
+        const updates = {
+          mmsi: selectedBarco.mmsi,
+          ais: selectedBarco.ais,
+          ultimo_mantenimiento_motor: selectedBarco.ultimo_mantenimiento_motor ?? undefined,
+          ultima_revision_balsa: selectedBarco.ultima_revision_balsa ?? undefined,
+          ultima_revision_extintores: selectedBarco.ultima_revision_extintores ?? undefined,
+          eslora: selectedBarco.eslora,
+          documentacion_url: selectedBarco.documentacion_url,
+          manual_pdf: selectedBarco.manual_pdf,
+          fuel_level: selectedBarco.fuel_level,
+          water_level: selectedBarco.water_level,
+          docs_certificado_navegabilidad: selectedBarco.docs_certificado_navegabilidad,
+          docs_permiso_navegacion: selectedBarco.docs_permiso_navegacion,
+          docs_seguro_vigente: selectedBarco.docs_seguro_vigente,
+          docs_itb_vigente: selectedBarco.docs_itb_vigente,
+          docs_dni_tripulacion: selectedBarco.docs_dni_tripulacion,
+          docs_titulacion_patron: selectedBarco.docs_titulacion_patron,
+          docs_leb_mmsi: selectedBarco.docs_leb_mmsi,
+          url_certificado_navegabilidad: selectedBarco.url_certificado_navegabilidad,
+          url_permiso_navegacion: selectedBarco.url_permiso_navegacion,
+          url_seguro: selectedBarco.url_seguro,
+          url_itb: selectedBarco.url_itb,
+          url_dni_tripulacion: selectedBarco.url_dni_tripulacion,
+          url_titulacion_patron: selectedBarco.url_titulacion_patron,
+          url_leb_mmsi: selectedBarco.url_leb_mmsi,
+          foto_url: finalPhotoUrl
+        };
+
+        const { error } = await vesselRepository.updateVessel(effectiveShipId, updates);
+
+        if (error) {
+          alert('Error al guardar en base de datos: ' + error.message);
+        } else {
+          setAdvisorMessage('Ficha técnica actualizada correctamente.');
+          setEditShipPhoto(null);
+          // Actualizar el objeto seleccionado localmente para reflejar los cambios de inmediato
+          if (selectedBarco && selectedBarco.id === effectiveShipId) {
+            setSelectedBarco({
+              ...selectedBarco,
+              ...updates,
+              foto_url: finalPhotoUrl
+            });
+          }
+          fetchFleet(userProfile?.id || '');
+        }
+      } catch (err: any) {
+        console.error('Error saving technical file:', err);
+        alert('Error al guardar en base de datos: ' + err.message);
+      } finally {
+        setIsUploading(false);
+      }
+    };
+
+    const addMantenimiento = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const effectiveShipId = selectedShipId;
+      if (!effectiveShipId) {
+        alert('Seleccione un barco primero.');
+        return;
+      }
+
+      const formData = new FormData(e.currentTarget);
+      const tarea = formData.get('tarea') as string;
+      const fecha = formData.get('fecha') as string;
+      const horas = formData.get('horas_motor_mantenimiento') ? Number(formData.get('horas_motor_mantenimiento')) : null;
+
+      try {
+        // CORRECCIÓN: Solo enviar barco_id y datos de tarea (Eliminado capitan_id)
+        const { error } = await supabase
+          .from('mantenimiento')
+          .insert([{
+            tarea,
+            fecha,
+            horas_motor_mantenimiento: horas,
+            barco_id: effectiveShipId
+          }]);
+
+        if (error) throw error;
+
+        setAdvisorMessage('Tarea de mantenimiento registrada.');
+        fetchMantenimiento(effectiveShipId);
+        (e.target as HTMLFormElement).reset();
+      } catch (err: any) {
+        console.error('Error registering task:', err);
+        alert('Error al guardar tarea: ' + err.message);
+      }
+    };
+
+
+    const handleAiRouteSubmit = async () => {
+      if (!aiRoutePrompt.trim()) return;
+      setIsAiProcessing(true);
+
+      // Save prompt as destination fallback
+      setNavigationDestination(aiRoutePrompt.length > 30 ? aiRoutePrompt.substring(0, 30) + '...' : aiRoutePrompt);
+
+      const mockBriefing = (prompt: string) =>
+        `Almirante, la ruta hacia "${prompt}" ha sido validada. Las condiciones son favorables. Proceda con el checklist de seguridad para iniciar la navegación asistida.`;
+
+      try {
+        const prompt = `Actúa como un Almirante navegante experto. El usuario quiere realizar la siguiente travesía: "${aiRoutePrompt}". 
       Si mencionan un destino, extráelo y úsalo en tu briefing.
       Confirma la ruta, menciona brevemente los puntos clave y da un briefing estratégico de 3 líneas máximo. 
       Termina siempre pidiendo que el capitán complete el checklist de seguridad.`.replace(/[\r\n]/g, " ");
 
-      const responseText = await callGemini(prompt);
-      
-      setAiBriefing(responseText.text);
-      setIsExplainingAiRoute(false);
-      setShowSafetyModal(true);
-    } catch (err) {
-      console.error("AI Route Error:", err);
-      setAiBriefing(mockBriefing(aiRoutePrompt));
-      setAdvisorMessage("AI Briefing en modo simulación (Offline).");
-      setIsExplainingAiRoute(false);
-      setShowSafetyModal(true);
-    } finally {
-      setIsAiProcessing(false);
-    }
-  };
+        const responseText = await callGemini(prompt);
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'navigation':
-        return (
-          <div className="h-full overflow-y-auto custom-scrollbar">
-            <NavigationDashboard 
-              lang={lang} 
-              dataSource={dataSource} 
-              setDataSource={setDataSource}
-              sensorQuality={sensorQuality}
-            />
-          </div>
-        );
-      case 'logbook':
-        return (
-          <div className="h-full w-full bg-slate-950 overflow-y-auto custom-scrollbar">
-            <Logbook 
-              userProfile={userProfile!} 
-              supabase={supabase} 
-              fleet={fleet}
-              selectedShipId={selectedShipId} 
-              setAdvisorMessage={setAdvisorMessage} 
-              logEntries={logEntries}
-              setLogEntries={setLogEntries}
-              saveLogEntry={saveTechnicalLog}
-              isEngineOn={isEngineOn}
-              setIsEngineOn={setIsEngineOn}
-              onClearAdvisor={() => {
-                setAdvisorText(null);
-                setIsAdvisorOpen(false);
-              }}
-            />
-          </div>
-        );
-      case 'profile':
-        return (
-          <div className="h-full overflow-y-auto custom-scrollbar">
-            <ProfileEditor 
-              userProfile={userProfile}
-              profileForm={profileForm}
-              setProfileForm={setProfileForm}
-              handleUpdateProfile={handleUpdateProfile}
-              isUpdatingProfile={isUpdatingProfile}
-              handleAvatarUpload={handleAvatarUpload}
-              fetchProfile={fetchProfile}
-            />
-          </div>
-        );
-      case 'admin':
-        return (
-          <div className="h-full overflow-y-auto custom-scrollbar">
-            {userProfile?.role === 'almirante' || userProfile?.role === 'admin' ? (
-              <PanelAlmirantazgo supabase={supabase} currentUser={userProfile} />
-            ) : (
-              <AdminPanel 
-                userProfile={userProfile}
-                allUsers={allUsers}
-                allShips={allShips}
+        setAiBriefing(responseText.text);
+        setIsExplainingAiRoute(false);
+        setShowSafetyModal(true);
+      } catch (err) {
+        console.error("AI Route Error:", err);
+        setAiBriefing(mockBriefing(aiRoutePrompt));
+        setAdvisorMessage("AI Briefing en modo simulación (Offline).");
+        setIsExplainingAiRoute(false);
+        setShowSafetyModal(true);
+      } finally {
+        setIsAiProcessing(false);
+      }
+    };
+
+    const renderContent = () => {
+      switch (activeTab) {
+        case 'navigation':
+          return (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <NavigationDashboard
+                lang={lang}
+                dataSource={dataSource}
+                setDataSource={setDataSource}
+                sensorQuality={sensorQuality}
               />
-            )}
-          </div>
-        );
-      case 'inventory':
-        return (
-          <div className="h-full overflow-y-auto custom-scrollbar">
-            <InventoryManager 
-              inventory={selectedShip?.inventory || []}
-              vesselStatus={vesselStatus}
-              supabase={supabase}
-              selectedShipId={selectedShipId}
-              saveLogEntry={async (entry: any) => {
-                if (typeof entry === 'object' && entry.titulo) {
-                  await saveTechnicalLog(entry.titulo, entry.descripcion, entry.categoria);
-                  notifyAdmiral(`Logística: ${entry.titulo}. ${entry.descripcion}`, 'success');
+            </div>
+          );
+        case 'logbook':
+          return (
+            <div className="h-full w-full bg-slate-950 overflow-y-auto custom-scrollbar">
+              <Logbook
+                userProfile={userProfile!}
+                supabase={supabase}
+                fleet={fleet}
+                selectedShipId={selectedShipId}
+                setAdvisorMessage={setAdvisorMessage}
+                logEntries={logEntries}
+                setLogEntries={setLogEntries}
+                saveLogEntry={saveTechnicalLog}
+                isEngineOn={isEngineOn}
+                setIsEngineOn={setIsEngineOn}
+                onClearAdvisor={() => {
+                  setAdvisorText(null);
+                  setIsAdvisorOpen(false);
+                }}
+              />
+            </div>
+          );
+        case 'profile':
+          return (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <ProfileEditor
+                userProfile={userProfile}
+                profileForm={profileForm}
+                setProfileForm={setProfileForm}
+                handleUpdateProfile={handleUpdateProfile}
+                isUpdatingProfile={isUpdatingProfile}
+                handleAvatarUpload={handleAvatarUpload}
+                fetchProfile={fetchProfile}
+              />
+            </div>
+          );
+        case 'admin':
+          return (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              {userProfile?.role === 'almirante' || userProfile?.role === 'admin' ? (
+                <PanelAlmirantazgo supabase={supabase} currentUser={userProfile} />
+              ) : (
+                <AdminPanel
+                  userProfile={userProfile}
+                  allUsers={allUsers}
+                  allShips={allShips}
+                />
+              )}
+            </div>
+          );
+        case 'inventory':
+          return (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <InventoryManager
+                inventory={selectedShip?.inventory || []}
+                vesselStatus={vesselStatus}
+                supabase={supabase}
+                selectedShipId={selectedShipId}
+                saveLogEntry={async (entry: any) => {
+                  if (typeof entry === 'object' && entry.titulo) {
+                    await saveTechnicalLog(entry.titulo, entry.descripcion, entry.categoria);
+                    notifyAdmiral(`Logística: ${entry.titulo}. ${entry.descripcion}`, 'success');
+                  }
+                }}
+                userProfile={userProfile}
+                onClose={() => setActiveTab('control')}
+              />
+            </div>
+          );
+        case 'guide':
+          return (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <Suspense
+                fallback={
+                  <div className="h-full min-h-[420px] flex items-center justify-center bg-slate-950 text-cyan-400">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  </div>
                 }
-              }}
-              userProfile={userProfile}
-              onClose={() => setActiveTab('control')}
-            />
-          </div>
-        );
-      case 'guide':
-        return (
-          <div className="h-full overflow-y-auto custom-scrollbar">
-            <Suspense
-              fallback={
-                <div className="h-full min-h-[420px] flex items-center justify-center bg-slate-950 text-cyan-400">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                </div>
-              }
-            >
-              <Vademecum onClose={() => setActiveTab('control')} />
-            </Suspense>
-          </div>
-        );
-      case 'fleet':
-        return (
-          <div className="h-full overflow-y-auto custom-scrollbar">
-            <FleetManager 
-              fleet={fleet}
-              userProfile={userProfile}
-              selectedShipId={selectedShipId}
-              setSelectedShipId={handleShipSelection}
-              showShipForm={showShipForm}
-              setShowShipForm={setShowShipForm}
-              newShip={newShip}
-              setNewShip={setNewShip as any}
-              handleAddShip={handleAddShip}
-              handleDeleteShip={handleDeleteShip}
-              isUploading={isUploading}
-              setShipPhoto={setShipPhoto}
-              shipPhoto={shipPhoto}
-              handleCaptureLocation={handleCaptureLocation}
-              getShipIcon={getShipIcon}
-              getDefaultShipImage={getDefaultShipImage}
-              selectedBarco={selectedBarco}
-              setSelectedBarco={setSelectedBarco}
-              fleetTab={fleetTab}
-              setFleetTab={setFleetTab}
-              fetchMantenimiento={fetchMantenimiento}
-              saveFichaTecnica={saveFichaTecnica}
-              addMantenimiento={addMantenimiento}
-              historial={historial}
-              editShipPhoto={editShipPhoto}
-              setEditShipPhoto={setEditShipPhoto}
-            />
-          </div>
-        );
-      case 'shield':
-        return (
-          <div className="h-full overflow-hidden">
-            <WatchdogPanel 
-              alarms={alarms}
-              alarmHistory={alarmHistory}
-              thresholds={thresholds}
-              onRemoveAlarm={removeAlarm}
-              onAddAlarm={addAlarm}
-              isMuted={isAlertMuted}
-              onMuteToggle={() => setIsAlertMuted(!isAlertMuted)}
-            />
-          </div>
-        );
-      case 'config':
-        return (
-          <div className="h-full overflow-y-auto custom-scrollbar">
-            <ConfigurationPanel 
-              dataSource={dataSource} 
-              setDataSource={setDataSource}
-              thresholds={thresholds}
-              setThresholds={setThresholds}
-              cartasPath={cartasPath}
-              onCambiarCarpeta={handleCambiarCarpeta}
-              simulationSpeed={simulationSpeed}
-              setSimulationSpeed={setSimulationSpeed}
-            />
-          </div>
-        );
-      default: // Control Center
-        return null;
-    }
-  };
+              >
+                <Vademecum onClose={() => setActiveTab('control')} />
+              </Suspense>
+            </div>
+          );
+        case 'fleet':
+          return (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <FleetManager
+                fleet={fleet}
+                userProfile={userProfile}
+                selectedShipId={selectedShipId}
+                setSelectedShipId={handleShipSelection}
+                showShipForm={showShipForm}
+                setShowShipForm={setShowShipForm}
+                newShip={newShip}
+                setNewShip={setNewShip as any}
+                handleAddShip={handleAddShip}
+                handleDeleteShip={handleDeleteShip}
+                isUploading={isUploading}
+                setShipPhoto={setShipPhoto}
+                shipPhoto={shipPhoto}
+                handleCaptureLocation={handleCaptureLocation}
+                getShipIcon={getShipIcon}
+                getDefaultShipImage={getDefaultShipImage}
+                selectedBarco={selectedBarco}
+                setSelectedBarco={setSelectedBarco}
+                fleetTab={fleetTab}
+                setFleetTab={setFleetTab}
+                fetchMantenimiento={fetchMantenimiento}
+                saveFichaTecnica={saveFichaTecnica}
+                addMantenimiento={addMantenimiento}
+                historial={historial}
+                editShipPhoto={editShipPhoto}
+                setEditShipPhoto={setEditShipPhoto}
+              />
+            </div>
+          );
+        case 'shield':
+          return (
+            <div className="h-full overflow-hidden">
+              <WatchdogPanel
+                alarms={alarms}
+                alarmHistory={alarmHistory}
+                thresholds={thresholds}
+                onRemoveAlarm={removeAlarm}
+                onAddAlarm={addAlarm}
+                isMuted={isAlertMuted}
+                onMuteToggle={() => setIsAlertMuted(!isAlertMuted)}
+              />
+            </div>
+          );
+        case 'config':
+          return (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <ConfigurationPanel
+                dataSource={dataSource}
+                setDataSource={setDataSource}
+                thresholds={thresholds}
+                setThresholds={setThresholds}
+                cartasPath={cartasPath}
+                onCambiarCarpeta={handleCambiarCarpeta}
+                simulationSpeed={simulationSpeed}
+                setSimulationSpeed={setSimulationSpeed}
+              />
+            </div>
+          );
+        default: // Control Center
+          return null;
+      }
+    };
 
 
-  if (isInitialLoading) {
-    return (
-      <div className="h-screen w-full bg-slate-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-12 h-12 text-cyan-500 animate-spin" />
-          <p className="text-xs font-black text-cyan-500 uppercase tracking-[0.3em] animate-pulse">Iniciando Sistemas de Navegación...</p>
+    if (isInitialLoading) {
+      return (
+        <div className="h-screen w-full bg-slate-950 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-12 h-12 text-cyan-500 animate-spin" />
+            <p className="text-xs font-black text-cyan-500 uppercase tracking-[0.3em] animate-pulse">Iniciando Sistemas de Navegación...</p>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (!isLoggedIn) return <AuthScreen />;
+    if (!isLoggedIn) return <AuthScreen />;
 
-  return (
-    <div className="h-screen w-full bg-[#0a0f18] flex font-sans overflow-hidden relative">
-      <AlarmToasts alarms={alarms} onRemove={removeAlarm} isMuted={isAlertMuted} onMuteToggle={() => setIsAlertMuted(!isAlertMuted)} />
+    return (
+      <div className="h-screen w-full bg-[#0a0f18] flex font-sans overflow-hidden relative">
+        <AlarmToasts alarms={alarms} onRemove={removeAlarm} isMuted={isAlertMuted} onMuteToggle={() => setIsAlertMuted(!isAlertMuted)} />
 
-      <CommandSidebar 
-        isSidebarOpen={isSidebarOpen} 
-        setIsSidebarOpen={setIsSidebarOpen} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        userProfile={userProfile} 
-        t={t} 
-        onSignOut={() => supabase.auth.signOut()} 
-        lang={lang} 
-        setLang={setLang} 
-      />
-
-      {/* Main Area */}
-      <main className="flex-1 flex flex-col bg-[#0a0f18] overflow-hidden relative">
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] z-0" />
-
-        <StatusBar 
-          vmg={navPlan?.vmg || 0}
-          gpsStatus={dataSource.gps === 'real' ? 'fix' : 'searching'}
-          battery={batteryLevel}
-          shipName={selectedShip?.nombre || 'Nucleus Zero'}
-          // Derive from alarms state
+        <CommandSidebar
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          userProfile={userProfile}
+          t={t}
+          onSignOut={() => supabase.auth.signOut()}
+          lang={lang}
+          setLang={setLang}
         />
 
-        {/* Contenido Principal - Layout Adaptativo Fluido */}
-        <div className={cn(
-          "relative overflow-hidden transition-all duration-700 ease-in-out p-6 h-full"
-        )}>
-          {activeTab === 'control' ? (
-            <div className="h-full w-full rounded-[2.5rem] overflow-hidden glass-panel relative neon-glow">
-              
-              <TacticalTerminal 
-                messages={messages}
-                onClearHistory={() => setMessages([])}
-                isIntMin={isIntMin}
-                setIsIntMin={setIntMin}
-              />
-              
-              <div className="absolute inset-0 flex flex-col">
-                <ErrorBoundary fallbackName="Mapa Táctico">
-                  <div className="relative flex-1 bg-slate-950 select-none overflow-hidden">
-                   <TacticalMap
-                   isLaylinesActive={false}
-  center={mapCenter}
-  zoom={15}
-  shipPosition={shipPosition}
-  shipName={
-    typeof fleet !== 'undefined' && fleet.length > 0
-      ? (
-          fleet.find(s => String(s.id) === String(selectedShipId))
-            ?.nombre ||
-          selectedShip?.nombre ||
-          'Buque Activo'
-        )
-      : (selectedShip?.nombre || 'Buque Activo')
-  }
-  navPlan={navPlan}
-  targetDestination={targetDestination}
-  currentPath={currentPath}
-  onMapClick={(lat, lng) => {
-    if (showShipForm) {
-      setNewShip?.((prev: any) => ({ ...prev, lat, lng }));
-      setAdvisorMessage(
-        `Coordenadas fijadas: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
-      );
-    } else {
-      setDestination({ lat, lng });
-      setAdvisorMessage(
-        `Destino fijado: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
-      );
+        {/* Main Area */}
+        <main className="flex-1 flex flex-col bg-[#0a0f18] overflow-hidden relative">
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] z-0" />
 
-      if (!navPlan?.targetCoords) {
-        setNavigationDestination(
-          `${lat.toFixed(4)}, ${lng.toFixed(4)}`
-        );
-      }
-    }
-  }}
-  onMapRightClick={handleMapRightClick}
-  onDragStart={() => setIsAutoCenter(false)}
->
-  {/* Flota */}
-  <FleetLayer
-  fleet={fleet}
-  selectedShipId={selectedShipId}
-  shipPosition={shipPosition}
-  simulatedAisTargets={tacticalAisTargets}
-/>
+          <StatusBar
+            vmg={navPlan?.vmg || 0}
+            gpsStatus={dataSource.gps === 'real' ? 'fix' : 'searching'}
+            battery={batteryLevel}
+            shipName={selectedShip?.nombre || 'Nucleus Zero'}
+          // Derive from alarms state
+          />
 
-  {/* Meteorología */}
-  <WeatherLayer
-    weather={weather}
-    plannedPath={plannedPath}
-  />
+          {/* Contenido Principal - Layout Adaptativo Fluido */}
+          <div className={cn(
+            "relative overflow-hidden transition-all duration-700 ease-in-out p-6 h-full"
+          )}>
+            {activeTab === 'control' ? (
+              <div className="h-full w-full rounded-[2.5rem] glass-panel relative neon-glow">
 
-  {/* Autoencuadre de ruta */}
-  {rutaActiva && rutaActiva.length >= 2 && (
-    <MapBoundsHandler
-      path={rutaActiva}
-      showControl={showControl}
-      showSystems={showSystems}
-    />
-  )}
-
-  {/* Ruta táctica */}
-  {rutaActiva && rutaActiva.length >= 2 && (
-    <Polyline
-      positions={rutaActiva}
-      color="#FF8C00"
-      weight={5}
-      opacity={0.9}
-    >
-      <Popup>Ruta Táctica</Popup>
-    </Polyline>
-  )}
-
-  {/* Laylines / Bordo sugerido */}
-  {tacticalData?.suggestedPath &&
-    tacticalData.suggestedPath.length >= 2 && (
-      <Polyline
-        positions={tacticalData.suggestedPath}
-        color="#22c55e"
-        weight={4}
-        opacity={0.9}
-        dashArray="12,10"
-      >
-        <Popup>Laylines / Bordo sugerido Zeus 3S</Popup>
-      </Polyline>
-    )}
-
-  {/* Ruta meteorológica */}
-  {plannedPath && plannedPath.length >= 2 && (
-    <Polyline
-      positions={plannedPath}
-      color="#00e5ff"
-      weight={5}
-      opacity={0.86}
-    >
-      <Popup>PredictWind / Ruta meteorológica</Popup>
-    </Polyline>
-  )}
-
-  {/* Zona AIS */}
-  {shipPosition && (
-    <Circle
-      center={[shipPosition.lat, shipPosition.lng]}
-      radius={500}
-      pathOptions={{
-        color: simulatedAisTargets.some(t => t.isCollisionRisk)
-          ? '#ef4444'
-          : '#06b6d4',
-        fillColor: simulatedAisTargets.some(t => t.isCollisionRisk)
-          ? '#ef4444'
-          : '#06b6d4',
-        fillOpacity: 0.05,
-        weight: 1,
-        dashArray: '5,5'
-      }}
-    />
-  )}
-  
-</TacticalMap>
-
-                <Zeus3SChartplotterOverlay
-                  sog={simulatedSog}
-                  hdg={selectedShip?.cog || 0}
-                  cog={selectedShip?.cog || 0}
-                  tws={weather?.wind || 0}
-                  twd={weather?.windDir || 0}
-                  twa={((weather?.windDir || 0) - (selectedShip?.cog || 0) + 360) % 360}
-                  depth={depth}
-                  dtw={navPlan.distanceNM || 0}
-                  btw={navPlan.btw}
-                  eta={navPlan.eta}
-                  xte={navPlan.xte || 0}
-                  waypointName={navPlan.targetName || navigationDestination || '---'}
-                  chartMode={chartMode}
-                  activeChartName={MBTILES_ZONES[mbtileIndex]?.name || 'Local'}
-                  aisEnabled={layersState.showAIS}
-                  windEnabled={layersState.showWind}
-                  collisionFilter={layersState.collisionFilter}
-                  isNavigating={isTravesiaActive}
-                  autopilotMode={autopilotMode}
-                  activePage={zeusPage}
-                  onSelectPage={setZeusPage}
-                  onOpenHud={openZeusHudPage}
-                  onOpenSystems={() => setShowSystems(true)}
-                  onCycleChart={cycleChart}
-                  onToggleAIS={() => setLayersState(prev => ({ ...prev, showAIS: !prev.showAIS }))}
-                  onToggleWind={() => setLayersState(prev => ({ ...prev, showWind: !prev.showWind }))}
-                  onToggleCollisionFilter={() => setLayersState(prev => ({ ...prev, collisionFilter: !prev.collisionFilter }))}
-                  onStartNavigation={() => setShowSafetyModal(true)}
-                  onEndNavigation={handleEndTravesia}
-                  isSailSteerWidgetOpen={isSailSteerWidgetOpen}
-                  onCloseSailSteerWidget={() => setIsSailSteerWidgetOpen(false)}
-                       
-                  
-                  
-                  onToggleAutopilot={toggleZeusAutopilot}
-                />
-                
-                <ZeusSidebar 
-                  activePage={zeusPage}
-                  onSelect={(page) => setZeusPage(page as any)}
-                  onToggleMenu={() => setShowSystems(!showSystems)}
-                  isNavigating={isTravesiaActive}
-                  listaCartas={listaCartas}
-                  cartasActivas={cartasActivas}
-                  toggleCarta={toggleCarta}
-                  cartasOpacity={cartasOpacity}
-                  setCartasOpacity={setCartasOpacity}
-                  layersState={layersState}
-                  setLayersState={setLayersState}
-                  aisEnabled={layersState.showAIS} // Pass existing state
-                  windEnabled={layersState.showWind} // Pass existing state
-                  aisTargets={tacticalAisTargets}
-                  collisionFilter={layersState.collisionFilter} // Pass existing state
-                  autopilotMode={autopilotMode} // Pass existing state
-                  onToggleAIS={() => setLayersState(prev => ({ ...prev, showAIS: !prev.showAIS }))} // Pass toggle function
-                  onToggleWind={() => setLayersState(prev => ({ ...prev, showWind: !prev.showWind }))} // Pass toggle function
-                  onToggleCollisionFilter={() => setLayersState(prev => ({ ...prev, collisionFilter: !prev.collisionFilter }))} // Pass toggle function
-                  isWeatherPanelOpen={isWeatherPanelOpen}
-                  setIsWeatherPanelOpen={setIsWeatherPanelOpen}
-                  isLaylinesActive={isLaylinesActive}
-                  isSailSteerWidgetOpen={isSailSteerWidgetOpen}
-                  setIsSailSteerWidgetOpen={setIsSailSteerWidgetOpen}
-                  setIsLaylinesActive={setIsLaylinesActive}
-                  onToggleAutopilot={toggleZeusAutopilot} // Pass toggle function
+                <TacticalTerminal
+                  messages={messages}
+                  onClearHistory={() => setMessages([])}
+                  isIntMin={isIntMin}
+                  setIsIntMin={setIntMin}
                 />
 
-                {/* Columna de Acción: Integrada en el mapa */}
-              
+                <div className="absolute inset-0 flex flex-col">
+                  <ErrorBoundary fallbackName="Mapa Táctico">
+                    <div className="relative flex-1 bg-slate-950 select-none overflow-hidden">
+                      <TacticalMap
+                        isLaylinesActive={false}
+                        center={mapCenter}
+                        zoom={15}
+                        shipPosition={shipPosition}
+                        shipName={
+                          typeof fleet !== 'undefined' && fleet.length > 0
+                            ? (
+                              fleet.find(s => String(s.id) === String(selectedShipId))
+                                ?.nombre ||
+                              selectedShip?.nombre ||
+                              'Buque Activo'
+                            )
+                            : (selectedShip?.nombre || 'Buque Activo')
+                        }
+                        navPlan={navPlan}
+                        targetDestination={targetDestination}
+                        currentPath={currentPath}
+                        onMapClick={(lat, lng) => {
+                          if (showShipForm) {
+                            setNewShip?.((prev: any) => ({ ...prev, lat, lng }));
+                            setAdvisorMessage(
+                              `Coordenadas fijadas: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+                            );
+                          } else {
+                            setDestination({ lat, lng });
+                            setAdvisorMessage(
+                              `Destino fijado: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+                            );
 
-              {/* Control Toggle y Cartas (Bottom Left del Mapa) - REMOVED BY USER REQUEST */}
-            </div>
-            </ErrorBoundary>
+                            if (!navPlan?.targetCoords) {
+                              setNavigationDestination(
+                                `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+                              );
+                            }
+                          }
+                        }}
+                        onMapRightClick={handleMapRightClick}
+                        onDragStart={() => setIsAutoCenter(false)}
+                      >
+                        {/* Flota */}
+                        <FleetLayer
+                          fleet={fleet}
+                          selectedShipId={selectedShipId}
+                          shipPosition={shipPosition}
+                          simulatedAisTargets={tacticalAisTargets}
+                        />
+
+                        {/* Meteorología */}
+                        <WeatherLayer
+                          weather={weather}
+                          plannedPath={plannedPath}
+                        />
+
+                        {/* Autoencuadre de ruta */}
+                        {rutaActiva && rutaActiva.length >= 2 && (
+                          <MapBoundsHandler
+                            path={rutaActiva}
+                            showControl={showControl}
+                            showSystems={showSystems}
+                          />
+                        )}
+
+                        {/* Ruta táctica */}
+                        {rutaActiva && rutaActiva.length >= 2 && (
+                          <Polyline
+                            positions={rutaActiva}
+                            color="#FF8C00"
+                            weight={5}
+                            opacity={0.9}
+                          >
+                            <Popup>Ruta Táctica</Popup>
+                          </Polyline>
+                        )}
+
+                        {/* Laylines / Bordo sugerido */}
+                        {tacticalData?.suggestedPath &&
+                          tacticalData.suggestedPath.length >= 2 && (
+                            <Polyline
+                              positions={tacticalData.suggestedPath}
+                              color="#22c55e"
+                              weight={4}
+                              opacity={0.9}
+                              dashArray="12,10"
+                            >
+                              <Popup>Laylines / Bordo sugerido Zeus 3S</Popup>
+                            </Polyline>
+                          )}
+
+                        {/* Ruta meteorológica */}
+                        {plannedPath && plannedPath.length >= 2 && (
+                          <Polyline
+                            positions={plannedPath}
+                            color="#00e5ff"
+                            weight={5}
+                            opacity={0.86}
+                          >
+                            <Popup>PredictWind / Ruta meteorológica</Popup>
+                          </Polyline>
+                        )}
+
+                        {/* Zona AIS */}
+                        {shipPosition && (
+                          <Circle
+                            center={[shipPosition.lat, shipPosition.lng]}
+                            radius={500}
+                            pathOptions={{
+                              color: simulatedAisTargets.some(t => t.isCollisionRisk)
+                                ? '#ef4444'
+                                : '#06b6d4',
+                              fillColor: simulatedAisTargets.some(t => t.isCollisionRisk)
+                                ? '#ef4444'
+                                : '#06b6d4',
+                              fillOpacity: 0.05,
+                              weight: 1,
+                              dashArray: '5,5'
+                            }}
+                          />
+                        )}
+
+                      </TacticalMap>
+
+                      <Zeus3SChartplotterOverlay
+                        sog={simulatedSog}
+                        hdg={selectedShip?.cog || 0}
+                        cog={selectedShip?.cog || 0}
+                        tws={weather?.wind || 0}
+                        twd={weather?.windDir || 0}
+                        twa={((weather?.windDir || 0) - (selectedShip?.cog || 0) + 360) % 360}
+                        depth={depth}
+                        dtw={navPlan.distanceNM || 0}
+                        btw={navPlan.btw}
+                        eta={navPlan.eta}
+                        xte={navPlan.xte || 0}
+                        waypointName={navPlan.targetName || navigationDestination || '---'}
+                        chartMode={chartMode}
+                        activeChartName={MBTILES_ZONES[mbtileIndex]?.name || 'Local'}
+                        aisEnabled={layersState.showAIS}
+                        windEnabled={layersState.showWind}
+                        collisionFilter={layersState.collisionFilter}
+                        isNavigating={isTravesiaActive}
+                        autopilotMode={autopilotMode}
+                        activePage={zeusPage}
+                        onSelectPage={setZeusPage}
+                        onOpenHud={openZeusHudPage}
+                        onOpenSystems={() => setShowSystems(true)}
+                        onCycleChart={cycleChart}
+                        onToggleAIS={() => setLayersState(prev => ({ ...prev, showAIS: !prev.showAIS }))}
+                        onToggleWind={() => setLayersState(prev => ({ ...prev, showWind: !prev.showWind }))}
+                        onToggleCollisionFilter={() => setLayersState(prev => ({ ...prev, collisionFilter: !prev.collisionFilter }))}
+                        onStartNavigation={() => setShowSafetyModal(true)}
+                        onEndNavigation={handleEndTravesia}
+                        isSailSteerWidgetOpen={isSailSteerWidgetOpen}
+                        onCloseSailSteerWidget={() => setIsSailSteerWidgetOpen(false)}
+
+
+
+                        onToggleAutopilot={toggleZeusAutopilot}
+                      />
+
+                      <ZeusSidebar
+                        activePage={zeusPage}
+                        onSelect={(page) => setZeusPage(page as any)}
+                        onToggleMenu={() => setShowSystems(!showSystems)}
+                        isNavigating={isTravesiaActive}
+                        listaCartas={listaCartas}
+                        cartasActivas={cartasActivas}
+                        toggleCarta={toggleCarta}
+                        cartasOpacity={cartasOpacity}
+                        setCartasOpacity={setCartasOpacity}
+                        layersState={layersState}
+                        setLayersState={setLayersState}
+                        aisEnabled={layersState.showAIS} // Pass existing state
+                        windEnabled={layersState.showWind} // Pass existing state
+                        aisTargets={tacticalAisTargets}
+                        collisionFilter={layersState.collisionFilter} // Pass existing state
+                        autopilotMode={autopilotMode} // Pass existing state
+                        onToggleAIS={() => setLayersState(prev => ({ ...prev, showAIS: !prev.showAIS }))} // Pass toggle function
+                        onToggleWind={() => setLayersState(prev => ({ ...prev, showWind: !prev.showWind }))} // Pass toggle function
+                        onToggleCollisionFilter={() => setLayersState(prev => ({ ...prev, collisionFilter: !prev.collisionFilter }))} // Pass toggle function
+                        isWeatherPanelOpen={isWeatherPanelOpen}
+                        setIsWeatherPanelOpen={setIsWeatherPanelOpen}
+                        isLaylinesActive={isLaylinesActive}
+                        isSailSteerWidgetOpen={isSailSteerWidgetOpen}
+                        setIsSailSteerWidgetOpen={setIsSailSteerWidgetOpen}
+                        setIsLaylinesActive={setIsLaylinesActive}
+                        onToggleAutopilot={toggleZeusAutopilot} // Pass toggle function
+                      />
+
+                      {/* Columna de Acción: Integrada en el mapa */}
+
+
+                      {/* Control Toggle y Cartas (Bottom Left del Mapa) - REMOVED BY USER REQUEST */}
+                    </div>
+                  </ErrorBoundary>
+                </div>
+
+                <div className="absolute inset-0 z-[7000] pointer-events-none">
+                  {showControl && (
+                    <div className="pointer-events-auto h-full">
+                      <TacticalHUD
+                        isOpen={showControl}
+                        onClose={() => setShowControl(false)}
+                        sog={simulatedSog}
+                        hdg={selectedShip?.cog || 0}
+                        twd={weather?.windDir || 0}
+                        tws={weather?.wind || 0}
+                        twa={((weather?.windDir || 0) - (selectedShip?.cog || 0) + 360) % 360}
+                        awa={((weather?.windDir || 0) - (selectedShip?.cog || 0) - 20 + 360) % 360}
+                        aws={(weather?.wind || 0) * 1.2}
+                        vmg={navPlan.vmg}
+                        onTabChange={(tab: any) => setActiveTab(tab)}
+                        onMotor={handleMotor}
+                        onVela={handleVela}
+                        onMOB={handleMOB}
+                        onToggleLights={handleToggleLights}
+                        lightsOn={lightsOn}
+                        mobActive={mobActive}
+                        activeTab={activeTab}
+                        isNavigating={isTravesiaActive}
+                        initialPageIndex={hudPageIndex}
+                        onPageIndexChange={handlePageChange}
+                        onRaceTimerFinished={handleRaceTimerFinished}
+                        depth={depth}
+                        depthHistory={depthHistory}
+                        trip1={trip1}
+                        trip2={trip2}
+                        engineData={engineData}
+                        navData={{
+                          btw: navPlan.btw,
+                          dtw: navPlan.distanceNM,
+                          eta: navPlan.eta, // Pass ETA to TacticalHUD
+                          xte: navPlan.xte,
+                          waypointName: navPlan.targetName || '---',
+                        }}
+                        onTripAction={handleTripAction}
+                        shipId={selectedShipId || '00000000-0000-0000-0000-000000000000'}
+                        anchorPosition={anchorPosition}
+                        shipPosition={shipPosition}
+                        swingRadius={swingRadius}
+                        currentAnchorDistance={currentAnchorDistance}
+                        isAnchorWatchActive={isAnchorWatchActive}
+                        anchorTrend={anchorTrend}
+                      />
+                    </div>
+                  )}
+                  {showSystems && (
+                    <div className="pointer-events-auto h-full">
+                      <ControlCenter
+                        isNightMode={isNightMode}
+                        setIsNightMode={setIsNightMode}
+                        fleet={fleet}
+                        selectedShipId={selectedShipId}
+                        setSelectedShipId={handleShipSelection}
+                        destination={destination}
+                        setDestination={setDestination}
+                        weather={weather}
+                        isAdvisorOpen={isAdvisorOpen}
+                        setIsAdvisorOpen={setIsAdvisorOpen}
+                        advisorMessage={advisorMessage}
+                        setAdvisorMessage={setAdvisorMessage}
+                        getTacticalAdvice={getTacticalAdvice}
+                        closeAdvisor={closeAdvisor}
+                        getShipEmoji={getShipEmoji}
+                        getShipIcon={getShipIcon}
+                        getDefaultShipImage={getDefaultShipImage}
+                        showShipForm={showShipForm}
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab as any}
+                        setNewShip={setNewShip as any}
+                        isTravesiaActive={isTravesiaActive}
+                        setIsTravesiaActive={setIsTravesiaActive}
+                        isEngineOn={isEngineOn}
+                        setIsEngineOn={setIsEngineOn}
+                        tripDistance={tripDistance}
+                        setTripDistance={setTripDistance}
+                        startTime={startTime}
+                        setStartTime={setStartTime}
+                        onEndNavigation={handleEndTravesia}
+                        setShowSafetyModal={setShowSafetyModal}
+                        supabase={supabase}
+                        saveLogEntry={saveTechnicalLog}
+                        isProcessing={isAdvisorProcessing}
+                        isSelectingNavigationMode={isSelectingNavigationMode}
+                        setIsSelectingNavigationMode={setIsSelectingNavigationMode}
+                        setNavigationMode={setNavigationMode}
+                        setNavigationDestination={setNavigationDestination}
+                        currentPath={currentPath}
+                        setCurrentPath={setCurrentPath}
+                        aiBriefing={aiBriefing}
+                        setIsLogbookOpen={(val) => {
+                          if (val) setActiveTab('logbook');
+                        }}
+                        shipPosition={shipPosition}
+                        onDispatch={(modo) => {
+                          setPendingTravesiaData({ modo });
+                          setShowSafetyModal(true);
+                        }}
+                        logEntries={logEntries}
+                        setLogEntries={setLogEntries as any}
+                        simulatedSog={simulatedSog}
+                        setSimulatedSog={setSimulatedSog}
+                        saveTechnicalEvent={saveTechnicalLog}
+                        lightsOn={lightsOn}
+                        setLightsOn={setLightsOn}
+                        mobActive={mobActive}
+                        setMobActive={setMobActive}
+                        isAnchorWatchActive={isAnchorWatchActive}
+                        onToggleAnchorWatch={toggleAnchorWatch}
+                        currentAnchorDistance={currentAnchorDistance}
+                        anchorTrend={anchorTrend}
+                        anchorPosition={anchorPosition}
+                        tacticalAdvisorActions={tacticalAdvisor.actions}
+                        tacticalAdvisorAlertCount={tacticalAdvisor.alerts.length}
+                        onMotor={() => {
+                          setPropulsionMode('MOTOR');
+                          saveTechnicalLog('Sistema de Propulsión', 'Cambio a propulsión a MOTOR');
+                        }}
+                        onVela={() => {
+                          setPropulsionMode('VELA');
+                          saveTechnicalLog('Sistema de Propulsión', 'Cambio a propulsión a VELA');
+                        }}
+                        propulsionMode={propulsionMode}
+                        targetDestination={targetDestination}
+                        setTargetDestination={setTargetDestination}
+                        aiLogs={aiLogs}
+                        refreshAiLogs={() => fetchAiLogs(selectedShipId)}
+                        plannedPath={plannedPath}
+                        setPlannedPath={setPlannedPath}
+                        rutaActiva={rutaActiva}
+                        setRutaActiva={setRutaActiva}
+                        tacticalAdvice={tacticalAdvice}
+                        setTacticalAdvice={setTacticalAdvice}
+                        handleAcceptTactical={handleAcceptTactical}
+                        activeRouteId={activeRouteId}
+                        isAutoCenter={isAutoCenter}
+                        setIsAutoCenter={setIsAutoCenter}
+                        navigationDestination={navigationDestination}
+                        onClose={() => setShowSystems(false)}
+                        userProfile={userProfile}
+                        depth={depth}
+                        alarms={alarms}
+                        thresholds={thresholds}
+                        telemetry={telemetry}
+                        captainPreferences={captainPreferences}
+                        navPlan={navPlan}
+                        PORT_LIST={PORT_LIST}
+                        updateNavigationPlan={updateNavigationPlan}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="h-full w-full bg-slate-950 overflow-hidden">
+                <div className="h-full w-full overflow-y-auto custom-scrollbar">
+
+                  {renderContent()}
+
+                </div>
+              </div>
+            )}
           </div>
 
-            <div className="absolute inset-0 z-[7000] pointer-events-none">
-              {showControl && (
-                <div className="pointer-events-auto h-full">
-                  <TacticalHUD 
-                    isOpen={showControl}
-                    onClose={() => setShowControl(false)}
-                    sog={simulatedSog}
-                    hdg={selectedShip?.cog || 0}
-                    twd={weather?.windDir || 0}
-                    tws={weather?.wind || 0}
-                    twa={((weather?.windDir || 0) - (selectedShip?.cog || 0) + 360) % 360}
-                    awa={((weather?.windDir || 0) - (selectedShip?.cog || 0) - 20 + 360) % 360}
-                    aws={(weather?.wind || 0) * 1.2}
-                    vmg={navPlan.vmg}
-                    onTabChange={(tab: any) => setActiveTab(tab)}
-                    onMotor={handleMotor}
-                    onVela={handleVela}
-                    onMOB={handleMOB}
-                    onToggleLights={handleToggleLights}
-                    lightsOn={lightsOn}
-                    mobActive={mobActive}
-                    activeTab={activeTab}
-                    isNavigating={isTravesiaActive}
-                    initialPageIndex={hudPageIndex}
-                    onPageIndexChange={handlePageChange}
-                    onRaceTimerFinished={handleRaceTimerFinished}
-                    depth={depth}
-                    depthHistory={depthHistory}
-                    trip1={trip1}
-                    trip2={trip2}
-                    engineData={engineData}
-                    navData={{
-                      btw: navPlan.btw,
-                      dtw: navPlan.distanceNM,
-                      eta: navPlan.eta, // Pass ETA to TacticalHUD
-                      xte: navPlan.xte,
-                      waypointName: navPlan.targetName || '---',
-                    }}
-                    onTripAction={handleTripAction}
-                    shipId={selectedShipId || '00000000-0000-0000-0000-000000000000'}
-                    anchorPosition={anchorPosition}
-                    shipPosition={shipPosition}
-                    swingRadius={swingRadius}
-                    currentAnchorDistance={currentAnchorDistance}
-                    isAnchorWatchActive={isAnchorWatchActive}
-                    anchorTrend={anchorTrend}
-                  />
-                </div>
-              )}
-              {showSystems && (
-                <div className="pointer-events-auto h-full">
-                  <ControlCenter 
-                    isNightMode={isNightMode}
-                    setIsNightMode={setIsNightMode}
-                    fleet={fleet}
-                    selectedShipId={selectedShipId}
-                    setSelectedShipId={handleShipSelection}
-                    destination={destination}
-                    setDestination={setDestination}
-                    weather={weather}
-                    isAdvisorOpen={isAdvisorOpen}
-                    setIsAdvisorOpen={setIsAdvisorOpen}
-                    advisorMessage={advisorMessage}
-                    setAdvisorMessage={setAdvisorMessage}
-                    getTacticalAdvice={getTacticalAdvice}
-                    closeAdvisor={closeAdvisor}
-                    getShipEmoji={getShipEmoji}
-                    getShipIcon={getShipIcon}
-                    getDefaultShipImage={getDefaultShipImage}
-                    showShipForm={showShipForm}
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab as any}
-                    setNewShip={setNewShip as any}
-                    isTravesiaActive={isTravesiaActive}
-                    setIsTravesiaActive={setIsTravesiaActive}
-                    isEngineOn={isEngineOn}
-                    setIsEngineOn={setIsEngineOn}
-                    tripDistance={tripDistance}
-                    setTripDistance={setTripDistance}
-                    startTime={startTime}
-                    setStartTime={setStartTime}
-                    onEndNavigation={handleEndTravesia}
-                    setShowSafetyModal={setShowSafetyModal}
-                    supabase={supabase}
-                    saveLogEntry={saveTechnicalLog}
-                    isProcessing={isAdvisorProcessing}
-                    isSelectingNavigationMode={isSelectingNavigationMode}
-                    setIsSelectingNavigationMode={setIsSelectingNavigationMode}
-                    setNavigationMode={setNavigationMode}
-                    setNavigationDestination={setNavigationDestination}
-                    currentPath={currentPath}
-                    setCurrentPath={setCurrentPath}
-                    aiBriefing={aiBriefing}
-                    setIsLogbookOpen={(val) => {
-                      if (val) setActiveTab('logbook');
-                    }}
-                    shipPosition={shipPosition}
-                    onDispatch={(modo) => {
-                      setPendingTravesiaData({ modo });
-                      setShowSafetyModal(true);
-                    }}
-                    logEntries={logEntries}
-                    setLogEntries={setLogEntries as any}
-                    simulatedSog={simulatedSog}
-                    setSimulatedSog={setSimulatedSog}
-                    saveTechnicalEvent={saveTechnicalLog}
-                    lightsOn={lightsOn}
-                    setLightsOn={setLightsOn}
-                    mobActive={mobActive}
-                    setMobActive={setMobActive}
-                    isAnchorWatchActive={isAnchorWatchActive}
-                    onToggleAnchorWatch={toggleAnchorWatch}
-                    currentAnchorDistance={currentAnchorDistance}
-                    anchorTrend={anchorTrend}
-                    anchorPosition={anchorPosition}
-                    tacticalAdvisorActions={tacticalAdvisor.actions}
-                    tacticalAdvisorAlertCount={tacticalAdvisor.alerts.length}
-                    onMotor={() => {
-                      setPropulsionMode('MOTOR');
-                      saveTechnicalLog('Sistema de Propulsión', 'Cambio a propulsión a MOTOR');
-                    }}
-                    onVela={() => {
-                      setPropulsionMode('VELA');
-                      saveTechnicalLog('Sistema de Propulsión', 'Cambio a propulsión a VELA');
-                    }}
-                    propulsionMode={propulsionMode}
-                    targetDestination={targetDestination}
-                    setTargetDestination={setTargetDestination}
-                    aiLogs={aiLogs}
-                    refreshAiLogs={() => fetchAiLogs(selectedShipId)}
-                    plannedPath={plannedPath}
-                    setPlannedPath={setPlannedPath}
-                    rutaActiva={rutaActiva}
-                    setRutaActiva={setRutaActiva}
-                    tacticalAdvice={tacticalAdvice}
-                    setTacticalAdvice={setTacticalAdvice}
-                    handleAcceptTactical={handleAcceptTactical}
-                    activeRouteId={activeRouteId}
-                    isAutoCenter={isAutoCenter}
-                    setIsAutoCenter={setIsAutoCenter}
-                    navigationDestination={navigationDestination}
-                    onClose={() => setShowSystems(false)}
-                    userProfile={userProfile}
-                    depth={depth}
-                    alarms={alarms}
-                    thresholds={thresholds}
-                    telemetry={telemetry}
-                    captainPreferences={captainPreferences}
-                    navPlan={navPlan}
-                    PORT_LIST={PORT_LIST}
-                    updateNavigationPlan={updateNavigationPlan}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-          ) : (
-            <div className="h-full w-full bg-slate-950 overflow-hidden">
-              <div className="h-full w-full overflow-y-auto custom-scrollbar">
-    
-              {renderContent()}
-
-            </div>
-            </div>
-          )}
-        </div>
-
-        {/* Input de Comandos Sticky (Original restored) */}
-        {activeTab === 'control' && (
-          <div className="absolute bottom-6 left-6 right-6 z-[7500] p-4 bg-gradient-to-r from-slate-900/40 via-cyan-900/20 to-slate-900/40 border border-cyan-500/30 backdrop-blur-md rounded-2xl flex items-center gap-4">
-             <form onSubmit={(e) => { e.preventDefault(); handleTacticalOrder(input); }} className="w-full flex gap-2">
+          {/* Input de Comandos Sticky (Original restored) */}
+          {activeTab === 'control' && (
+            <div className="absolute bottom-4 left-6 right-70 z-[7500] px-4 py-2 bg-gradient-to-r from-slate-900/40 via-cyan-900/20 to-slate-900/40 border border-cyan-500/30 backdrop-blur-md rounded-xl flex items-center gap-3">
+              <form onSubmit={(e) => { e.preventDefault(); handleTacticalOrder(input); }} className="w-full flex gap-2">
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ejecutar comando táctico..."
-                  className="flex-1 bg-transparent border-none text-white focus:outline-none font-mono text-sm"
+                  className="flex-1 bg-transparent border-none text-white focus:outline-none font-mono text-sm h-8"
                 />
-                <button type="submit" disabled={isProcessing || !input.trim()} className="p-2 bg-cyan-600 rounded-lg text-white hover:bg-cyan-500">
+                <button type="submit" disabled={isProcessing || !input.trim()} className="h-8 w-8 flex items-center justify-center bg-cyan-600 rounded-lg text-white hover:bg-cyan-500">
                   <Send size={16} />
                 </button>
-             </form>
-          </div>
-        )}
-      </main>
+              </form>
+            </div>
+          )}
+        </main>
 
 
-      {/* Ubiquitous Logbook Drawer */}
-      {/* Watch Selection Modal */}
-      <AnimatePresence>
-        {isSelectingNavigationMode && (
-          <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              className="bg-slate-900 border border-white/10 p-8 rounded-[40px] space-y-6 w-full max-w-lg shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
-            >
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-cyan-500/20 rounded-2xl flex items-center justify-center mx-auto border border-cyan-500/30">
-                  <Navigation className="w-8 h-8 text-cyan-500" />
-                </div>
-                <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Preparar Travesía</h2>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Almirante, seleccione la doctrina de navegación para esta misión</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button 
-                  onClick={() => {
-                    setIsSelectingNavigationMode(false);
-                    setNavigationMode('Libre');
-                    setTipoTravesia('libre');
-                    setShowSafetyModal(true);
-                  }}
-                  className="group flex flex-col items-center gap-4 p-6 bg-slate-950/50 border border-white/5 rounded-3xl hover:border-cyan-500 hover:bg-cyan-950/20 transition-all text-center"
-                >
-                  <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-cyan-600 group-hover:text-white transition-all shadow-xl">
-                    <Compass className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-white uppercase tracking-tight">Navegación Libre</h3>
-                    <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Manual - Sin asistencia táctica de IA</p>
-                  </div>
-                </button>
-
-                <button 
-                  onClick={() => {
-                    setIsSelectingNavigationMode(false);
-                    setNavigationMode('Planificada');
-                    setTipoTravesia('asistida');
-                    setIsExplainingAiRoute(true);
-                  }}
-                  className="group flex flex-col items-center gap-4 p-6 bg-slate-950/50 border border-white/5 rounded-3xl hover:border-emerald-500 hover:bg-emerald-950/20 transition-all text-center"
-                >
-                  <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-xl">
-                    <Zap className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-white uppercase tracking-tight">Ruta Asistida (IA)</h3>
-                    <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Optimización VMG y meteorología avanzada</p>
-                  </div>
-                </button>
-              </div>
-
-              <button 
-                onClick={() => setIsSelectingNavigationMode(false)}
-                className="w-full py-4 text-slate-500 font-bold uppercase tracking-widest text-[10px] hover:text-white transition-colors border-t border-white/5 mt-4"
+        {/* Ubiquitous Logbook Drawer */}
+        {/* Watch Selection Modal */}
+        <AnimatePresence>
+          {isSelectingNavigationMode && (
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                className="bg-slate-900 border border-white/10 p-8 rounded-[40px] space-y-6 w-full max-w-lg shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
               >
-                Abortar Misión
-              </button>
-            </motion.div>
-          </div>
-        )}
-
-        {isExplainingAiRoute && (
-          <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="bg-slate-900 border border-emerald-500/20 p-8 rounded-[40px] space-y-6 w-full max-w-lg shadow-[0_40px_100px_rgba(0,163,255,0.2)]"
-            >
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto border border-emerald-500/30">
-                  <Zap className="w-8 h-8 text-emerald-500 animate-pulse" />
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-cyan-500/20 rounded-2xl flex items-center justify-center mx-auto border border-cyan-500/30">
+                    <Navigation className="w-8 h-8 text-cyan-500" />
+                  </div>
+                  <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Preparar Travesía</h2>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Almirante, seleccione la doctrina de navegación para esta misión</p>
                 </div>
-                <h2 className="text-2xl font-black text-white uppercase tracking-tighter italic">AI Tactical Briefing</h2>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Almirante, describa su ruta u objetivo estratégico</p>
-              </div>
 
-              <div className="space-y-4">
-                <textarea 
-                  value={aiRoutePrompt}
-                  onChange={(e) => setAiRoutePrompt(e.target.value)}
-                  placeholder="Ej: Salida de Motril hacia Almuñécar, navegación costera evitando bancos de arena..."
-                  className="w-full h-32 bg-black/50 border border-white/10 rounded-2xl p-4 text-sm text-white placeholder:text-slate-700 focus:border-emerald-500 outline-none transition-all resize-none font-mono"
-                />
-
-                <button 
-                  onClick={handleAiRouteSubmit}
-                  disabled={isAiProcessing || !aiRoutePrompt.trim()}
-                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-900/20"
-                >
-                  {isAiProcessing ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      <span>Confirmar Ruta</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <button 
-                onClick={() => setIsExplainingAiRoute(false)}
-                className="w-full py-2 text-slate-500 font-bold uppercase tracking-widest text-[9px] hover:text-white transition-colors"
-              >
-                Volver
-              </button>
-            </motion.div>
-          </div>
-        )}
-
-        {showWatchSelection && (
-          <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="bg-slate-900 border border-slate-800 p-8 rounded-[40px] space-y-6 w-full max-w-sm shadow-2xl"
-            >
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto border border-emerald-500/30">
-                  <Clock className="w-8 h-8 text-emerald-500" />
-                </div>
-                <h2 className="text-xl font-black text-white uppercase tracking-tighter">Inicio de Guardia</h2>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">¿Quién inicia la guardia en este despacho?</p>
-              </div>
-
-              <div className="grid gap-2">
-                {crewOnBoard.map(member => (
-                  <button 
-                    key={member.id}
-                    onClick={() => proceedWithStartTravesia(pendingTravesiaData!.modo, pendingTravesiaData!.levels, member.id)}
-                    className="flex items-center gap-4 p-4 bg-slate-950/50 border border-slate-800 rounded-2xl hover:border-cyan-500 hover:bg-cyan-950/20 transition-all group"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => {
+                      setIsSelectingNavigationMode(false);
+                      setNavigationMode('Libre');
+                      setTipoTravesia('libre');
+                      setShowSafetyModal(true);
+                    }}
+                    className="group flex flex-col items-center gap-4 p-6 bg-slate-950/50 border border-white/5 rounded-3xl hover:border-cyan-500 hover:bg-cyan-950/20 transition-all text-center"
                   >
-                    <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-xs font-black text-slate-400 group-hover:bg-cyan-600 group-hover:text-white transition-all">
-                      {member.nombre.charAt(0)}
+                    <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-cyan-600 group-hover:text-white transition-all shadow-xl">
+                      <Compass className="w-6 h-6" />
                     </div>
-                    <div className="text-left">
-                      <p className="text-[10px] font-black text-white uppercase tracking-tight">{member.nombre}</p>
-                      <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{member.rango}</p>
+                    <div>
+                      <h3 className="text-sm font-black text-white uppercase tracking-tight">Navegación Libre</h3>
+                      <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Manual - Sin asistencia táctica de IA</p>
                     </div>
                   </button>
-                ))}
-              </div>
 
-              <button 
-                onClick={() => setShowWatchSelection(false)}
-                className="w-full py-3 text-slate-500 font-bold uppercase tracking-widest text-[10px] hover:text-slate-300 transition-colors"
-              >
-                Cancelar
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <SafetyModal 
-        show={showSafetyModal}
-        userProfile={userProfile}
-        supabase={supabase}
-        fleet={fleet}
-        onComplete={() => setShowSafetyModal(false)}
-        onDispatch={(levels, crew) => {
-          console.log('App: SafetyModal onDispatch called', { levels, crewLength: crew?.length });
-          setShowSafetyModal(false);
-          // Small delay to ensure modal close doesn't interfere with new modal open
-          setTimeout(() => {
-            const finalMode = navigationMode === 'Planificada' ? 'IA' : 'Libre';
-            handleStartTravesia(finalMode, levels, crew);
-          }, 100);
-        }}
-        setAdvisorMessage={setAdvisorMessage}
-        selectedShipId={selectedShipId}
-      />
-
-      <ChangelogModal 
-        isOpen={showChangelog} 
-        onClose={() => setShowChangelog(false)} 
-        data={changelogData} 
-      />
-
-      <AnimatePresence>
-        {isLogbookOpen && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsLogbookOpen(false)}
-              className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[8000]"
-            />
-            <motion.div 
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-full md:w-[600px] bg-slate-950 border-l border-slate-800 z-[8001] shadow-2xl overflow-y-auto custom-scrollbar flex flex-col"
-            >
-              <div className="p-4 border-b border-slate-800 flex items-center justify-between sticky top-0 bg-slate-950/90 backdrop-blur-md z-10">
-                <div className="flex items-center gap-3">
-                  <Book className="w-5 h-5 text-cyan-500" />
-                  <h2 className="text-sm font-black text-white uppercase tracking-widest">Bitácora de Navegación</h2>
+                  <button
+                    onClick={() => {
+                      setIsSelectingNavigationMode(false);
+                      setNavigationMode('Planificada');
+                      setTipoTravesia('asistida');
+                      setIsExplainingAiRoute(true);
+                    }}
+                    className="group flex flex-col items-center gap-4 p-6 bg-slate-950/50 border border-white/5 rounded-3xl hover:border-emerald-500 hover:bg-emerald-950/20 transition-all text-center"
+                  >
+                    <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-xl">
+                      <Zap className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-white uppercase tracking-tight">Ruta Asistida (IA)</h3>
+                      <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Optimización VMG y meteorología avanzada</p>
+                    </div>
+                  </button>
                 </div>
-                <button 
-                  onClick={() => setIsLogbookOpen(false)}
-                  className="p-2 bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors"
+
+                <button
+                  onClick={() => setIsSelectingNavigationMode(false)}
+                  className="w-full py-4 text-slate-500 font-bold uppercase tracking-widest text-[10px] hover:text-white transition-colors border-t border-white/5 mt-4"
                 >
-                  <X className="w-4 h-4 text-slate-400" />
+                  Abortar Misión
                 </button>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <Logbook 
-                  userProfile={userProfile!} 
-                  supabase={supabase} 
-                  fleet={fleet}
-                  selectedShipId={selectedShipId} 
-                  setAdvisorMessage={setAdvisorMessage} 
-                  logEntries={logEntries}
-                  setLogEntries={setLogEntries}
-                  saveLogEntry={saveTechnicalLog}
-                  isEngineOn={isEngineOn}
-                  setIsEngineOn={setIsEngineOn}
-                />
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
+          )}
+
+          {isExplainingAiRoute && (
+            <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-slate-900 border border-emerald-500/20 p-8 rounded-[40px] space-y-6 w-full max-w-lg shadow-[0_40px_100px_rgba(0,163,255,0.2)]"
+              >
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto border border-emerald-500/30">
+                    <Zap className="w-8 h-8 text-emerald-500 animate-pulse" />
+                  </div>
+                  <h2 className="text-2xl font-black text-white uppercase tracking-tighter italic">AI Tactical Briefing</h2>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Almirante, describa su ruta u objetivo estratégico</p>
+                </div>
+
+                <div className="space-y-4">
+                  <textarea
+                    value={aiRoutePrompt}
+                    onChange={(e) => setAiRoutePrompt(e.target.value)}
+                    placeholder="Ej: Salida de Motril hacia Almuñécar, navegación costera evitando bancos de arena..."
+                    className="w-full h-32 bg-black/50 border border-white/10 rounded-2xl p-4 text-sm text-white placeholder:text-slate-700 focus:border-emerald-500 outline-none transition-all resize-none font-mono"
+                  />
+
+                  <button
+                    onClick={handleAiRouteSubmit}
+                    disabled={isAiProcessing || !aiRoutePrompt.trim()}
+                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-900/20"
+                  >
+                    {isAiProcessing ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5" />
+                        <span>Confirmar Ruta</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setIsExplainingAiRoute(false)}
+                  className="w-full py-2 text-slate-500 font-bold uppercase tracking-widest text-[9px] hover:text-white transition-colors"
+                >
+                  Volver
+                </button>
+              </motion.div>
+            </div>
+          )}
+
+          {showWatchSelection && (
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-slate-900 border border-slate-800 p-8 rounded-[40px] space-y-6 w-full max-w-sm shadow-2xl"
+              >
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto border border-emerald-500/30">
+                    <Clock className="w-8 h-8 text-emerald-500" />
+                  </div>
+                  <h2 className="text-xl font-black text-white uppercase tracking-tighter">Inicio de Guardia</h2>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">¿Quién inicia la guardia en este despacho?</p>
+                </div>
+
+                <div className="grid gap-2">
+                  {crewOnBoard.map(member => (
+                    <button
+                      key={member.id}
+                      onClick={() => proceedWithStartTravesia(pendingTravesiaData!.modo, pendingTravesiaData!.levels, member.id)}
+                      className="flex items-center gap-4 p-4 bg-slate-950/50 border border-slate-800 rounded-2xl hover:border-cyan-500 hover:bg-cyan-950/20 transition-all group"
+                    >
+                      <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-xs font-black text-slate-400 group-hover:bg-cyan-600 group-hover:text-white transition-all">
+                        {member.nombre.charAt(0)}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[10px] font-black text-white uppercase tracking-tight">{member.nombre}</p>
+                        <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{member.rango}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setShowWatchSelection(false)}
+                  className="w-full py-3 text-slate-500 font-bold uppercase tracking-widest text-[10px] hover:text-slate-300 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <SafetyModal
+          show={showSafetyModal}
+          userProfile={userProfile}
+          supabase={supabase}
+          fleet={fleet}
+          onComplete={() => setShowSafetyModal(false)}
+          onDispatch={(levels, crew) => {
+            console.log('App: SafetyModal onDispatch called', { levels, crewLength: crew?.length });
+            setShowSafetyModal(false);
+            // Small delay to ensure modal close doesn't interfere with new modal open
+            setTimeout(() => {
+              const finalMode = navigationMode === 'Planificada' ? 'IA' : 'Libre';
+              handleStartTravesia(finalMode, levels, crew);
+            }, 100);
+          }}
+          setAdvisorMessage={setAdvisorMessage}
+          selectedShipId={selectedShipId}
+        />
+
+        <ChangelogModal
+          isOpen={showChangelog}
+          onClose={() => setShowChangelog(false)}
+          data={changelogData}
+        />
+
+        <AnimatePresence>
+          {isLogbookOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsLogbookOpen(false)}
+                className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[8000]"
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="fixed top-0 right-0 h-full w-full md:w-[600px] bg-slate-950 border-l border-slate-800 z-[8001] shadow-2xl overflow-y-auto custom-scrollbar flex flex-col"
+              >
+                <div className="p-4 border-b border-slate-800 flex items-center justify-between sticky top-0 bg-slate-950/90 backdrop-blur-md z-10">
+                  <div className="flex items-center gap-3">
+                    <Book className="w-5 h-5 text-cyan-500" />
+                    <h2 className="text-sm font-black text-white uppercase tracking-widest">Bitácora de Navegación</h2>
+                  </div>
+                  <button
+                    onClick={() => setIsLogbookOpen(false)}
+                    className="p-2 bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors"
+                  >
+                    <X className="w-4 h-4 text-slate-400" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <Logbook
+                    userProfile={userProfile!}
+                    supabase={supabase}
+                    fleet={fleet}
+                    selectedShipId={selectedShipId}
+                    setAdvisorMessage={setAdvisorMessage}
+                    logEntries={logEntries}
+                    setLogEntries={setLogEntries}
+                    saveLogEntry={saveTechnicalLog}
+                    isEngineOn={isEngineOn}
+                    setIsEngineOn={setIsEngineOn}
+                  />
+                </div>
+              </motion.div>
             </>
           )}
         </AnimatePresence>
-    </div>
-  );
-}
+      </div>
+    );
+  }
 
-export default App;
+  export default App;

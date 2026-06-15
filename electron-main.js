@@ -111,11 +111,11 @@ function initializeServices(window) {
   // Servidor de Mapas local (MBTiles) en puerto 8089
   console.log('CREANDO MAPSERVICE');
 
-// const mapService = new MapService();
+const mapService = new MapService();
 
 console.log('ARRANCANDO MAPSERVICE');
 
-// mapService.start(8089);
+mapService.start(8089);
 
 console.log('MAPSERVICE ARRANCADO');
 }
@@ -175,11 +175,7 @@ ipcMain.on('hw:connect', (event, port) => {
 
 app.whenReady().then(() => {
   setupAutoUpdater();
-  dialog.showErrorBox(
-  'SMARTSHIP TEST',
-  'electron-main.js se está ejecutando'
-);
-  createWindow();
+    createWindow();
   initializeServices(mainWindow);
   console.log('INITIALIZE SERVICES EJECUTADO');
    if (process.env.VITE_AISSTREAM_API_KEY) {

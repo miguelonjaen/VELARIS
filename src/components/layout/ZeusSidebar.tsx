@@ -106,11 +106,11 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
       />
 
       <aside
-        className={cn(
-          'absolute right-4 top-1/2 -translate-y-1/2 w-16 bg-[#050607]/90 backdrop-blur-xl border border-white/10 rounded-[24px] py-4 flex flex-col items-center gap-4 z-[7000] shadow-2xl',
-          className
-        )}
-      >
+  className={cn(
+    'absolute right-6 top-18 bottom-18 w-[72px] bg-[#050607]/90 backdrop-blur-xl border border-white/10 rounded-[24px] py-4 flex flex-col items-center z-[7000] shadow-2xl',
+    className
+  )}
+>
         <button
           onClick={onToggleMenu}
           className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-slate-300"
@@ -211,35 +211,35 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
         </button>
 
         {/* AUTO */}
-        <button
-          onClick={onToggleAutopilot}
-          className={cn(
-            'w-12 h-12 flex flex-col items-center justify-center rounded-xl transition-all border',
-            autopilotMode !== 'standby'
-              ? 'bg-cyan-600 border-cyan-400 text-white shadow-[0_0_15px_#22d3ee]'
-              : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-200'
-          )}
-        >
-          <Zap size={20} />
-          <span className="text-[6px] font-black mt-1 uppercase tracking-tighter">
-            AUTO
-          </span>
-        </button>
+<button
+  onClick={onToggleAutopilot}
+  className={cn(
+    'w-12 h-12 flex flex-col items-center justify-center rounded-xl transition-all border',
+    autopilotMode !== 'standby'
+      ? 'bg-cyan-600 border-cyan-400 text-white shadow-[0_0_15px_#22d3ee]'
+      : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-200'
+  )}
+>
+  <Zap size={20} />
+  <span className="text-[6px] font-black mt-1 uppercase tracking-tighter">
+    AUTO
+  </span>
+</button>
 
-        <div className="w-8 h-px bg-white/10 my-2" />
+<div className="w-8 h-px bg-white/10 my-2" />
 
-        <div className="mt-auto pt-4">
-          <button
-            className={cn(
-              'w-10 h-10 flex items-center justify-center rounded-full border transition-all',
-              isNavigating
-                ? 'bg-red-950 border-red-500 text-red-500 animate-pulse'
-                : 'bg-slate-900 border-slate-700 text-slate-600'
-            )}
-          >
-            <Power size={16} />
-          </button>
-        </div>
+<div className="pt-2">
+  <button
+    className={cn(
+      'w-10 h-10 flex items-center justify-center rounded-full border transition-all',
+      isNavigating
+        ? 'bg-red-950 border-red-500 text-red-500 animate-pulse'
+        : 'bg-slate-900 border-slate-700 text-slate-600'
+    )}
+  >
+    <Power size={16} />
+  </button>
+</div>
       </aside>
     </>
   );

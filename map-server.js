@@ -203,6 +203,7 @@ app.get('/api/flota', async (req, res) => {
   // ... implementación única ...
 });
 
+console.log('***** MAP-SERVER VERSION NUEVA *****');
 app.listen(PORT, () => {
   console.log(`🚀 SmartShip PRO Backend ONLINE en puerto ${PORT}`);
   console.log(`🛡️  Modo Seguro: IA y Supabase encapsulados.`);

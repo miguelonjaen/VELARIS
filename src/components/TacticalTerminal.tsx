@@ -46,16 +46,18 @@ export const TacticalTerminal: React.FC<TacticalTerminalProps> = ({
 
   return (
     <div className={cn(
-      "absolute z-[1000] overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.5)] flex flex-col transition-all duration-500 border border-cyan-500/30",
+      "absolute z-[1000] overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.5)] flex flex-col min-h-0 transition-all duration-500 border border-cyan-500/30",
       isIntMin 
         ? "bottom-24 left-6 h-8 w-[260px] rounded-full bg-[#050607]/90 backdrop-blur-md border-cyan-500/20"
-        : "top-6 left-6 max-h-[85%] h-[600px] w-80 rounded-2xl bg-[#0a0f18]/95 backdrop-blur-xl"
+        : "top-30 left-6 h-[500px] w-80 rounded-2xl bg-[#0a0f18]/95 backdrop-blur-xl"
     )}>
       <div 
         className={cn(
-          "flex items-center cursor-pointer select-none h-full",
-          isIntMin ? "px-4 justify-start gap-3" : "px-4 py-3 bg-white/5 border-b border-white/5 justify-between"
-        )}
+  "flex items-center cursor-pointer select-none",
+  isIntMin
+    ? "h-full px-4 justify-start gap-3"
+    : "px-4 py-3 bg-white/5 border-b border-white/5 justify-between"
+)}
         onClick={() => setIsIntMin(!isIntMin)}
       >
         <div className="flex items-center gap-2.5 overflow-hidden">
@@ -93,7 +95,7 @@ export const TacticalTerminal: React.FC<TacticalTerminalProps> = ({
         )}
       </div>
       {!isIntMin && (
-        <div ref={terminalRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-black/20">
+        <div ref={terminalRef} onScroll={handleScroll} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-black/20">
           {messages.map((msg, idx) => (
             <div key={idx} className={cn("text-xs font-mono break-words p-2 rounded-lg", msg.role === 'ai' ? "text-emerald-400 bg-emerald-500/5" : "text-cyan-400 bg-cyan-500/5 border-l border-cyan-500/30")}>
               {msg.role === 'ai' ? `IA_OFFICER: ${msg.text}` : `> ${msg.text}`}

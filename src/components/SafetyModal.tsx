@@ -56,6 +56,43 @@ const SafetyModal: React.FC<SafetyModalProps> = ({
     return fleet.find(s => s.id === selectedShipId) || fleet[0];
   }, [fleet, selectedShipId]);
 
+  const handleAutoCompleteChecklist = () => {
+
+  setSafetyChecklist({
+    chalecos: true,
+    pirotecnia: true,
+    extintores: true,
+    botiquin: true,
+    documentacion: true,
+    radio_vhf: true,
+
+    combustible_ok: true,
+    agua_potable_ok: true,
+    aceite_motor: true,
+    correas: true,
+    sentinas: true,
+    grifos_fondo: true,
+    baterias: true,
+    luces_nav: true,
+    timon: true,
+
+    meteorologia: true,
+    cartas: true,
+    fondeo: true,
+
+    aviso_tierra: true,
+    objetos_sueltos: true,
+    linternas: true
+  });
+
+  setLevels({
+    fuel_level: 100,
+    water_level: 100,
+    oil_status: 'OK'
+  });
+
+};
+
   const [safetyChecklist, setSafetyChecklist] = useState({
     // Seguridad y Documentación
     chalecos: false,
@@ -480,6 +517,12 @@ const SafetyModal: React.FC<SafetyModalProps> = ({
                 </div>
               ) : (
                 <>
+                 <button
+      onClick={handleAutoCompleteChecklist}
+      className="w-full mb-4 py-3 rounded-xl bg-amber-500 text-white font-black uppercase tracking-wider hover:bg-amber-600 transition-all"
+    >
+      ⚡ AUTOCOMPLETAR CHECKLIST (SIMULACIÓN)
+    </button>
                   {sections.map((section, idx) => (
                     <div key={idx} className="space-y-3">
                       <h3 className="text-[10px] font-black text-cyan-500 uppercase tracking-[0.2em] px-2">{section.title}</h3>

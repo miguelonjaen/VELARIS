@@ -202,33 +202,7 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
 />
       
       
-      <aside className="pointer-events-auto absolute bottom-24 right-4 top-24 flex w-16 flex-col items-center gap-2 border border-white/10 bg-[#07111e]/90 p-2 shadow-2xl backdrop-blur-md">
-        <button onClick={onOpenSystems} className="flex h-12 w-12 items-center justify-center border border-white/10 bg-black/60 text-slate-300 hover:border-cyan-300 hover:text-cyan-200" title="Menu">
-          <Menu className="h-5 w-5" />
-        </button>
-        <button onClick={onCycleChart} className="flex h-12 w-12 items-center justify-center border border-white/10 bg-black/60 text-slate-300 hover:border-cyan-300 hover:text-cyan-200" title="Pages / Cartas">
-          <Layers className="h-5 w-5" />
-        </button>
-        <button onClick={onToggleAutopilot} className={cn('flex h-12 w-12 items-center justify-center border text-slate-300', autopilotMode !== 'standby' ? 'border-emerald-400 bg-emerald-500/20 text-emerald-200' : 'border-white/10 bg-black/60 hover:border-cyan-300 hover:text-cyan-200')} title="Piloto">
-          <Compass className="h-5 w-5" />
-        </button>
-        <button onClick={onToggleAIS} className={cn('flex h-12 w-12 items-center justify-center border', aisEnabled ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200' : 'border-white/10 bg-black/60 text-slate-300')} title="AIS">
-          <Radar className="h-5 w-5" />
-        </button>
-        <button onClick={onToggleWind} className={cn('flex h-12 w-12 items-center justify-center border', windEnabled ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200' : 'border-white/10 bg-black/60 text-slate-300')} title="Viento">
-          <Wind className="h-5 w-5" />
-        </button>
-        <button onClick={onToggleCollisionFilter} className={cn('flex h-12 w-12 items-center justify-center border', collisionFilter ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-white/10 bg-black/60 text-slate-300')} title="Filtro CPA">
-          <Crosshair className="h-5 w-5" />
-        </button>
-        <div className="mt-auto grid gap-2">
-          <button onClick={onZoomIn} className="h-9 w-12 border border-white/10 bg-black/60 font-mono text-lg font-black text-white">+</button>
-          <button onClick={onZoomOut} className="h-9 w-12 border border-white/10 bg-black/60 font-mono text-lg font-black text-white">-</button>
-        </div>
-        <button onClick={isNavigating ? onEndNavigation : onStartNavigation} className={cn('flex h-12 w-12 items-center justify-center border', isNavigating ? 'border-red-400 bg-red-500/25 text-red-100' : 'border-emerald-400 bg-emerald-500/25 text-emerald-100')} title="Start/Stop">
-          <Power className="h-5 w-5" />
-        </button>
-      </aside>
+    
 
     </div>
   );

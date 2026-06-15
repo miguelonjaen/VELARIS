@@ -14,6 +14,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Gauge, Navigation as NavIcon } from 'lucide-react';
 import { cn } from '@lib/utils';
+import 'leaflet-rotatedmarker';
 
 if (import.meta.env.DEV) {
   console.log('TACTICAL MAP ACTIVO');
@@ -115,7 +116,14 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             </Popup>
           </Marker>
         )}
-
+{currentPath.length > 1 && (
+  <Polyline
+    positions={currentPath}
+    color="#00ffff"
+    weight={3}
+    opacity={0.8}
+  />
+)}
         {navPlan.targetCoords && shipPosition && (
           <>
             <Polyline positions={[[shipPosition.lat, shipPosition.lng], [navPlan.targetCoords.lat, navPlan.targetCoords.lng]]} color="#00FFFF" weight={2} dashArray="5, 10" opacity={0.8} />

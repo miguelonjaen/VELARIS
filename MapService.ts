@@ -21,7 +21,12 @@ export class MapService {
     if (process.env.GEMINI_API_KEY) {
       this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     }
-    
+    console.log(
+  'GEMINI KEY:',
+  process.env.GEMINI_API_KEY
+    ? process.env.GEMINI_API_KEY.substring(0, 10) + '...'
+    : 'NO ENCONTRADA'
+);
     this.setupEndpoints();
   }
 
@@ -63,6 +68,97 @@ export class MapService {
       log.info(`📂 Repositorio de cartas actualizado a: ${newPath}`);
       res.json({ success: true });
     });
+    this.app.post('/api/chat', async (req, res) => {
+  try {
+
+    if (!this.genAI) {
+      return res.status(500).json({
+        error: 'GEMINI_API_KEY no configurada'
+      });
+    }
+
+    const {
+      prompt,
+      systemInstruction
+    } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({
+        error: 'Falta prompt'
+      });
+    }
+
+    const modelName = 'models/gemini-2.5-flash';
+
+console.log('MODELO USADO:', modelName);
+
+const model = this.genAI.getGenerativeModel({
+  model: modelName
+});
+
+    const fullPrompt = `
+${systemInstruction || ''}
+
+${prompt}
+`;
+
+    const result = await model.generateContent(fullPrompt);
+
+    const response = await result.response;
+
+    res.json({
+      text: response.text()
+    });
+
+  } catch (error: any) {
+
+  console.error('ERROR RAW:', error);
+  console.error('ERROR MESSAGE:', error?.message);
+  console.error('ERROR STATUS:', error?.status);
+  console.error('ERROR STACK:', error?.stack);
+
+  res.status(500).json({
+    error: error?.message || 'Error Gemini'
+  });
+
+    console.error(
+  'Gemini Error:',
+  JSON.stringify(error, null, 2)
+);
+
+    res.status(500).json({
+      error: error.message
+    });
+
+  }
+});
+    // Listado de cartas disponibles
+this.app.get('/api/charts', async (_req, res) => {
+  if (!this.currentChartsPath || !fs.existsSync(this.currentChartsPath)) {
+    return res.json([]);
+  }
+
+  try {
+    const files = fs
+      .readdirSync(this.currentChartsPath)
+      .filter(f => f.toLowerCase().endsWith('.mbtiles'));
+
+    const chartsWithMetadata: any[] = [];
+
+    for (const file of files) {
+      chartsWithMetadata.push({
+        name: file
+      });
+    }
+
+    res.json(chartsWithMetadata);
+
+  } catch (error: any) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
   }
 
   public setChartsPath(newPath: string) {
@@ -77,5 +173,26 @@ export class MapService {
     } catch (error) {
       log.error('Fallo al iniciar MapService:', error);
     }
+    this.app.get('/api/list-models', async (_req, res) => {
+
+  try {
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`
+    );
+
+    const data = await response.json();
+
+    res.json(data);
+
+  } catch (err: any) {
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
   }
 }
