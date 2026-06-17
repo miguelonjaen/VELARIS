@@ -41,16 +41,22 @@ export const callGemini = async (
   isJson: boolean = false,
   tools?: any[]
 ): Promise<GeminiResponse> => {
-  const maxRetries = 3;
+  const maxRetries = 2;
   const retryDelay = 1500; // 1.5 segundos entre intentos
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      // Timeout de 30 segundos para evitar colgar la UI
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, systemInstruction, isJson, tools }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       // Manejo de Error 503 (Service Unavailable) o Saturación
       if (response.status === 503) {

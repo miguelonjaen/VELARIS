@@ -25,6 +25,8 @@ export const MBTileLayer: React.FC<MBTileLayerProps> = ({
   shipPosition
 }) => {
   const map = useMap();
+  console.log('MBTILE URL:', url);
+console.log('MBTILE NAME:', name);
   const layerRef = useRef<L.Layer | null>(null);
   const [zoomBounds, setZoomBounds] = useState<{ min: number; max: number }>({ min: 0, max: 16 });
 

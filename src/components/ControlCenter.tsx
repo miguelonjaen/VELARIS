@@ -326,6 +326,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       });
 
       if (destFound) {
+        console.log('⚓ Puerto encontrado:', destFound);
         plan = {
           puntos: [
             [shipPosition.lat, shipPosition.lng],
@@ -333,7 +334,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
             [destFound[0] - 0.02, destFound[1]],
             destFound
           ],
-          mensaje: "Derrota de emergencia: Base de datos."
+          mensaje: `Derrota táctica local hacia ${Object.keys(RUTAS_FRECUENTES).find(port => query.includes(port))}`
         };
       }
     }
@@ -344,6 +345,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       setTargetDestination({ lat: plan.puntos[plan.puntos.length - 1][0], lng: plan.puntos[plan.puntos.length - 1][1] });
       setAdvisorMessage(plan.mensaje || 'Entendido Almirante, orden recibida.');
     } else {
+      console.log('🧭 PLAN GENERADO:', plan);
       setAdvisorMessage('Error: No se pudo calcular la derrota táctica.');
     }
   };
@@ -787,7 +789,21 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
                       <select 
                         onChange={(e) => {
                           const port = PORT_LIST.find(p => p.name === e.target.value);
-                          if (port) updateNavigationPlan(port.coords, port.name);
+                          if (port) {
+
+  updateNavigationPlan(port.coords, port.name);
+
+  const rutaLocal: [number, number][] = [
+    [shipPosition!.lat, shipPosition!.lng],
+    [shipPosition!.lat - 0.02, shipPosition!.lng],
+    [port.coords.lat - 0.02, port.coords.lng],
+    [port.coords.lat, port.coords.lng]
+  ];
+
+  setPlannedPath(rutaLocal);
+  setRutaActiva(rutaLocal);
+  setTargetDestination(port.coords);
+}
                         }}
                         className="w-full bg-black/60 border border-white/10 p-4 rounded-2xl text-xs text-white font-bold appearance-none focus:border-cyan-500 outline-none transition-all cursor-pointer"
                         value={navPlan.targetName || ""}

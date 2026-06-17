@@ -112,7 +112,7 @@ app.get('/api/charts', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
   try {
     // 📥 Recibimos la posición en tiempo real desde el frontend
-    const { prompt, systemInstruction, isJson, posicionActual } = req.body;
+    const { prompt, systemInstruction, isJson, posicionActual,tools } = req.body;
     if (!prompt) return res.status(400).json({ error: "Falta el mensaje" });
 
     // 📡 CONTEXTO DE UBICACIÓN DINÁMICO
@@ -146,7 +146,7 @@ app.post('/api/chat', async (req, res) => {
     `;
 
     const configuracionModelo = { 
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash",
       systemInstruction: directivaSistemaFinal
     };
 
@@ -155,16 +155,71 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const model = genAI.getGenerativeModel(configuracionModelo);
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    
-    res.json({ text: response.text() });
-  } catch (error) {
-    console.error("❌ Error en comunicación Nexus:", error.message);
-    res.status(500).json({ error: "Fallo en la comunicación con la IA" });
-  }
+const result = await model.generateContent(prompt);
+const response = await result.response;
+
+let functionCalls = [];
+
+const lowerPrompt = prompt.toLowerCase();
+
+if (
+  lowerPrompt.includes('rumbo a aguadulce') ||
+  lowerPrompt.includes('puerto de aguadulce')
+) {
+  functionCalls.push({
+    name: 'set_navigation_target',
+    args: {
+      name: 'Puerto de Aguadulce',
+      lat: 36.8142,
+      lng: -2.5726
+    }
+  });
+}
+
+if (
+  lowerPrompt.includes('inicia travesia') ||
+  lowerPrompt.includes('zarpa')
+) {
+  functionCalls.push({
+    name: 'start_travesia',
+    args: {
+      assisted: true
+    }
+  });
+}
+
+if (
+  lowerPrompt.includes('finaliza travesia') ||
+  lowerPrompt.includes('arriba a puerto')
+) {
+  functionCalls.push({
+    name: 'end_travesia',
+    args: {}
+  });
+}
+
+if (
+  lowerPrompt.includes('hombre al agua') ||
+  lowerPrompt.includes('mob')
+) {
+  functionCalls.push({
+    name: 'activate_mob',
+    args: {}
+  });
+}
+
+console.log('FUNCTION CALLS:', functionCalls);
+
+res.json({
+  text: response.text(),
+  functionCalls
 });
 
+} catch (error) {
+  console.error("❌ Error en comunicación Nexus:", error.message);
+  res.status(500).json({ error: "Fallo en la comunicación con la IA" });
+}
+});
 // Endpoint de Salud
 app.get('/health', (req, res) => res.status(200).send('OK'));
 

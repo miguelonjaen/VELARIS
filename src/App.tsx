@@ -682,6 +682,7 @@ function App() {
   const PORT_LIST = [
     { name: 'Motril (Puerto Base)', coords: { lat: 36.7215, lng: -3.5235 } },
     { name: 'Adra', coords: { lat: 36.7464, lng: -3.0189 } },
+    {name: 'Aguadulce', coords: { lat: 36.8142, lng: -2.5726 } },
     { name: 'Almería', coords: { lat: 36.8340, lng: -2.4637 } },
     { name: 'Málaga', coords: { lat: 36.7112, lng: -4.4143 } },
     { name: 'Fuengirola', coords: { lat: 36.5417, lng: -4.6212 } },
@@ -818,7 +819,7 @@ function App() {
       const result = await callGemini(order, systemPrompt, false, NAV_TOOLS);
       const aiText = typeof result === 'string' ? result : result.text || 'Orden procesada.';
       const functionCalls = typeof result === 'string' ? [] : result.functionCalls || [];
-
+console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
       // Ejecutar herramientas si existen
       if (functionCalls && functionCalls.length > 0) {
         for (const call of functionCalls) {
@@ -2822,10 +2823,27 @@ function App() {
 
       setSimulationWaypointIndex(1);
 
-      setRutaActiva([
-        [shipPosition.lat, shipPosition.lng],
-        [navPlan.targetCoords.lat, navPlan.targetCoords.lng]
-      ]);
+if (plannedPath.length > 1) {
+
+  console.log(
+    '🧭 Derrota IA cargada:',
+    plannedPath.length,
+    'waypoints'
+  );
+
+  setRutaActiva(plannedPath);
+
+} else {
+
+  console.log(
+    '⚠️ Sin derrota IA. Navegación directa.'
+  );
+
+  setRutaActiva([
+    [shipPosition.lat, shipPosition.lng],
+    [navPlan.targetCoords.lat, navPlan.targetCoords.lng]
+  ]);
+}
 
 
 
@@ -3962,6 +3980,8 @@ function App() {
                         }}
                         onMapRightClick={handleMapRightClick}
                         onDragStart={() => setIsAutoCenter(false)}
+                        listaCartas={listaCartas}
+  cartasActivas={cartasActivas}
                       >
                         {/* Flota */}
                         <FleetLayer

@@ -36,6 +36,8 @@ interface TacticalMapProps {
   stbdLaylinePath?: [number, number][];
   collisionFilter?: boolean;
   children?: React.ReactNode;
+  listaCartas: any[];
+  cartasActivas: Record<string, boolean>;
   
 }
 
@@ -68,7 +70,8 @@ const InternalEvents = ({ onMapClick, onMapRightClick, onDragStart }: any) => {
 
 export const TacticalMap: React.FC<TacticalMapProps> = ({
   center, zoom, shipPosition, shipName, navPlan, targetDestination, currentPath, onMapClick, onMapRightClick, onDragStart,
-  isLaylinesActive, portLaylinePath, stbdLaylinePath, collisionFilter, children
+  isLaylinesActive, portLaylinePath, stbdLaylinePath, collisionFilter, listaCartas,
+  cartasActivas,children
 }) => {
   return (
     <div
@@ -87,6 +90,15 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
   attribution="© OpenStreetMap contributors"
 />
+{listaCartas?.map(chart =>
+  cartasActivas?.[chart.name] ? (
+    <TileLayer
+      key={chart.name}
+      url={`http://localhost:8089/tiles/${chart.name}/{z}/{x}/{y}`}
+      opacity={1}
+    />
+  ) : null
+)}
 
         {shipPosition && (
           <Marker 
