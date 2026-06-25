@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Compass, Navigation, Gauge, Waves, MapPin, Activity } from 'lucide-react';
 import { motion } from 'motion/react';
-import { cn } from '../../../lib/utils';
-import { Language, translations } from '../../../i18n';
-import { SensorQualityMap } from '../../../lib/sensorQuality';
+import { cn } from './lib/utils';
+import { Language, translations } from './i18n';
+import { SensorQualityMap } from './lib/sensorQuality';
 
 interface NavData {
   lat: number;

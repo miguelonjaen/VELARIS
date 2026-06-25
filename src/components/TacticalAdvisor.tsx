@@ -89,11 +89,12 @@ export const TacticalAdvisor: React.FC<TacticalAdvisorProps> = ({
             
             Da un consejo táctico BREVE y DIRECTO (máximo 12 palabras). Usa lenguaje náutico profesional.`;
           
-          const resultText = await callGemini(prompt);
+          const result = await callGemini(prompt);
+          const resultText = result.text.trim();
           
           if (resultText) {
             setAdvice({
-              text: resultText.trim(),
+              text: resultText,
               priority: 'low',
               timestamp: new Date().toLocaleTimeString()
             });

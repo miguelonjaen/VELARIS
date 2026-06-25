@@ -61,9 +61,21 @@ export const FleetLayer: React.FC<FleetLayerProps> = ({
 return (
   <>
     {/* Marcadores de la Flota (Unidades Propias) */}
-    {fleet.map(ship => {
+    {/* {fleet
+  .filter(ship => String(ship.id) !== String(selectedShipId))
+  .map(ship => {
              
-
+console.log(
+  'SHIP:',
+  ship.nombre,
+  ship.id,
+  'SELECTED:',
+  selectedShipId
+);
+console.log(
+  '¿ES EL SELECCIONADO?',
+  String(ship.id) === String(selectedShipId)
+);
       return (
         <Marker
           key={ship.id}
@@ -79,6 +91,7 @@ return (
             className: 'ship-tactical-render'
             
 })}
+
 
         >
           <Popup className="custom-popup">
@@ -113,6 +126,7 @@ return (
         </Marker>
        );
     })}
+        */}
     {/* AIS Reales */}
 {simulatedAisTargets.map((target) => {
   const tcpaMinutes = target.tcpa ?? 0;

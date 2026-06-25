@@ -132,6 +132,7 @@ import SailSteerWidget from './components/SailSteerWidget';
 import { getUpwindAngle } from './components/utils/polar';
 import { AISStreamService } from './services/aisStreamService';
 
+
 const Vademecum = lazy(() => import('./components/Vademecum'));
 
 declare global {
@@ -213,7 +214,7 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
 // --- Constants ---
 
 const APP_ID = "react-example";
-const GEMINI_MODEL = "gemini-1.5-flash";
+const GEMINI_MODEL = "gemini-2.5-flash";
 
 // --- Constants for Charts ---
 const MBTILES_ZONES = [
@@ -309,6 +310,11 @@ function App() {
 
     const unsubscribe =
       window.smartshipAPI.onAISMessage((msg: any) => {
+        // console.log(
+   //  '🚢 AIS RECIBIDO EN REACT',
+    // msg
+  // );
+
 
         if (msg.MessageType !== 'PositionReport') return;
 
@@ -919,6 +925,10 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
 
       switch (data.type) {
         case 'GPS':
+          console.log(
+  '🛰️ GPS RECIBIDO',
+  data
+);
 
           if (!isSimulationMode) {
             console.log(
@@ -936,7 +946,16 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
 
           markRealSensors(['gps', 'heading', 'sog']);
           if (selectedShipId) {
-            setFleet(prev => prev.map(s => s.id === selectedShipId ? { ...s, cog: data.cog, sog: data.sog } : s));
+  setFleet(prev => prev.map(s =>
+    s.id === selectedShipId
+      ? {
+          ...s,
+          lat: data.lat,
+          lng: data.lng,
+          cog: data.cog,
+          sog: data.sog
+        }
+      : s));
           }
           break;
         case 'WIND':
@@ -952,7 +971,11 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
           markRealSensors(['depth']);
           break;
         case 'AIS':
-          setAisTargets(prev => {
+          //console.log(
+    //'🚢 AIS RECIBIDO:',
+   //  data
+  // );
+            setAisTargets(prev => {
             const target = enrichAisTarget(ownShipVector, {
               ...data,
               id: data.id || data.mmsi || `ais-${Date.now()}`,
@@ -1097,6 +1120,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
   const [advisorText, setAdvisorText] = useState<any>(null);
   const [advisorActions, setAdvisorActions] = useState<any[]>([]);
   const [hasNewAdvice, setHasNewAdvice] = useState(false);
+  const lastLoggedAdvice = useRef<string>('');
   const [destination, setDestination] = useState<any>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [isSafetyChecklistComplete, setIsSafetyChecklistComplete] = useState(false);
@@ -1161,6 +1185,8 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
 
           console.log('🏁 DESTINO ALCANZADO');
 
+          setIsTravesiaActive(false);
+
           handleEndTravesia();
 
           return;
@@ -1217,19 +1243,19 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
         });
         setHasNewAdvice(true);
 
-        if (next.commentWithAi) {
+        if (false && next.commentWithAi) {
           setIsAdvisorProcessing(true);
           setAdvisorMessage('Sincronizando con el centro de datos IA...');
           try {
             const comment = await callGemini(`Almirante en el puente. Analiza estos datos y genera un informe de bienvenida corto, profesional y marinero. Destaca anomalías. Evento: ${next.message}`);
 
-            if (comment) {
+            if (comment.text) {
               setAdvisorText({
-                text: `${next.message}. [IA]: ${comment}`,
+                text: `${next.message}. [IA]: ${comment.text}`,
                 priority: next.priority,
                 timestamp: Date.now()
               });
-              setAdvisorMessage(`${next.message}. IA: ${comment}`);
+              setAdvisorMessage(`${next.message}. IA: ${comment.text}`);
             }
           } catch (err) {
             console.error('Ai Commentary Error:', err);
@@ -1407,7 +1433,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
 
   useEffect(() => {
     if (navigationDestination?.toLowerCase().includes('adra')) {
-      trazarRutaAdra();
+     // trazarRutaAdra();
     } else if (!isSimulationMode) {
       setRutaActiva([]);
     }
@@ -1433,7 +1459,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
   };
 
   const generateMorningReport = async () => {
-    console.log('MORNING REPORT DISPARADO');
+    console.log('🚫 MORNING REPORT EJECUTADO');
     if (!userProfile || !selectedShipId) {
       console.warn('Morning Report: No profile or ship selected yet.');
       return;
@@ -1482,7 +1508,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
       const report = await callGemini(prompt, systemInstruction);
 
       setIsAdvisorProcessing(false);
-      const reportText = typeof report === 'string' ? report : JSON.stringify(report);
+      const reportText = report.text;
       setAdvisorMessage(reportText);
       // 3. Show Result
       setAdvisorText({
@@ -2384,6 +2410,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
   const registerTacticalChange = async (titulo: string, descripcion: string, categoria: string = 'NAVEGACIÓN TÁCTICA') => {
     return saveTechnicalLog(titulo, descripcion, categoria, navigationMode || undefined, navigationDestination, true);
   };
+  const recentLogEntries = useRef<Record<string, number>>({});
 
   async function saveTechnicalLog(
     titulo: string,
@@ -2394,6 +2421,18 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
     isAuto: boolean = true,
     rutaId?: string
   ) {
+    const logKey = `${categoria}|${titulo}`;
+const now = Date.now();
+
+if (
+  recentLogEntries.current[logKey] &&
+  now - recentLogEntries.current[logKey] < 600000 // 10 min
+) {
+  console.log('⏭️ Log duplicado ignorado:', titulo);
+  return;
+}
+
+recentLogEntries.current[logKey] = now;
     try {
       const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
       const barcoIdReal = activeShip?.id || selectedShipId || null;
@@ -2565,14 +2604,27 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
         setHasNewAdvice(true);
 
         // Log critical alerts for traceability
-        if (newAdvice.priority === 'critical' || newAdvice.priority === 'warning') {
-          saveTechnicalLog(
-            newAdvice.priority === 'critical' ? 'Alerta Crítica del Sistema' : 'Advertencia Táctica',
-            newAdvice.text,
-            newAdvice.priority === 'critical' ? 'SEGURIDAD' : 'NAVEGACIÓN',
-            undefined, undefined, true
-          );
-        }
+        if (
+  (newAdvice.priority === 'critical' ||
+   newAdvice.priority === 'warning') &&
+  lastLoggedAdvice.current !== newAdvice.text
+) {
+
+  lastLoggedAdvice.current = newAdvice.text;
+
+  saveTechnicalLog(
+    newAdvice.priority === 'critical'
+      ? 'Alerta Crítica del Sistema'
+      : 'Advertencia Táctica',
+    newAdvice.text,
+    newAdvice.priority === 'critical'
+      ? 'SEGURIDAD'
+      : 'NAVEGACIÓN',
+    undefined,
+    undefined,
+    true
+  );
+}
       }
     };
 
@@ -2617,6 +2669,59 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
       `;
 
       const result = await callGemini(prompt, undefined, true);
+      if (!result.route || !Array.isArray(result.route)) {
+
+  console.log('⚠️ Gemini no disponible. Generando derrota local.');
+
+if (shipPosition && targetDestination) {
+
+  const offshore = 0.04;
+
+  const localRoute: [number, number][] = [
+    [shipPosition.lat, shipPosition.lng],
+
+    [shipPosition.lat - offshore, shipPosition.lng],
+
+    [
+      shipPosition.lat - offshore,
+      shipPosition.lng +
+        (targetDestination.lng - shipPosition.lng) * 0.25
+    ],
+
+    [
+      shipPosition.lat - offshore,
+      shipPosition.lng +
+        (targetDestination.lng - shipPosition.lng) * 0.50
+    ],
+
+    [
+      shipPosition.lat - offshore,
+      shipPosition.lng +
+        (targetDestination.lng - shipPosition.lng) * 0.75
+    ],
+
+    [
+      targetDestination.lat - offshore,
+      targetDestination.lng
+    ],
+
+    [
+      targetDestination.lat,
+      targetDestination.lng
+    ]
+  ];
+
+  console.log(
+    '🧭 RUTA LOCAL GENERADA:',
+    localRoute.length,
+    'waypoints'
+  );
+
+  setPlannedPath(localRoute);
+}
+
+return;
+}
 
       if (result.route && Array.isArray(result.route)) {
         const validRoute = result.route.filter((p: any) =>
@@ -2670,8 +2775,25 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
         }
       }
     } catch (error) {
-      console.error('Error planning route:', error);
-      setAdvisorMessage('Error en el cálculo de ruta táctica.');
+      if (shipPosition && targetDestination) {
+
+    const offshore = 0.04;
+
+    const localRoute: [number, number][] = [
+      [shipPosition.lat, shipPosition.lng],
+      [shipPosition.lat - offshore, shipPosition.lng],
+      [shipPosition.lat - offshore, shipPosition.lng + (targetDestination.lng - shipPosition.lng) * 0.25],
+      [shipPosition.lat - offshore, shipPosition.lng + (targetDestination.lng - shipPosition.lng) * 0.50],
+      [shipPosition.lat - offshore, shipPosition.lng + (targetDestination.lng - shipPosition.lng) * 0.75],
+      [targetDestination.lat - offshore, targetDestination.lng],
+      [targetDestination.lat, targetDestination.lng]
+    ];
+
+    console.log('🧭 FALLBACK LOCAL:', localRoute.length, 'waypoints');
+
+    setPlannedPath(localRoute);
+    setAdvisorMessage('Ruta local generada (Gemini desactivado)');
+  }
     }
   };
 
@@ -2826,7 +2948,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
 if (plannedPath.length > 1) {
 
   console.log(
-    '🧭 Derrota IA cargada:',
+    '🧭 Derrota cargada:',
     plannedPath.length,
     'waypoints'
   );
@@ -2836,13 +2958,46 @@ if (plannedPath.length > 1) {
 } else {
 
   console.log(
-    '⚠️ Sin derrota IA. Navegación directa.'
+    '⚠️ Generando derrota local'
   );
 
-  setRutaActiva([
+  const offshore = 0.04;
+
+  const localRoute: [number, number][] = [
     [shipPosition.lat, shipPosition.lng],
-    [navPlan.targetCoords.lat, navPlan.targetCoords.lng]
-  ]);
+
+    [shipPosition.lat - offshore, shipPosition.lng],
+
+    [
+      shipPosition.lat - offshore,
+      shipPosition.lng +
+      (navPlan.targetCoords.lng - shipPosition.lng) * 0.25
+    ],
+
+    [
+      shipPosition.lat - offshore,
+      shipPosition.lng +
+      (navPlan.targetCoords.lng - shipPosition.lng) * 0.50
+    ],
+
+    [
+      shipPosition.lat - offshore,
+      shipPosition.lng +
+      (navPlan.targetCoords.lng - shipPosition.lng) * 0.75
+    ],
+
+    [
+      navPlan.targetCoords.lat - offshore,
+      navPlan.targetCoords.lng
+    ],
+
+    [
+      navPlan.targetCoords.lat,
+      navPlan.targetCoords.lng
+    ]
+  ];
+
+  setRutaActiva(localRoute);
 }
 
 
@@ -3353,7 +3508,7 @@ if (plannedPath.length > 1) {
 
         // Force Morning Report
         morningReportTriggeredRef.current = true;
-        generateMorningReport();
+        // generateMorningReport();
       }
     }, [isLoggedIn, userProfile?.id, selectedShipId]);
 

@@ -28,6 +28,7 @@ import { TacticalAdvisorPanel } from './TacticalAdvisorPanel';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShipData, VesselStatus, ProcessedWeather, LogEntry, SmartshipAlarm, SecurityThresholds } from '../shared/types';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { COASTAL_ROUTES } from '../navigation/coastalRoutes';
 
 import { cn } from '../lib/utils';
 import { RUTAS_FRECUENTES } from '../rutasFrecuentes';
@@ -45,7 +46,7 @@ const NAUTICAL_PORTS: Record<string, [number, number]> = {
   'motril': [36.72, -3.52],
   'marbella': [36.50, -4.88],
   'almeria': [36.83, -2.47],
-  'almería': [36.83, -2.47],
+  'almerimar': [36.41, -2.46],
   'malaga': [36.71, -4.42],
   'málaga': [36.71, -4.42],
   'estepona': [36.41, -5.15],
@@ -170,6 +171,31 @@ interface ControlCenterProps {
   aiLogs?: any[];
   refreshAiLogs?: () => void;
 }
+const buildSafeRoute = (
+  start: { lat: number; lng: number },
+  dest: [number, number]
+): [number, number][] => {
+  
+
+  const offshore = 0.04;
+  const midLng = (start.lng + dest[1]) / 2;
+
+  return [
+  [start.lat, start.lng],
+
+  [start.lat - offshore, start.lng],
+
+  [start.lat - offshore, start.lng + (dest[1] - start.lng) * 0.25],
+
+  [start.lat - offshore, start.lng + (dest[1] - start.lng) * 0.50],
+
+  [start.lat - offshore, start.lng + (dest[1] - start.lng) * 0.75],
+
+  [dest[0] - offshore, dest[1]],
+
+  dest
+];
+};
 
 export const ControlCenter: React.FC<ControlCenterProps> = ({
   isNightMode,
@@ -283,21 +309,61 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   // Procesador de Comandos Náuticos vía Gemini LLM
   const handleNavigationOrder = async () => {
     const query = navCommand.toLowerCase();
-    if (query.length < 5 || !shipPosition) return;
+    
+    if (!shipPosition) return;
+    
 
     setAdvisorMessage('Analizando derrota táctica...');
 
     let plan = null;
+
+    const buildSafeRoute = (
+  start: { lat: number; lng: number },
+  dest: [number, number]
+): [number, number][] => {
+
+  const offshore = 0.04;
+
+  return [
+
+    [start.lat, start.lng],
+
+    [start.lat - offshore, start.lng],
+
+    [start.lat - offshore,
+     start.lng + (dest[1] - start.lng) * 0.25],
+
+    [start.lat - offshore,
+     start.lng + (dest[1] - start.lng) * 0.50],
+
+    [start.lat - offshore,
+     start.lng + (dest[1] - start.lng) * 0.75],
+
+    [dest[0] - offshore, dest[1]],
+
+    dest
+  ];
+};
 
     try {
       const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
       const draft = activeShip?.calado || activeShip?.draft || 1.5;
       
       const systemInstruction = "Actúa como un Navegador Náutico experto y Oficial de Puente. Tu misión es trazar derrotas precisas evitando tierra y respetando las preferencias del Almirante. La salida debe ser exclusivamente un JSON.";
-      
-      const prompt = `Calcula una derrota táctica basada en esta orden: "${navCommand}".
-      
-      CONTEXTO TÁCTICO INTEGRAL:
+      console.log(
+  'NAV COMMAND:',
+  navCommand
+);
+
+console.log(
+  'TARGET NAME:',
+  navPlan.targetName
+);
+const navigationOrder =
+  navCommand.trim() || navPlan.targetName || "Destino desconocido";
+  console.log("ORDEN ENVIADA A GEMINI:", navigationOrder);
+      const prompt = `Calcula una derrota táctica basada en esta orden: "${navigationOrder}".
+       CONTEXTO TÁCTICO INTEGRAL:
       - Buque de Operaciones: ${activeShip?.nombre || 'Nucleus Zero'} | Calado: ${draft}m | Eslora: ${activeShip?.eslora || 'N/A'}m.
       - Posición de Origen: [${shipPosition.lat}, ${shipPosition.lng}].
       - Entorno Meteorológico: Viento ${weather?.wind} kn (${weather?.windDir}°) | Mar: ${weather?.seaState} | Altura de Ola: ${weather?.waveHeight || 'N/A'}m.
@@ -305,47 +371,161 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       - Preferencias del Almirante: "${captainPreferences}".
       
       REQUERIMIENTOS TÉCNICOS:
-      - Genera 5-7 waypoints marítimos seguros y profundos.
-      - Garantiza seguridad de navegación considerando el calado de ${draft}m.
-      - Salida JSON obligatorio: {"puntos": [[lat1, lng1], [lat2, lng2]...], "mensaje": "Resumen táctico de la derrota", "distancia": 12.5}`;
+      REGLAS OBLIGATORIAS
+
+- Responde exclusivamente con un JSON válido.
+- El primer waypoint debe ser exactamente la posición de origen.
+- El último waypoint debe ser exactamente el puerto solicitado.
+- Todos los waypoints intermedios deben permanecer sobre el mar.
+- Mantén una separación mínima de 1 milla náutica respecto a la costa, salvo en la aproximación final al puerto.
+- Evita aguas de menos de 5 metros de profundidad.
+- Evita cambios de rumbo innecesarios.
+- Utiliza el menor número de waypoints posible para una navegación segura.
+- Genera normalmente entre 4 y 12 waypoints, aumentando solo si la derrota lo requiere.
+- Cada waypoint debe existir por una razón náutica (cambio de rumbo, seguridad, aproximación o evitación de peligros). Nunca añadas waypoints de relleno.
+- No inventes puertos ni coordenadas terrestres.
+- Garantiza seguridad de navegación considerando el calado de ${draft}m.
+- Salida JSON obligatorio: {
+  "puntos": [[lat,lng], ...],
+  "mensaje": "...",
+  "distancia": número}`;
 
       const result = await callGemini(prompt, systemInstruction, true);
-      
+
+      console.log("=== RESPUESTA GEMINI ===");
+console.log(result);
+console.log("========================");
+
       if (result && result.puntos) {
         plan = result;
       }
     } catch (error) {
       console.error("Error en Gemini Tactical Navigation:", error);
     }
+    if (!plan && navPlan?.targetCoords) {
 
+  const puertoSeleccionado =
+  navPlan.targetName
+    ?.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+
+  if (
+    puertoSeleccionado &&
+    COASTAL_ROUTES[puertoSeleccionado]
+  ) {
+
+    console.log(
+      '🌊 Usando ruta costera:',
+      puertoSeleccionado
+    );
+
+    plan = {
+      puntos: COASTAL_ROUTES[puertoSeleccionado],
+      mensaje: `Ruta costera hacia ${puertoSeleccionado}`
+    };
+
+  } else {
+
+   
+    plan = {
+      puntos: buildSafeRoute(
+        shipPosition,
+        [
+          navPlan.targetCoords.lat,
+          navPlan.targetCoords.lng
+        ]
+      ),
+      mensaje: 'Derrota local generada'
+    };
+  }
+}
+
+const puertoSeleccionado =
+  navPlan.targetName
+    ?.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
     // Fallback manual (rutasFrecuentes.ts)
     if (!plan || !plan.puntos) {
       let destFound: [number, number] | null = null;
-      Object.keys(RUTAS_FRECUENTES).forEach(port => {
-        if (query.includes(port)) destFound = RUTAS_FRECUENTES[port];
-      });
+
+const puertoSeleccionado =
+  navPlan.targetName
+    ?.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+if (
+  puertoSeleccionado &&
+  RUTAS_FRECUENTES[puertoSeleccionado]
+) {
+  destFound =
+    RUTAS_FRECUENTES[puertoSeleccionado];
+  
+}
+ 
+
+
 
       if (destFound) {
-        console.log('⚓ Puerto encontrado:', destFound);
-        plan = {
-          puntos: [
-            [shipPosition.lat, shipPosition.lng],
-            [shipPosition.lat - 0.02, shipPosition.lng],
-            [destFound[0] - 0.02, destFound[1]],
-            destFound
-          ],
-          mensaje: `Derrota táctica local hacia ${Object.keys(RUTAS_FRECUENTES).find(port => query.includes(port))}`
-        };
-      }
-    }
 
+  const puertoSeleccionado =
+  navPlan.targetName
+    ?.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+    
+
+ 
+
+  if (
+    puertoSeleccionado &&
+    COASTAL_ROUTES[puertoSeleccionado]
+  ) {
+
+    
+    plan = {
+      puntos: COASTAL_ROUTES[puertoSeleccionado],
+      mensaje: `Ruta costera hacia ${puertoSeleccionado}`
+    };
+
+  } else {
+
+    
+
+    plan = {
+      puntos: buildSafeRoute(
+        shipPosition,
+        destFound
+      ),
+      mensaje: `Derrota táctica local hacia ${
+        puertoSeleccionado || 'destino'
+      }`
+    };
+  }
+}
+    }
+      console.log('🔥 PLAN ANTES DEL IF', plan);
     if (plan && plan.puntos) {
+     
+      // alert(`Waypoints: ${plan.puntos.length}`);
       setRutaActiva(plan.puntos);
       setPlannedPath(plan.puntos);
+      
       setTargetDestination({ lat: plan.puntos[plan.puntos.length - 1][0], lng: plan.puntos[plan.puntos.length - 1][1] });
       setAdvisorMessage(plan.mensaje || 'Entendido Almirante, orden recibida.');
+      console.log(
+  'DESTINO FINAL:',
+  plan.puntos[plan.puntos.length - 1]
+);
     } else {
-      console.log('🧭 PLAN GENERADO:', plan);
+     
       setAdvisorMessage('Error: No se pudo calcular la derrota táctica.');
     }
   };
@@ -579,6 +759,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       />
       <H5000Frame title="SISTEMAS" hdg={Math.round(currentHeading)} isNavigating={isTravesiaActive} onClose={onClose}>
         <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
+          {/*
           <div className="px-4 py-3 border-b border-white/10 bg-slate-950/80">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -616,6 +797,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
               </div>
             </div>
           </div>
+          */}
         {localActiveTab === 'viento' && (
           <div className="h-full flex flex-col p-4">
             {/* Tactical Wind Hub */}
@@ -747,6 +929,68 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
             <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl space-y-6">
               {!isTravesiaActive ? (
                 <div className="space-y-4">
+                  {/* Selector de Puertos Andaluces - REQUERIMIENTO ALMIRANTE */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-cyan-500 uppercase tracking-widest ml-1">Destino:</label>
+                    <div className="relative group">
+                      <select 
+                        onChange={(e) => {
+                          const port = PORT_LIST.find(p => p.name === e.target.value);
+                          if (port) {
+                            
+
+  updateNavigationPlan(
+    port.coords,
+    port.name
+  );
+
+  setTargetDestination(
+    port.coords
+  );
+
+  setPlannedPath([]);
+  setRutaActiva([]);
+}
+                        }}
+                        className="w-full bg-black/60 border border-white/10 p-4 rounded-2xl text-xs text-white font-bold appearance-none focus:border-cyan-500 outline-none transition-all cursor-pointer"
+                        value={navPlan.targetName || ""}
+                      >
+                        <option value="" disabled>Seleccione puerto de destino...</option>
+                        {PORT_LIST.map(port => (
+                          <option key={port.name} value={port.name}>{port.name}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500/50 pointer-events-none group-hover:text-cyan-400 transition-colors" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+  <div className="bg-black/40 rounded-xl p-3 text-center">
+    <div className="text-[9px] text-slate-500 uppercase">
+      Distancia
+    </div>
+    <div className="text-white font-black">
+      {navPlan.distanceNM || '--'}
+    </div>
+  </div>
+
+  <div className="bg-black/40 rounded-xl p-3 text-center">
+    <div className="text-[9px] text-slate-500 uppercase">
+      ETA
+    </div>
+    <div className="text-white font-black">
+      {navPlan.eta || '--'}
+    </div>
+  </div>
+
+  <div className="bg-black/40 rounded-xl p-3 text-center">
+    <div className="text-[9px] text-slate-500 uppercase">
+      WP
+    </div>
+    <div className="text-white font-black">
+      {rutaActiva?.length || 0}
+    </div>
+  </div>
+</div>
+                  </div>
                   {/* Comando Almirante */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-cyan-500 uppercase tracking-widest ml-1">¿A dónde quieres navegar, Almirante?</label>
@@ -768,10 +1012,11 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
                     className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2"
                   >
                     <Target className="w-5 h-5" />
-                    Calcular Derrota (IA)
+                    GENERAR DERROTA
                   </button>
 
                   {/* IA Advisor Flash Message */}
+                  {/*
                   <div className="p-4 bg-slate-800/40 border border-white/5 rounded-2xl">
                     <div className="flex items-center gap-2 mb-1">
                       <Zap className="w-3 h-3 text-cyan-400" />
@@ -781,49 +1026,22 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
                       {advisorMessage}
                     </p>
                   </div>
+                  */}
 
-                  {/* Selector de Puertos Andaluces - REQUERIMIENTO ALMIRANTE */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-cyan-500 uppercase tracking-widest ml-1">Selector de Puertos (Andalucía)</label>
-                    <div className="relative group">
-                      <select 
-                        onChange={(e) => {
-                          const port = PORT_LIST.find(p => p.name === e.target.value);
-                          if (port) {
+                  
 
-  updateNavigationPlan(port.coords, port.name);
-
-  const rutaLocal: [number, number][] = [
-    [shipPosition!.lat, shipPosition!.lng],
-    [shipPosition!.lat - 0.02, shipPosition!.lng],
-    [port.coords.lat - 0.02, port.coords.lng],
-    [port.coords.lat, port.coords.lng]
-  ];
-
-  setPlannedPath(rutaLocal);
-  setRutaActiva(rutaLocal);
-  setTargetDestination(port.coords);
-}
-                        }}
-                        className="w-full bg-black/60 border border-white/10 p-4 rounded-2xl text-xs text-white font-bold appearance-none focus:border-cyan-500 outline-none transition-all cursor-pointer"
-                        value={navPlan.targetName || ""}
-                      >
-                        <option value="" disabled>Seleccione puerto de destino...</option>
-                        {PORT_LIST.map(port => (
-                          <option key={port.name} value={port.name}>{port.name}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500/50 pointer-events-none group-hover:text-cyan-400 transition-colors" />
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={() => setShowSafetyModal(true)}
-                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"
-                  >
-                    <Navigation className="w-5 h-5" />
-                    Iniciar Travesía
-                  </button>
+                  <button
+  onClick={() => setShowSafetyModal(true)}
+  disabled={!rutaActiva || rutaActiva.length < 2}
+  className={`w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2 ${
+    !rutaActiva || rutaActiva.length < 2
+      ? 'opacity-40 cursor-not-allowed'
+      : ''
+  }`}
+>
+  <Navigation className="w-5 h-5" />
+  Iniciar Travesía
+</button>
                 </div>
               ) : (
                 <div className="space-y-6">

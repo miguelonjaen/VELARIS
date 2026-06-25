@@ -25,6 +25,16 @@ const AIS_PROFILES = {
 
 let socket = null;
 
+console.log(
+  'AIS KEY PRESENTE:',
+  !!process.env.VITE_AISSTREAM_API_KEY
+);
+
+console.log(
+  'LONGITUD KEY:',
+  process.env.VITE_AISSTREAM_API_KEY?.length
+);
+
 function connectAIS(mainWindow, apiKey) {
   if (socket) return;
 
@@ -33,35 +43,73 @@ function connectAIS(mainWindow, apiKey) {
   socket = new WebSocket('wss://stream.aisstream.io/v0/stream');
 
   socket.on('open', () => {
-    console.log('[AIS] Conectado');
 
-    socket.send(
-      JSON.stringify({
-        APIKey: apiKey,
-        BoundingBoxes: AIS_PROFILES[ACTIVE_PROFILE]    })
-    );
-  });
+  console.log('[AIS] Conectado');
+
+  const payload = {
+    APIKey: apiKey,
+    BoundingBoxes: AIS_PROFILES[ACTIVE_PROFILE]
+  };
+
+  console.log(
+    '📡 SUSCRIPCION AIS JSON:',
+    JSON.stringify(payload)
+  );
+
+  socket.send(JSON.stringify(payload));
+  setTimeout(() => {
+    
+  console.log(
+    '⏱️ SIGUE CONECTADO TRAS 30s:',
+    socket.readyState
+  );
+}, 30000);
+});
 
   socket.on('message', (data) => {
-    try {
-      const msg = JSON.parse(data.toString());
+  // console.log('🚢 AISSTREAM MENSAJE RECIBIDO');
+  //console.log(data.toString().substring(0, 300));
+  //console.log(
+   //  '🚢 MENSAJE AISSTREAM'
+  // );
 
-      mainWindow.webContents.send(
-        'ais-message',
-        msg
-      );
-    } catch (err) {
-      console.error('[AIS] Parse Error', err);
-    }
-  });
+  try {
+    const msg = JSON.parse(data.toString());
 
-  socket.on('close', (event) => {
-    console.log('[AIS] Cerrado', event);
-  });
+    mainWindow.webContents.send(
+      'ais-message',
+      msg
+    );
+  } catch (err) {
+    console.error('[AIS] Parse Error', err);
+  }
+});
+  socket.on('close', (code, reason) => {
+  console.error(
+    '❌ AIS CERRADO:',
+    code,
+    reason?.toString()
+  );
+});
+
+socket.on('error', (err) => {
+  console.error(
+    '❌ AIS ERROR:',
+    err
+  );
+});
 
   socket.on('error', (err) => {
-    console.error('[AIS] Error', err);
-  });
+  console.error('❌ AIS ERROR COMPLETO:', err);
+});
+
+socket.on('close', (code, reason) => {
+  console.error(
+    '❌ AIS CERRADO:',
+    code,
+    reason?.toString()
+  );
+});
 }
 
 module.exports = {

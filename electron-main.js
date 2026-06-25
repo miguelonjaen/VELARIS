@@ -1,5 +1,6 @@
 console.log('*** ELECTRON MAIN REAL EJECUTADO ***');
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+require('tsx/cjs');
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
@@ -12,7 +13,7 @@ const { connectAIS } = require('./aisBridge');
 // Importación de servicios core (ahora en la raíz)
 const { NMEAService } = require('./NMEAService.ts');
 const { TacticalTicker } = require('./TacticalTicker.ts');
-const { MapService } = require('./MapService.ts');
+const { startMapServer, stopMapServer } = require('./map-server.js');
 
 let mainWindow;
 let nmeaService;
@@ -105,19 +106,19 @@ function initializeServices(window) {
   // Servicio NMEA para hardware serial
   nmeaService = new NMEAService((line) => {
     // Se comunica con el hook useAIS y la telemetría de App.tsx
+    console.log(
+  '📡 ENVIANDO TELEMETRIA:',
+  payload
+);
+console.log(
+  '📡 TELEMETRIA SALIENTE:',
+  data
+);
     window.webContents.send('vessel-telemetry', { type: 'RAW', data: line });
   });
 
-  // Servidor de Mapas local (MBTiles) en puerto 8089
-  console.log('CREANDO MAPSERVICE');
-
-const mapService = new MapService();
-
-console.log('ARRANCANDO MAPSERVICE');
-
-mapService.start(8089);
-
-console.log('MAPSERVICE ARRANCADO');
+  // Backend local canónico: cartas, salud, Supabase y Gemini.
+  startMapServer(8089);
 }
 
 // === MANEJADORES IPC (INTER-PROCESS COMMUNICATION) ===
@@ -188,6 +189,10 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('before-quit', () => {
+  stopMapServer();
 });
 
 app.on('activate', () => {

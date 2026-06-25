@@ -6,6 +6,9 @@
   "main": "electron-main.js",
   "author": "MiguelonJaen",
   "type": "commonjs",
+  "backend": "node map-server.js",
+  "smartship": "npm run electron:start",
+  "dev:full": "concurrently \"npm run backend\" \"npm run smartship\"",
   "scripts": {
     "dev": "vite --port=3000",
     "build": "vite build",
@@ -41,6 +44,7 @@
     "localforage": "^1.10.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
+    "openai": "^6.44.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
@@ -49,6 +53,7 @@
     "sql.js": "^1.14.1",
     "suncalc": "^1.9.0",
     "tailwind-merge": "^3.5.0",
+    "tsx": "^4.22.4",
     "vite": "^6.2.0",
     "ws": "^8.21.0"
   },
@@ -65,7 +70,6 @@
     "electron": "^34.5.8",
     "electron-builder": "^25.1.8",
     "tailwindcss": "^4.1.14",
-    "tsx": "^4.22.4",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vite-plugin-pwa": "^1.2.0",
@@ -90,6 +94,10 @@
       "dist/**/*",
       "electron-main.js",
       "electron-preload.js",
+      "aisBridge.js",
+      "NMEAService.ts",
+      "TacticalTicker.ts",
+      "map-server.js",
       "package.json"
     ],
     "win": {

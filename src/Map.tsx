@@ -13,7 +13,7 @@ import L from 'leaflet';
 import 'leaflet-rotatedmarker'; // 👈 Extensión de rotación en Leaflet activada
 import { motion } from 'framer-motion';
 import { Zap, Wind } from 'lucide-react';
-import { WeatherWidget } from '../../weather/components/WeatherWidget';
+import { WeatherWidget } from './features/weather/components/WeatherWidget';
 
 // 1. Importación de los recursos tácticos
 // import barcoPlayerImg from '../assets/icons/barco-player.png';
@@ -98,7 +98,9 @@ L.Icon.Default.mergeOptions({
 
       <MapClickHandler />
 
-      {fleet.map(ship => {
+      {fleet
+  .filter(ship => String(ship.id) !== String(selectedShipId))
+  .map(ship => {
         const esElBarcoSeleccionado = String(selectedShipId) === String(ship.id);
         
         // Extrae el rumbo magnético o verdadero del buque (por defecto 0° / Norte)

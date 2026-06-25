@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Upload, MapPin, Trash2, Play, Download, FileText, Map, AlertCircle } from 'lucide-react';
-import { parseGPX, GPXRoute, GPXWaypoint, exportRouteToGPX } from '../../../lib/gpxParser';
-import { cn } from '../../../lib/utils';
+import { parseGPX, GPXRoute, GPXWaypoint, exportRouteToGPX } from './lib/gpxParser';
+import { cn } from './lib/utils';
 
 interface WaypointManagerProps {
   onRouteLoaded: (route: GPXRoute) => void;
