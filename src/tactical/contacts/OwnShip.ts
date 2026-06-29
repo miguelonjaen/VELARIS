@@ -1,17 +1,7 @@
 import { Vessel } from "./Vessel";
 import { ContactType } from "./ContactType";
 
-export class AISContact extends Vessel {
-
-    public mmsi = "";
-
-    public imo = "";
-
-    public callsign = "";
-
-    public destination = "";
-
-    public eta = "";
+export class OwnShip extends Vessel {
 
     constructor(
         id: string,
@@ -21,7 +11,7 @@ export class AISContact extends Vessel {
 
         super(
             id,
-            ContactType.AIS,
+            ContactType.OwnShip,
             lat,
             lng
         );

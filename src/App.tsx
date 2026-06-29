@@ -131,6 +131,7 @@ import { ChangelogModal } from './components/ChangelogModal';
 import SailSteerWidget from './components/SailSteerWidget';
 import { getUpwindAngle } from './components/utils/polar';
 import { AISStreamService } from './services/aisStreamService';
+import { app } from "@/application";
 
 
 const Vademecum = lazy(() => import('./components/Vademecum'));
@@ -628,6 +629,22 @@ function App() {
   }) : null, [shipPosition, simulatedSog, selectedShip]);
 
   const simulatedAisTargets = useAIS(ownAISData);
+
+  useEffect(() => {
+
+   app.ais.update(simulatedAisTargets);
+
+    
+}, [simulatedAisTargets]);
+
+useEffect(() => {
+
+    console.log(
+        "TACTICAL CONTACTS:",
+        app.tactical.getContacts()
+    );
+
+}, [simulatedAisTargets]);
 
   // --- MOTOR TÁCTICO DE POLARES Y ENRUTAMIENTO ---
   const tacticalData = useTacticalRouting({

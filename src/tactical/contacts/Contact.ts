@@ -1,42 +1,21 @@
 import { ContactType } from "./ContactType";
 
 export class Contact {
-  id: string;
 
-  type: ContactType;
+    constructor(
 
-  lat: number;
+        public readonly id: string,
 
-  lng: number;
+        public readonly type: ContactType,
 
-  cog: number;
+        public lat: number,
 
-  sog: number;
+        public lng: number
 
-  selected: boolean;
+    ) {}
 
-  visible: boolean;
+    public visible = true;
 
-  constructor(
-    id: string,
-    type: ContactType,
-    lat: number,
-    lng: number
-  ) {
-    this.id = id;
+    public selected = false;
 
-    this.type = type;
-
-    this.lat = lat;
-
-    this.lng = lng;
-
-    this.cog = 0;
-
-    this.sog = 0;
-
-    this.selected = false;
-
-    this.visible = true;
-  }
 }

@@ -1,18 +1,7 @@
 import { calculateDistanceNM } from './utils';
+import { TargetAIS } from "@/tactical/models/TargetAIS";
 
-export interface TargetAIS {
-  mmsi: string;
-  nombre: string;
-  tipo: 'Carguero' | 'Velero' | 'Pesquero' | 'Yate';
-  lat: number;
-  lng: number;
-  cog: number;
-  sog: number;
-  status: 'Navegando' | 'Fondeado';
-  cpa?: number;  // metros
-  tcpa?: number; // minutos
-  isCollisionRisk?: boolean;
-}
+
 
 /**
  * Calcula el CPA (Closest Point of Approach) y TCPA entre nuestro barco y un objetivo.

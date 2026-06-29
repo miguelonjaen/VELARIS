@@ -15,8 +15,7 @@ export function createShipIcon({
   color,
   size = 40,
 }: CreateShipIconOptions) {
-  console.log("Ship size:", size);
-  return L.divIcon({
+   return L.divIcon({
     className: "ship-icon",
 
     html: `

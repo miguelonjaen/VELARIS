@@ -18,7 +18,6 @@ const OwnShipLayer: React.FC<OwnShipLayerProps> = ({
 }) => {
   if (!shipPosition) return null;
   
-console.log("HEADING:", heading);
 
   return (
     <Marker
