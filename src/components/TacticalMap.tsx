@@ -14,8 +14,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Gauge, Navigation as NavIcon } from 'lucide-react';
 import { cn } from '@lib/utils';
-import 'leaflet-rotatedmarker';
 import OwnShipLayer from './navigation/OwnShipLayer';
+import { calculateBearing } from '../navigation/calculateBearing';
 
 if (import.meta.env.DEV) {
   console.log('TACTICAL MAP ACTIVO');
@@ -49,24 +49,21 @@ const MapUpdater = ({ center }: { center: [number, number] }) => {
   return null;
 };
 
-  const calculateBearing = (
-  from: { lat: number; lng: number },
-  to: { lat: number; lng: number }
-) => {
-  const φ1 = from.lat * Math.PI / 180;
-  const φ2 = to.lat * Math.PI / 180;
-  const Δλ = (to.lng - from.lng) * Math.PI / 180;
+const ZoomWatcher = ({
+  onZoomChange
+}: {
+  onZoomChange: (zoom: number) => void;
+}) => {
 
-  const y = Math.sin(Δλ) * Math.cos(φ2);
-  const x =
-    Math.cos(φ1) * Math.sin(φ2) -
-    Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  useMapEvents({
+    zoomend(e) {
+      onZoomChange(e.target.getZoom());
+    }
+  });
 
-  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  return null;
 };
-  const [zoom, setZoom] = useState(15);
-  const map = useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
-   
+     
   
 
 const InternalEvents = ({ onMapClick, onMapRightClick, onDragStart }: any) => {
@@ -83,7 +80,25 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   isLaylinesActive, portLaylinePath, stbdLaylinePath, collisionFilter, listaCartas,
   cartasActivas,children
 }) => {
-  // const [mapZoom, setMapZoom] = useState(zoom);
+  const [mapZoom, setMapZoom] = useState(zoom);
+  let shipHeading = 0;
+
+if (shipPosition && currentPath.length > 1) {
+  shipHeading = calculateBearing(
+    shipPosition,
+    {
+      lat: currentPath[1][0],
+      lng: currentPath[1][1]
+    }
+  );
+}
+const shipSize = Math.max(
+  12,
+  Math.min(
+    60,
+    mapZoom * 4
+  )
+);
   
   return (
     <div
@@ -96,12 +111,17 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       <MapContainer center={center} zoom={zoom} minZoom={4} maxZoom={16} className="h-full w-full" zoomControl={false}>
         <ZoomControl position="topright" />
         <MapUpdater center={center} />
+        <ZoomWatcher
+  onZoomChange={setMapZoom}
+/>     
+        
         
         <InternalEvents onMapClick={onMapClick} onMapRightClick={onMapRightClick} onDragStart={onDragStart} />
         <TileLayer
   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
   attribution="© OpenStreetMap contributors"
 />
+
 {listaCartas?.map(chart =>
   cartasActivas?.[chart.name] ? (
     <TileLayer
@@ -115,8 +135,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
        <OwnShipLayer
   shipPosition={shipPosition}
   shipName={shipName}
-  heading={0}
-  iconSize={36}
+  heading={shipHeading}
+  iconSize={shipSize}
 />
         
 {currentPath.length > 1 && (

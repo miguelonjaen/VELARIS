@@ -5,6 +5,8 @@ import { ShipData } from '@/shared/types';
 import { Wind, Zap, LayoutDashboard, Ship as ShipIcon, Anchor } from 'lucide-react';
 import { Polyline } from 'react-leaflet';
 import { calculateDistanceNM } from '../lib/aisMath';
+import { createShipIcon } from "@/components/vessels/createShipIcon";
+import { VesselRenderer } from "./vessels/VesselRenderer";
 
 interface FleetLayerProps {
   fleet: ShipData[];
@@ -194,34 +196,17 @@ const startLng =
 
       <Marker
         position={[target.lat, target.lng]}
-        icon={L.divIcon({
-          className: 'ais-target',
-          html: `
-            <div
-              style="
-                transform: rotate(${target.cog}deg);
-                transform-origin:center;
-                width:32px;
-                height:32px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                filter: drop-shadow(0 0 6px #ff00ff);
-              "
-            >
-              <svg width="26" height="26" viewBox="0 0 24 24">
-                <path
-                  d="M12 2 L18 20 L12 17 L6 20 Z"
-                  fill="${riskColor}"
-                  stroke="#ffffff"
-                  stroke-width="0.8"
-                />
-              </svg>
-            </div>
-          `,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12]
-        })}
+        icon={VesselRenderer.render({
+  lat: target.lat,
+  lng: target.lng,
+
+  cog: target.cog,
+  sog: target.sog,
+
+  risk: target.risk ?? "SAFE",
+
+  shipType: target.shipType,
+})}
       >
         <Popup>
   <div>

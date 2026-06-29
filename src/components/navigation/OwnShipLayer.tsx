@@ -1,7 +1,7 @@
 import React from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet-rotatedmarker';
+
 
 interface OwnShipLayerProps {
   shipPosition: { lat: number; lng: number } | null;
@@ -17,22 +17,42 @@ const OwnShipLayer: React.FC<OwnShipLayerProps> = ({
   iconSize = 36
 }) => {
   if (!shipPosition) return null;
-  const markerProps = {
-  rotationAngle: heading,
-  rotationOrigin: 'center center'
-} as any;
+  
+console.log("HEADING:", heading);
 
   return (
     <Marker
-    {...markerProps}
-    position={[shipPosition.lat, shipPosition.lng]}
-    icon={L.icon({
-      iconUrl: 'barco-player.png',
-      iconSize: [iconSize, iconSize],
-      iconAnchor: [iconSize / 2, iconSize / 2],
-      popupAnchor: [0, -iconSize / 2]
-    })}
-  >
+  position={[shipPosition.lat, shipPosition.lng]}
+  icon={L.divIcon({
+    className: '',
+    html: `
+      <div
+        style="
+          width:${iconSize}px;
+          height:${iconSize}px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          transform: rotate(${(heading + 180) % 360}deg);
+          transition: transform 0.25s linear;
+        "
+      >
+        <img
+          src="barco-player.png"
+          style="
+            width:${iconSize}px;
+            height:${iconSize}px;
+            user-select:none;
+            pointer-events:none;
+          "
+        />
+      </div>
+    `,
+    iconSize: [iconSize, iconSize],
+    iconAnchor: [iconSize / 2, iconSize / 2],
+    popupAnchor: [0, -iconSize / 2]
+  })}
+>
       <Popup className="custom-popup">
         <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 w-48 shadow-2xl text-white">
           <p className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-2">
