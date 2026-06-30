@@ -641,11 +641,7 @@ function App() {
 
 useEffect(() => {
 
-    console.log(
-        "TACTICAL CONTACTS:",
-        app.tactical.getContacts()
-    );
-
+    
 }, [simulatedAisTargets]);
 
   // --- MOTOR TÁCTICO DE POLARES Y ENRUTAMIENTO ---

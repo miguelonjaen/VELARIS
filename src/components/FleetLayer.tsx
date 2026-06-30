@@ -8,6 +8,7 @@ import { calculateDistanceNM } from '../lib/aisMath';
 import { createShipIcon } from "@/components/vessels/createShipIcon";
 import { VesselRenderer } from "./vessels/VesselRenderer";
 import { app } from "@/application";
+import { FleetMarkers } from "./fleet/FleetMarkers";
 
 
 
@@ -67,182 +68,20 @@ export const FleetLayer: React.FC<FleetLayerProps> = ({
   
 return (
   <>
-    {/* Marcadores de la Flota (Unidades Propias) */}
-    {/* {fleet
-  .filter(ship => String(ship.id) !== String(selectedShipId))
-  .map(ship => {
-             
-console.log(
-  'SHIP:',
-  ship.nombre,
-  ship.id,
-  'SELECTED:',
-  selectedShipId
-);
-console.log(
-  '¿ES EL SELECCIONADO?',
-  String(ship.id) === String(selectedShipId)
-);
-      return (
-        <Marker
-          key={ship.id}
-          position={[
-            ship.lat || 36.7215,
-            ship.lng || -3.5235
-          ]}
-          icon={L.icon({
-            iconUrl: 'barco-player.png',
-            iconSize: [25, 50],
-            iconAnchor: [12.5, 25],
-            popupAnchor: [0, -25],
-            className: 'ship-tactical-render'
-            
-})}
+    
+    <FleetMarkers
 
+    simulatedAisTargets={simulatedAisTargets}
 
-        >
-          <Popup className="custom-popup">
-            <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden p-0 w-56 shadow-2xl">
-              <div className="relative h-28">
-                <img 
-                  src={ship.foto_url || getDefaultShipImage(ship.tipo_barco)} 
-                  className="w-full h-full object-cover" 
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute top-2 left-2 bg-slate-950/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
-                  {getShipIcon(ship.tipo_barco, "w-3.5 h-3.5")}
-                  <span className="text-[8px] font-black text-white uppercase tracking-widest">{ship.tipo_barco}</span>
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">{getShipEmoji(ship.tipo_barco)}</span>
-                  <p className="text-sm font-black text-white uppercase tracking-tighter truncate">{ship.nombre || 'Sin Nombre'}</p>
-                </div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase">{ship.brand || ''} {ship.model || ''}</p>
-                <div className="mt-3 pt-3 border-t border-slate-900 flex justify-between items-center">
-                  <p className="text-[8px] font-black text-cyan-500 uppercase tracking-widest">{ship.registration || 'S/M'}</p>
-                  <div className="flex gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-[8px] font-bold text-slate-400 uppercase">Sistemas OK</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Popup>
-        </Marker>
-       );
-    })}
-        */}
-    {/* AIS Reales */}
-{simulatedAisTargets.map((target) => {
-  const tcpaMinutes = target.tcpa ?? 0;
+    shipPosition={shipPosition}
 
-const tcpaDisplay =
-  tcpaMinutes < 0
-    ? 'PASSED'
-    : tcpaMinutes >= 60
-      ? `${Math.floor(tcpaMinutes / 60)}h ${Math.round(tcpaMinutes % 60)}m`
-      : `${Math.round(tcpaMinutes)} min`;
+    selectedShipId={selectedShipId}
 
-  const predictionMinutes = 30;
-  const riskColor =
-    target.risk === 'danger'
-      ? '#ef4444'
-      : target.risk === 'caution'
-      ? '#f59e0b'
-      : '#22c55e';
-  const distance =
-  shipPosition
-    ? calculateDistanceNM(
-        shipPosition.lat,
-        shipPosition.lng,
-        target.lat,
-        target.lng
-      )
-    : 0;
+    fleet={fleet}
 
-  const distanceNm =
-    target.sog * (predictionMinutes / 60);
-
-  const cogRad =
-    (target.cog * Math.PI) / 180;
-    const bowOffset = 0.00008;
-
-const startLat =
-  target.lat +
-  bowOffset * Math.cos(cogRad);
-
-const startLng =
-  target.lng +
-  bowOffset * Math.sin(cogRad);
-
-  const futureLat =
-    target.lat +
-    (distanceNm * Math.cos(cogRad)) / 60;
-
-  const futureLng =
-    target.lng +
-    (distanceNm * Math.sin(cogRad)) /
-      (60 * Math.cos(target.lat * Math.PI / 180));
-
-  return (
-    <React.Fragment key={target.mmsi}>
-
-      <Polyline
-  positions={[
-    [startLat, startLng],
-    [futureLat, futureLng]
-  ]}
-  color={riskColor}
-  weight={2}
-  opacity={0.7}
 />
 
-      <Marker
-        position={[target.lat, target.lng]}
-        icon={VesselRenderer.render({
-  lat: target.lat,
-  lng: target.lng,
 
-  cog: target.cog,
-  sog: target.sog,
-
-  risk: target.risk ?? "SAFE",
-
-  shipType: target.shipType,
-})}
-      >
-        <Popup>
-  <div>
-    <b>{target.nombre}</b>
-
-    <br />
-    MMSI: {target.mmsi}
-
-    <br />
-    DIST: {(target.distancia ?? 0).toFixed(2)} nm
-    <br />
-    CPA: {target.cpa?.toFixed(2) ?? '--'} nm
-    <br />
-<br />
-RISK: {target.risk ?? 'SAFE'}
-
-    <br />
-    TCPA: {tcpaDisplay}
-    <br />
-    SOG: {target.sog} kt
-
-    <br />
-    COG: {target.cog}°
-  </div>
-</Popup>
-      </Marker>
-
-    </React.Fragment>
-  );
-})}
-{/* NUEVA CAPA TÁCTICA */}
 
 
       {/* Indicador de Riesgo de Colisión (Zona de Seguridad AIS) */}
