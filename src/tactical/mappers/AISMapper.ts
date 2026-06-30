@@ -17,6 +17,7 @@ export class AISMapper implements IMapper<TargetAIS, AISContact> {
     contact.cog = source.cog;
     contact.sog = source.sog;
 
+    
     return contact;
 }
 

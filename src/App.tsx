@@ -634,9 +634,7 @@ function App() {
 
    app.ais.update(simulatedAisTargets);
 
-   
-
-    
+        
 }, [simulatedAisTargets]);
 
 useEffect(() => {

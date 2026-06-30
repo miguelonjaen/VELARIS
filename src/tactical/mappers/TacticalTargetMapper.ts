@@ -1,25 +1,26 @@
-import { Vessel } from "../contacts/Vessel";
+import { AISContact } from "../contacts/AISContact";
 import { TacticalTarget } from "../models/TacticalTarget";
 
 export class TacticalTargetMapper {
 
-    public map(vessel: Vessel): TacticalTarget {
+    public map(contact: AISContact): TacticalTarget {
 
+        
         return {
 
-            id: vessel.id,
+            id: contact.id,
 
-            mmsi: "",
+            mmsi: contact.mmsi,
 
-            nombre: "",
+            nombre: contact.id,   // temporalmente
 
-            lat: vessel.lat,
+            lat: contact.lat,
 
-            lng: vessel.lng,
+            lng: contact.lng,
 
-            cog: vessel.cog,
+            cog: contact.cog,
 
-            sog: vessel.sog,
+            sog: contact.sog,
 
             cpa: undefined,
 
@@ -27,9 +28,9 @@ export class TacticalTargetMapper {
 
             risk: "safe",
 
-            selected: vessel.selected,
+            selected: contact.selected,
 
-            visible: vessel.visible
+            visible: contact.visible
 
         };
 

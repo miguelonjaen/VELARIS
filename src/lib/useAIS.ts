@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { TargetAIS, calculateCollisionMetrics } from '../lib/aisUtils';
-
+import { calculateCollisionMetrics } from "../lib/aisUtils";
+import { TargetAIS } from "@/tactical/models/TargetAIS";
 export const useAIS = (ownShip: { lat: number; lng: number; sog: number; cog: number } | null) => {
   const [targets, setTargets] = useState<TargetAIS[]>([]);
 
