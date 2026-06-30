@@ -8,6 +8,7 @@ import {
   SensorId,
   SensorQualityMap
 } from '../lib/sensorQuality';
+import { updateRealSensors } from "@/telemetry/helpers/SensorQualityUpdater";
 
 interface TelemetryProps {
   selectedShipId: string | null;
@@ -36,51 +37,106 @@ export const useTelemetry = ({ selectedShipId, shipPosition, simulatedSog, cog }
   );
 
   useEffect(() => {
-    const handleTelemetry = (data: any) => {
-      if (!data?.type) return;
-      
-      const markReal = (ids: SensorId[]) => {
-        setSensorQuality(prev => markSensorUpdated(prev, ids, 'real'));
-        setDataSource(prev => ids.reduce((next, id) => ({ ...next, [id]: 'real' as const }), prev));
-      };
 
-      switch (data.type) {
-        case 'GPS':
-          markReal(['gps', 'heading', 'sog']);
-          break;
-        case 'WIND':
-          markReal(['wind']);
-          break;
-        case 'DEPTH':
-          markReal(['depth']);
-          break;
-        case 'AIS':
-          setAisTargets(prev => {
-            const target = enrichAisTarget(ownShipVector, data);
-            const targetId = target.id || target.mmsi;
-            return [target, ...prev.filter(item => (item.id || item.mmsi) !== targetId)].slice(0, 30);
-          });
-          markReal(['ais']);
-          break;
-      }
-    };
+  const handleTelemetry = (data: any) => {
 
-    const api = window.smartshipAPI;
-    if (api?.on) {
-      api.on('vessel-telemetry', handleTelemetry);
-      return () => api.removeListener('vessel-telemetry', handleTelemetry);
+    if (!data?.type) return;
+
+    switch (data.type) {
+
+      case 'GPS':
+
+        updateRealSensors(
+          ['gps', 'heading', 'sog'],
+          setSensorQuality,
+          setDataSource
+        );
+
+        break;
+
+      case 'WIND':
+
+        updateRealSensors(
+          ['wind'],
+          setSensorQuality,
+          setDataSource
+        );
+
+        break;
+
+      case 'DEPTH':
+
+        updateRealSensors(
+          ['depth'],
+          setSensorQuality,
+          setDataSource
+        );
+
+        break;
+
+      case 'AIS':
+
+        setAisTargets(prev => {
+
+          const target = enrichAisTarget(ownShipVector, data);
+
+          const targetId = target.id || target.mmsi;
+
+          return [
+            target,
+            ...prev.filter(item => (item.id || item.mmsi) !== targetId)
+          ].slice(0, 30);
+
+        });
+
+        updateRealSensors(
+          ['ais'],
+          setSensorQuality,
+          setDataSource
+        );
+
+        break;
+
     }
-  }, [ownShipVector]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSensorQuality(prev => refreshSensorQualityMap(prev, dataSource));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [dataSource]);
-
-  return {
-    sensorQuality, sensorConfidence, tacticalAisTargets, 
-    setAisTargets, dataSource, setDataSource
   };
+
+  const api = window.smartshipAPI;
+
+  if (api?.on) {
+
+    api.on('vessel-telemetry', handleTelemetry);
+
+    return () =>
+      api.removeListener('vessel-telemetry', handleTelemetry);
+
+  }
+
+}, [ownShipVector]);
+
+useEffect(() => {
+
+  const interval = setInterval(() => {
+
+    setSensorQuality(prev =>
+      refreshSensorQualityMap(prev, dataSource)
+    );
+
+  }, 1000);
+
+  return () => clearInterval(interval);
+
+}, [dataSource]);
+
+return {
+  sensorQuality,
+  sensorConfidence,
+  tacticalAisTargets,
+
+  setAisTargets,
+
+  dataSource,
+  setDataSource
+};
+
 };

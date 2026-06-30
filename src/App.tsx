@@ -132,6 +132,7 @@ import SailSteerWidget from './components/SailSteerWidget';
 import { getUpwindAngle } from './components/utils/polar';
 import { AISStreamService } from './services/aisStreamService';
 import { app } from "@/application";
+import { updateRealSensors } from "@/telemetry/helpers/SensorQualityUpdater";
 
 
 const Vademecum = lazy(() => import('./components/Vademecum'));
@@ -931,10 +932,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
     const handleTelemetry = (data: any) => {
       if (!data?.type) return;
 
-      const markRealSensors = (ids: SensorId[]) => {
-        setSensorQuality(prev => markSensorUpdated(prev, ids, 'real'));
-        setDataSource(prev => ids.reduce((next, id) => ({ ...next, [id]: 'real' as const }), prev));
-      };
+      
 
       switch (data.type) {
         case 'GPS':
@@ -957,7 +955,11 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
 
           setSimulatedSog(data.sog);
 
-          markRealSensors(['gps', 'heading', 'sog']);
+          updateRealSensors(
+    ['gps', 'heading', 'sog'],
+    setSensorQuality,
+    setDataSource
+);
           if (selectedShipId) {
   setFleet(prev => prev.map(s =>
     s.id === selectedShipId
@@ -972,56 +974,97 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
           }
           break;
         case 'WIND':
-          setWeather(prev => ({
-            ...prev,
-            wind: data.speed,
-            windDir: data.angle
-          }));
-          markRealSensors(['wind']);
-          break;
-        case 'DEPTH':
-          setDepth(data.depth);
-          markRealSensors(['depth']);
-          break;
-        case 'AIS':
-          //console.log(
-    //'🚢 AIS RECIBIDO:',
-   //  data
-  // );
-            setAisTargets(prev => {
-            const target = enrichAisTarget(ownShipVector, {
-              ...data,
-              id: data.id || data.mmsi || `ais-${Date.now()}`,
-              nombre: data.nombre || data.name || data.mmsi || 'AIS TARGET',
-            });
-            const targetId = target.id || target.mmsi;
-            return [target, ...prev.filter(item => (item.id || item.mmsi) !== targetId)].slice(0, 30);
-          });
-          markRealSensors(['ais']);
-          break;
-        case 'NMEA_INVALID':
-          console.warn('[NMEA] Sentencia rechazada:', data.reason);
-          break;
-      }
+  setWeather(prev => ({
+    ...prev,
+    wind: data.speed,
+    windDir: data.angle
+  }));
+
+  updateRealSensors(
+    ['wind'],
+    setSensorQuality,
+    setDataSource
+  );
+
+  break;
+
+case 'DEPTH':
+  setDepth(data.depth);
+
+  updateRealSensors(
+    ['depth'],
+    setSensorQuality,
+    setDataSource
+  );
+
+  break;
+
+case 'AIS':
+
+  //console.log(
+  //'🚢 AIS RECIBIDO:',
+  //data
+  //);
+
+  setAisTargets(prev => {
+
+    const target = enrichAisTarget(ownShipVector, {
+      ...data,
+      id: data.id || data.mmsi || `ais-${Date.now()}`,
+      nombre: data.nombre || data.name || data.mmsi || 'AIS TARGET',
+    });
+
+    const targetId = target.id || target.mmsi;
+
+    return [
+      target,
+      ...prev.filter(item => (item.id || item.mmsi) !== targetId)
+    ].slice(0, 30);
+
+  });
+
+  updateRealSensors(
+    ['ais'],
+    setSensorQuality,
+    setDataSource
+  );
+
+  break;
+
+case 'NMEA_INVALID':
+  console.warn('[NMEA] Sentencia rechazada:', data.reason);
+  break;
+
+    } // <-- cierra el switch
+
+  }; // <-- cierra handleTelemetry
+
+  const api = window.smartshipAPI;
+
+  if (
+    api &&
+    typeof api.on === "function" &&
+    typeof api.removeListener === "function"
+  ) {
+
+    api.on("vessel-telemetry", handleTelemetry);
+
+    return () => {
+      api.removeListener("vessel-telemetry", handleTelemetry);
     };
 
-    const api = window.smartshipAPI; // Assuming smartshipAPI is exposed by preload.js
-    if (api && typeof api.on === 'function' && typeof api.removeListener === 'function') {
-      // Correct signature for ipcRenderer.on
-      api.on('vessel-telemetry', handleTelemetry);
+  } else {
 
-      return () => {
-        api.removeListener('vessel-telemetry', handleTelemetry);
-      };
-    } else {
-      console.info('[NMEA] Puente Electron no disponible; telemetria en modo local.');
-      // Fallback or warning if API is not correctly exposed
-      if (!api) console.warn('[NMEA] window.smartshipAPI no está definido.');
-      else console.warn('[NMEA] Métodos on/removeListener no disponibles en smartshipAPI.');
-    }
-    // No cleanup needed if API is not available, as no listener was set
-  }, [selectedShipId, ownShipVector]);
+    console.info("[NMEA] Puente Electron no disponible; telemetría en modo local.");
 
+    if (!api)
+      console.warn("[NMEA] window.smartshipAPI no está definido.");
+    else
+      console.warn("[NMEA] Métodos on/removeListener no disponibles en smartshipAPI.");
+
+  }
+
+}, [selectedShipId, ownShipVector]);
   useEffect(() => {
     const interval = setInterval(() => {
       setSensorQuality(prev => refreshSensorQualityMap(prev, dataSource));
