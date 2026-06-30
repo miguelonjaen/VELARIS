@@ -7,6 +7,9 @@ import { Polyline } from 'react-leaflet';
 import { calculateDistanceNM } from '../lib/aisMath';
 import { createShipIcon } from "@/components/vessels/createShipIcon";
 import { VesselRenderer } from "./vessels/VesselRenderer";
+import { app } from "@/application";
+
+
 
 interface FleetLayerProps {
   fleet: ShipData[];
@@ -52,13 +55,15 @@ const getDefaultShipImage = (tipo?: string) => {
   }
 };
 
+
 export const FleetLayer: React.FC<FleetLayerProps> = ({
   fleet,
   selectedShipId,
   shipPosition,
   simulatedAisTargets,
 }) => {
-  
+  const tacticalTargets = app.tactical.getTargets();
+
   
 return (
   <>
@@ -237,6 +242,9 @@ RISK: {target.risk ?? 'SAFE'}
     </React.Fragment>
   );
 })}
+{/* NUEVA CAPA TÁCTICA */}
+
+
       {/* Indicador de Riesgo de Colisión (Zona de Seguridad AIS) */}
       {shipPosition && (
         <Circle 

@@ -4,6 +4,7 @@ import { MemoryRepository } from "@/data/memory/MemoryRepository";
 import { Contact } from "@/tactical/contacts/Contact";
 import { TacticalEngine } from "@/tactical/TacticalEngine";
 import { AISService } from "@/services/AISService";
+import { RenderingEngine } from "@/rendering/RenderingEngine";
 
 
 export class Application {
@@ -13,6 +14,8 @@ export class Application {
     public readonly tactical: TacticalEngine;
 
     public readonly ais: AISService;
+
+    public readonly rendering: RenderingEngine;
 
 
 
@@ -30,7 +33,9 @@ export class Application {
 
         );
         this.ais = new AISService(this.contacts);
+        this.rendering = new RenderingEngine();
 
     }
+    
 
 }
