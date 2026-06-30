@@ -1,5 +1,6 @@
 import L from "leaflet";
 import { createShipIcon } from "./createShipIcon";
+import { ZoomStyleResolver } from "@/rendering/ZoomStyleResolver";
 
 export interface VesselRenderData {
   lat: number;
@@ -17,12 +18,19 @@ export interface VesselRenderData {
 
 export class VesselRenderer {
 
-  static render(vessel: VesselRenderData): L.DivIcon {
+  static render(
+    vessel: VesselRenderData,
+    zoom: number
+): L.DivIcon {
 
     return createShipIcon({
-      heading: vessel.cog,
-      color: this.getRiskColor(vessel.risk),
-      size: this.getSize(vessel),
+
+    heading: vessel.cog,
+
+    color: this.getRiskColor(vessel.risk),
+
+    size: this.zoomResolver.getShipSize(zoom),
+
     });
 
   }
@@ -32,6 +40,7 @@ export class VesselRenderer {
     return 32;
 
   }
+  private static readonly zoomResolver = new ZoomStyleResolver();
 
   private static getRiskColor(risk: string): string {
 

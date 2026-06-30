@@ -8,6 +8,7 @@ import { Polyline } from 'react-leaflet';
 import { VesselRenderer } from "../vessels/VesselRenderer";
 
 import { calculateDistanceNM } from "@/lib/aisMath";
+import { useMap } from "react-leaflet";
 
 
 
@@ -42,6 +43,9 @@ const tcpaDisplay =
     : tcpaMinutes >= 60
       ? `${Math.floor(tcpaMinutes / 60)}h ${Math.round(tcpaMinutes % 60)}m`
       : `${Math.round(tcpaMinutes)} min`;
+      const map = useMap();
+
+const zoom = map.getZoom();
 
   const predictionMinutes = 30;
   const riskColor =
@@ -99,17 +103,20 @@ const startLng =
 
       <Marker
         position={[target.lat, target.lng]}
-        icon={VesselRenderer.render({
-  lat: target.lat,
-  lng: target.lng,
+        icon={VesselRenderer.render(
+    {
+        lat: target.lat,
+        lng: target.lng,
 
-  cog: target.cog,
-  sog: target.sog,
+        cog: target.cog,
+        sog: target.sog,
 
-  risk: target.risk ?? "SAFE",
+        risk: target.risk ?? "SAFE",
 
-  shipType: target.shipType,
-})}
+        shipType: target.shipType,
+    },
+    zoom
+)}
       >
         <Popup>
   <div>

@@ -9,6 +9,8 @@ import { createShipIcon } from "@/components/vessels/createShipIcon";
 import { VesselRenderer } from "./vessels/VesselRenderer";
 import { app } from "@/application";
 import { FleetMarkers } from "./fleet/FleetMarkers";
+import { FleetSafety } from "./fleet/FleetSafety";
+import { FleetPrediction } from "./fleet/FleetPrediction";
 
 
 
@@ -69,6 +71,17 @@ export const FleetLayer: React.FC<FleetLayerProps> = ({
 return (
   <>
     
+    <FleetPrediction
+    simulatedAisTargets={simulatedAisTargets}
+/>
+<FleetSafety
+
+    shipPosition={shipPosition}
+
+    simulatedAisTargets={simulatedAisTargets}
+    
+
+/>
     <FleetMarkers
 
     simulatedAisTargets={simulatedAisTargets}
@@ -84,20 +97,6 @@ return (
 
 
 
-      {/* Indicador de Riesgo de Colisión (Zona de Seguridad AIS) */}
-      {shipPosition && (
-        <Circle 
-          center={[shipPosition.lat, shipPosition.lng]} 
-          radius={500}
-          pathOptions={{ 
-            color: simulatedAisTargets.some(t => t.isCollisionRisk) ? '#ef4444' : '#06b6d4', 
-            fillColor: simulatedAisTargets.some(t => t.isCollisionRisk) ? '#ef4444' : '#06b6d4', 
-            fillOpacity: 0.05, 
-            weight: 1, 
-            dashArray: '5, 5' 
-          }}
-        />
-      )}
     </>
   );
 };
