@@ -33,3 +33,8 @@ export interface AISTelemetry {
     type: "AIS";
     data: unknown;
 }
+export interface BaseTelemetry {
+
+    type: string;
+
+}

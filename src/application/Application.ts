@@ -14,6 +14,8 @@ import { NavigationService } from "@/core/services/NavigationService";
 import { ElectronTelemetryAdapter } from "@/platform/telemetry/ElectronTelemetryAdapter";
 
 
+
+
 export class Application {
 
     public readonly events: CoreEvents;
