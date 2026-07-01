@@ -217,6 +217,8 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
 
 const APP_ID = "react-example";
 const GEMINI_MODEL = "gemini-2.5-flash";
+const DEFAULT_SHIP_POSITION = { lat: 36.7215, lng: -3.5235 };
+const DEFAULT_DEPTH = 10.5;
 
 // --- Constants for Charts ---
 const MBTILES_ZONES = [
@@ -536,7 +538,43 @@ function App() {
   const [lang, setLang] = useState<Language>('es');
   const t = translations[lang];
   const [messages, setMessages] = useState<any[]>([]);
-  const [shipPosition, setShipPosition] = useState<{ lat: number; lng: number } | null>({ lat: 36.7215, lng: -3.5235 });
+  const [coreTelemetryRevision, setCoreTelemetryRevision] = useState(0);
+  const refreshCoreTelemetry = useCallback(() => {
+    setCoreTelemetryRevision(prev => prev + 1);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribePosition = app.events.subscribe("core.position.updated", refreshCoreTelemetry);
+    const unsubscribeMotion = app.events.subscribe("core.motion.updated", refreshCoreTelemetry);
+    const unsubscribeDepth = app.events.subscribe("core.depth.updated", refreshCoreTelemetry);
+    const unsubscribeWind = app.events.subscribe("core.wind.updated", refreshCoreTelemetry);
+
+    return () => {
+      unsubscribePosition();
+      unsubscribeMotion();
+      unsubscribeDepth();
+      unsubscribeWind();
+    };
+  }, [refreshCoreTelemetry]);
+
+  const shipPosition = app.state.shipPosition ?? DEFAULT_SHIP_POSITION;
+  const setShipPosition = useCallback((value: React.SetStateAction<{ lat: number; lng: number } | null>) => {
+    const currentPosition = app.state.shipPosition ?? DEFAULT_SHIP_POSITION;
+    const nextPosition = typeof value === 'function'
+      ? value(currentPosition)
+      : value;
+
+    if (!nextPosition) return;
+
+    app.state.updatePosition(
+      nextPosition.lat,
+      nextPosition.lng,
+      app.state.sog,
+      app.state.cog,
+      "system"
+    );
+    refreshCoreTelemetry();
+  }, [refreshCoreTelemetry]);
 
   const [fleet, setFleet] = useState<ShipData[]>([]);
   const [selectedShipId, setSelectedShipId] = useState<string | null>(null);
@@ -553,10 +591,49 @@ function App() {
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isTravesiaActive, setIsTravesiaActive] = useState(false);
-  const [weather, setWeather] = useState<ProcessedWeather>({ temp: 22, wind: 12, windDir: 0, condition: 'Despejado', seaState: 'Calma', humidity: 60, pressure: 1013, visibility: 10000, waveHeight: 0.5, tideLevel: 0.5 });
-  const [depth, setDepth] = useState(10.5);
+  const [weatherState, setWeatherState] = useState<ProcessedWeather>({ temp: 22, wind: 12, windDir: 0, condition: 'Despejado', seaState: 'Calma', humidity: 60, pressure: 1013, visibility: 10000, waveHeight: 0.5, tideLevel: 0.5 });
+  const weather = useMemo<ProcessedWeather>(() => ({
+    ...weatherState,
+    wind: app.state.wind.speed > 0 ? app.state.wind.speed : weatherState.wind,
+    windDir: app.state.wind.angle > 0 ? app.state.wind.angle : weatherState.windDir
+  }), [weatherState, coreTelemetryRevision]);
+  const setWeather: React.Dispatch<React.SetStateAction<ProcessedWeather>> = useCallback((value) => {
+    setWeatherState(prev => {
+      const nextWeather = typeof value === 'function'
+        ? value(prev)
+        : value;
+
+      app.state.updateWind(nextWeather.wind, nextWeather.windDir, "system");
+      return nextWeather;
+    });
+    refreshCoreTelemetry();
+  }, [refreshCoreTelemetry]);
+  const depth = app.state.depth > 0 ? app.state.depth : DEFAULT_DEPTH;
+  const setDepth = useCallback((value: React.SetStateAction<number>) => {
+    const nextDepth = typeof value === 'function'
+      ? value(app.state.depth > 0 ? app.state.depth : DEFAULT_DEPTH)
+      : value;
+
+    app.state.updateDepth(nextDepth, "system");
+    refreshCoreTelemetry();
+  }, [refreshCoreTelemetry]);
   const [depthHistory, setDepthHistory] = useState(() => app.simulation.createInitialDepthHistory());
-  const [simulatedSog, setSimulatedSog] = useState(0);
+  const simulatedSog = app.state.sog;
+  const setSimulatedSog = useCallback((value: React.SetStateAction<number>) => {
+    const nextSog = typeof value === 'function'
+      ? value(app.state.sog)
+      : value;
+    const currentPosition = app.state.shipPosition ?? DEFAULT_SHIP_POSITION;
+
+    app.state.updatePosition(
+      currentPosition.lat,
+      currentPosition.lng,
+      nextSog,
+      app.state.cog,
+      "system"
+    );
+    refreshCoreTelemetry();
+  }, [refreshCoreTelemetry]);
   const [isEngineOn, setIsEngineOn] = useState(false);
   const [engineData, setEngineData] = useState({ rpm: 0, temp: 20, voltage: 12.8, fuel: 85, water: 90 });
   const [navigationDestination, setNavigationDestination] = useState<string>('');
@@ -893,6 +970,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
     e.preventDefault();
     handleTacticalOrder(input);
   };
+
   const [isSelectingNavigationMode, setIsSelectingNavigationMode] = useState(false);
   const [isDemoMode] = useState(true); // Always true as requested
   const [activeTab, setActiveTab] = useState<'control' | 'fleet' | 'inventory' | 'guide' | 'admin' | 'profile' | 'logbook' | 'navigation' | 'config' | 'shield'>('control');
@@ -927,147 +1005,98 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
 
   // --- NMEA REAL-TIME INTEGRATION ---
   useEffect(() => {
-    console.log("🚀 useEffect NMEA MONTADO");
+    console.log("NMEA useEffect mounted");
 
     const handleTelemetry = (data: any) => {
       console.log("RECIBIDO", data);
       if (!data?.type) return;
       console.log("APP handleTelemetry", data.type, data);
 
-      
-
       switch (data.type) {
         case 'GPS':
-          app.telemetry.process(data);
           console.log("CORE STATE", app.state);
-          console.log(
-  '🛰️ GPS RECIBIDO',
-  data
-);
+          console.log('GPS RECIBIDO', data);
 
           if (!isSimulationMode) {
-            console.log(
-              'SIM',
-              shipPosition
-            );
-            setShipPosition({
-              lat: data.lat,
-              lng: data.lng
-            });
+            console.log('SIM', shipPosition);
           }
 
-          setSimulatedSog(data.sog);
+          updateRealSensors(['gps', 'heading', 'sog'], setSensorQuality, setDataSource);
 
-          updateRealSensors(
-    ['gps', 'heading', 'sog'],
-    setSensorQuality,
-    setDataSource
-);
           if (selectedShipId) {
-  setFleet(prev => prev.map(s =>
-    s.id === selectedShipId
-      ? {
-          ...s,
-          lat: data.lat,
-          lng: data.lng,
-          cog: data.cog,
-          sog: data.sog
-        }
-      : s));
+            setFleet(prev => prev.map(s =>
+              s.id === selectedShipId
+                ? {
+                    ...s,
+                    lat: data.lat,
+                    lng: data.lng,
+                    cog: data.cog,
+                    sog: data.sog
+                  }
+                : s
+            ));
           }
           break;
+
         case 'WIND':
-  setWeather(prev => ({
-    ...prev,
-    wind: data.speed,
-    windDir: data.angle
-  }));
+          setWeather(prev => ({
+            ...prev,
+            wind: app.state.wind.speed,
+            windDir: app.state.wind.angle
+          }));
 
-  updateRealSensors(
-    ['wind'],
-    setSensorQuality,
-    setDataSource
-  );
+          updateRealSensors(['wind'], setSensorQuality, setDataSource);
+          break;
 
-  break;
+        case 'DEPTH':
+          refreshCoreTelemetry();
+          updateRealSensors(['depth'], setSensorQuality, setDataSource);
+          break;
 
-case 'DEPTH':
-  setDepth(data.depth);
+        case 'AIS':
+          setAisTargets(prev => {
+            const target = enrichAisTarget(ownShipVector, {
+              ...data,
+              id: data.id || data.mmsi || `ais-${Date.now()}`,
+              nombre: data.nombre || data.name || data.mmsi || 'AIS TARGET',
+            });
 
-  updateRealSensors(
-    ['depth'],
-    setSensorQuality,
-    setDataSource
-  );
+            const targetId = target.id || target.mmsi;
 
-  break;
+            return [
+              target,
+              ...prev.filter(item => (item.id || item.mmsi) !== targetId)
+            ].slice(0, 30);
+          });
 
-case 'AIS':
+          updateRealSensors(['ais'], setSensorQuality, setDataSource);
+          break;
 
-  //console.log(
-  //'🚢 AIS RECIBIDO:',
-  //data
-  //);
-
-  setAisTargets(prev => {
-
-    const target = enrichAisTarget(ownShipVector, {
-      ...data,
-      id: data.id || data.mmsi || `ais-${Date.now()}`,
-      nombre: data.nombre || data.name || data.mmsi || 'AIS TARGET',
-    });
-
-    const targetId = target.id || target.mmsi;
-
-    return [
-      target,
-      ...prev.filter(item => (item.id || item.mmsi) !== targetId)
-    ].slice(0, 30);
-
-  });
-
-  updateRealSensors(
-    ['ais'],
-    setSensorQuality,
-    setDataSource
-  );
-
-  break;
-
-case 'NMEA_INVALID':
-  console.warn('[NMEA] Sentencia rechazada:', data.reason);
-  break;
-
-    } // <-- cierra el switch
-
-  }; // <-- cierra handleTelemetry
-
-  const api = window.smartshipAPI;
-
-  if (
-    api &&
-    typeof api.on === "function" &&
-    typeof api.removeListener === "function"
-  ) {
-
-    api.on("vessel-telemetry", handleTelemetry);
-
-    return () => {
-      api.removeListener("vessel-telemetry", handleTelemetry);
+        case 'NMEA_INVALID':
+          console.warn('[NMEA] Sentencia rechazada:', data.reason);
+          break;
+      }
     };
 
-  } else {
+    const api = window.smartshipAPI;
+    const telemetryStarted = app.electronTelemetry.start(api, handleTelemetry);
 
-    console.info("[NMEA] Puente Electron no disponible; telemetría en modo local.");
+    if (!telemetryStarted) {
+      console.info("[NMEA] Puente Electron no disponible; telemetria en modo local.");
 
-    if (!api)
-      console.warn("[NMEA] window.smartshipAPI no está definido.");
-    else
-      console.warn("[NMEA] Métodos on/removeListener no disponibles en smartshipAPI.");
+      if (!api) {
+        console.warn("[NMEA] window.smartshipAPI no esta definido.");
+      } else {
+        console.warn("[NMEA] Metodos on/removeListener no disponibles en smartshipAPI.");
+      }
+    }
 
-  }
+    return () => {
+      app.electronTelemetry.stop();
+    };
 
-}, [selectedShipId, ownShipVector]);
+  }, [selectedShipId, ownShipVector, isSimulationMode, shipPosition, refreshCoreTelemetry]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setSensorQuality(prev => refreshSensorQualityMap(prev, dataSource));
@@ -1237,15 +1266,10 @@ case 'NMEA_INVALID':
 
       if (!gpsMessage) return;
 
-      app.telemetry.process(gpsMessage);
+      app.electronTelemetry.forward(gpsMessage);
       console.log("CORE", app.state);
 
       console.log("SIM GPS", gpsMessage);
-
-      setShipPosition({
-        lat: gpsMessage.lat,
-        lng: gpsMessage.lng
-      });
 
     }, 1000);
 

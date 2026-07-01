@@ -11,6 +11,7 @@ import { SimulationService } from "@/core/services/SimulationService";
 import { CoreEvents } from "@/core/events/CoreEvents";
 import { SynchronousCoreEvents } from "@/core/events/SynchronousCoreEvents";
 import { NavigationService } from "@/core/services/NavigationService";
+import { ElectronTelemetryAdapter } from "@/platform/telemetry/ElectronTelemetryAdapter";
 
 
 export class Application {
@@ -26,6 +27,8 @@ export class Application {
     public readonly ais: AISService;
 
     public readonly telemetry: TelemetryService;
+
+    public readonly electronTelemetry: ElectronTelemetryAdapter;
 
     public readonly rendering: RenderingEngine;
 
@@ -54,6 +57,8 @@ export class Application {
     this.ais = new AISService(this.contacts);
 
     this.telemetry = new TelemetryService(this.state);
+
+    this.electronTelemetry = new ElectronTelemetryAdapter(this.telemetry);
 
     this.navigation = new NavigationService(this.events);
 

@@ -43,7 +43,22 @@ export class TelemetryService {
 
 }
     private processAIS(data: any): void {}
-    private processWind(data: any): void {}
-    private processDepth(data: any): void {}
+    private processWind(data: any): void {
+
+        this.state.updateWind(
+            data.speed,
+            data.angle
+        );
+
+    }
+
+    private processDepth(data: any): void {
+
+        this.state.updateDepth(
+            data.depth
+        );
+
+    }
+
     private processInvalid(data: any): void {}
 }
