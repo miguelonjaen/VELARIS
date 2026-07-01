@@ -10,6 +10,7 @@ import { TelemetryService } from "@/core/services/TelemetryService";
 import { SimulationService } from "@/core/services/SimulationService";
 import { CoreEvents } from "@/core/events/CoreEvents";
 import { SynchronousCoreEvents } from "@/core/events/SynchronousCoreEvents";
+import { NavigationService } from "@/core/services/NavigationService";
 
 
 export class Application {
@@ -29,6 +30,8 @@ export class Application {
     public readonly rendering: RenderingEngine;
 
     public readonly simulation: SimulationService;
+
+    public readonly navigation: NavigationService;
 
 
 
@@ -51,6 +54,8 @@ export class Application {
     this.ais = new AISService(this.contacts);
 
     this.telemetry = new TelemetryService(this.state);
+
+    this.navigation = new NavigationService(this.events);
 
     this.simulation = new SimulationService();
 
