@@ -304,7 +304,6 @@ function App() {
   const [changelogData, setChangelogData] = useState(getLatestVersion());
   const [simulationSpeed, setSimulationSpeed] = useState(1);
   const [vesselStatus, setVesselStatus] = useState<VesselStatus | null>(null);
-  const [simulationWaypointIndex, setSimulationWaypointIndex] = useState(1);
 
   useEffect(() => {
 
@@ -556,7 +555,7 @@ function App() {
   const [isTravesiaActive, setIsTravesiaActive] = useState(false);
   const [weather, setWeather] = useState<ProcessedWeather>({ temp: 22, wind: 12, windDir: 0, condition: 'Despejado', seaState: 'Calma', humidity: 60, pressure: 1013, visibility: 10000, waveHeight: 0.5, tideLevel: 0.5 });
   const [depth, setDepth] = useState(10.5);
-  const [depthHistory, setDepthHistory] = useState(() => Array.from({ length: 20 }, (_, i) => ({ time: Date.now() - (i * 1000), depth: 10 + Math.random() })));
+  const [depthHistory, setDepthHistory] = useState(() => app.simulation.createInitialDepthHistory());
   const [simulatedSog, setSimulatedSog] = useState(0);
   const [isEngineOn, setIsEngineOn] = useState(false);
   const [engineData, setEngineData] = useState({ rpm: 0, temp: 20, voltage: 12.8, fuel: 85, water: 90 });
@@ -949,8 +948,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
           if (!isSimulationMode) {
             console.log(
               'SIM',
-              shipPosition,
-              simulationWaypointIndex
+              shipPosition
             );
             setShipPosition({
               lat: data.lat,
@@ -1221,67 +1219,33 @@ case 'NMEA_INVALID':
     if (rutaActiva.length < 2) return;
 
     const interval = setInterval(() => {
-      // console.log(  'TARGET',  rutaActiva[simulationWaypointIndex]);
-
-      const target = rutaActiva[simulationWaypointIndex];
-
-      if (!target) return;
-
-      const targetLat = target[0];
-      const targetLng = target[1];
-
-      const dLat = targetLat - shipPosition.lat;
-      const dLng = targetLng - shipPosition.lng;
-
-      const cog =
-  (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
-
-      const distance = Math.sqrt(
-        dLat * dLat +
-        dLng * dLng
-      );
       if (!isTravesiaActive) return;
 
-      if (distance < 0.001) {
+      const gpsMessage = app.simulation.tick({
+        position: shipPosition,
+        route: rutaActiva,
+        sog: simulatedSog,
+        speedMultiplier: simulationSpeed
+      });
 
-        if (simulationWaypointIndex >= rutaActiva.length - 1) {
-
-          console.log('🏁 DESTINO ALCANZADO');
-
-          setIsTravesiaActive(false);
-
-          handleEndTravesia();
-
-          return;
-        }
-
-        setSimulationWaypointIndex(prev => prev + 1);
-
+      if (app.simulation.hasReachedDestination()) {
+        console.log('🏁 DESTINO ALCANZADO');
+        setIsTravesiaActive(false);
+        handleEndTravesia();
         return;
       }
 
-      const factor = 0.01 * simulationSpeed;
-      //console.log(  'MOVIENDO',  shipPosition,  '→',  target);
+      if (!gpsMessage) return;
 
-      const nextLat = shipPosition.lat + dLat * factor;
-const nextLng = shipPosition.lng + dLng * factor;
+      app.telemetry.process(gpsMessage);
+      console.log("CORE", app.state);
 
-const gpsMessage = app.simulation.tick(
-    nextLat,
-    nextLng,
-    simulatedSog,
-    cog
-);
+      console.log("SIM GPS", gpsMessage);
 
-app.telemetry.process(gpsMessage);
-console.log("CORE", app.state);
-
-console.log("SIM GPS", gpsMessage);
-
-setShipPosition({
-    lat: nextLat,
-    lng: nextLng
-});
+      setShipPosition({
+        lat: gpsMessage.lat,
+        lng: gpsMessage.lng
+      });
 
     }, 1000);
 
@@ -1291,7 +1255,6 @@ setShipPosition({
     isSimulationMode,
     shipPosition,
     rutaActiva,
-    simulationWaypointIndex,
     isTravesiaActive,
     simulationSpeed
   ]);
@@ -1744,37 +1707,17 @@ setShipPosition({
   useEffect(() => {
     if (import.meta.env.VITE_AISSTREAM_API_KEY) return; // Skip simulation if real AIS is on
     const interval = setInterval(() => {
-      // Depth fluctuates normally, but every now and then it drops (simulation)
-      setDepth(prev => {
-        const next = Math.max(0.5, prev + (Math.random() - 0.5) * 0.8);
-        return next;
+      setDepth(prev => app.simulation.simulateDepth(prev));
+      setDepthHistory(prev => app.simulation.appendDepthHistory(prev, depth));
+
+      const aisTarget = app.simulation.maybeCreateAisTarget({
+        isTravesiaActive,
+        targetCount: aisTargets.length,
+        ownPosition: shipPosition
       });
 
-      setDepthHistory(prev => {
-        const next = [...prev.slice(1), { time: Date.now(), depth: depth }];
-        return next;
-      });
-
-      // AIS Simulation desactivada cuando AISStream está activo
-      if (
-        !import.meta.env.VITE_AISSTREAM_API_KEY &&
-        isTravesiaActive &&
-        Math.random() > 0.8 &&
-        aisTargets.length < 3
-      ) {
-        const baseLat = shipPosition?.lat || 36.7215;
-        const baseLng = shipPosition?.lng || -3.5235;
-        const offsetLat = (Math.random() - 0.5) * 0.04;
-        const offsetLng = (Math.random() - 0.5) * 0.04;
-        setAisTargets(prev => [...prev, {
-          id: 'target-' + Date.now(),
-          mmsi: '224' + Math.floor(Math.random() * 999999),
-          nombre: 'BUQUE CARGUERO ' + Math.floor(Math.random() * 100),
-          lat: baseLat + offsetLat,
-          lng: baseLng + offsetLng,
-          sog: 6 + Math.random() * 14,
-          cog: Math.floor(Math.random() * 360)
-        }]);
+      if (aisTarget) {
+        setAisTargets(prev => [...prev, aisTarget]);
         setSensorQuality(prev => markSensorUpdated(prev, ['ais'], 'simulated'));
       }
     }, 5000);
@@ -1788,13 +1731,9 @@ setShipPosition({
   // Navigation simulation
   useEffect(() => {
     const interval = setInterval(() => {
-      setNavData((prev: any) => {
+      setNavData((prev) => {
         if (!prev) return prev; // Salvaguarda por si prev es nulo
-        return {
-          ...prev,
-          xte: (prev.xte || 0) + (Math.random() - 0.5) * 0.01,
-          dtw: Math.max(0, (prev.dtw || 0) - 0.001)
-        };
+        return app.simulation.simulateNavigationData(prev);
       });
     }, 4000);
     return () => clearInterval(interval);
@@ -1803,14 +1742,7 @@ setShipPosition({
   // Engine Simulation
   useEffect(() => {
     const interval = setInterval(() => {
-      setEngineData(prev => ({
-        ...prev,
-        rpm: isTravesiaActive ? 2200 + Math.random() * 200 : 0,
-        temp: isTravesiaActive ? Math.min(105, prev.temp + 0.1) : Math.max(20, prev.temp - 0.2),
-        voltage: isTravesiaActive ? 14.2 + Math.random() * 0.2 : 12.6 + Math.random() * 0.1,
-        fuel: isTravesiaActive ? Math.max(0, prev.fuel - 0.01) : prev.fuel,
-        water: isTravesiaActive ? Math.max(0, prev.water - 0.005) : prev.water
-      }));
+      setEngineData(prev => app.simulation.simulateEngineData(prev, isTravesiaActive));
     }, 2000);
     return () => clearInterval(interval);
   }, [isTravesiaActive]);
@@ -2124,7 +2056,7 @@ setShipPosition({
       // REACTIVIDAD: Limpiar UI inmediatamente
       setIsTravesiaActive(false);
       setRutaActiva([]);
-      setSimulationWaypointIndex(1);
+      app.simulation.resetNavigation(1);
       setNavigationDestination('');
       setPlannedPath([]);
       setCurrentPath([]);
@@ -2753,41 +2685,10 @@ recentLogEntries.current[logKey] = now;
 
 if (shipPosition && targetDestination) {
 
-  const offshore = 0.04;
-
-  const localRoute: [number, number][] = [
-    [shipPosition.lat, shipPosition.lng],
-
-    [shipPosition.lat - offshore, shipPosition.lng],
-
-    [
-      shipPosition.lat - offshore,
-      shipPosition.lng +
-        (targetDestination.lng - shipPosition.lng) * 0.25
-    ],
-
-    [
-      shipPosition.lat - offshore,
-      shipPosition.lng +
-        (targetDestination.lng - shipPosition.lng) * 0.50
-    ],
-
-    [
-      shipPosition.lat - offshore,
-      shipPosition.lng +
-        (targetDestination.lng - shipPosition.lng) * 0.75
-    ],
-
-    [
-      targetDestination.lat - offshore,
-      targetDestination.lng
-    ],
-
-    [
-      targetDestination.lat,
-      targetDestination.lng
-    ]
-  ];
+  const localRoute = app.simulation.createLocalOffshoreRoute(
+    shipPosition,
+    targetDestination
+  );
 
   console.log(
     '🧭 RUTA LOCAL GENERADA:',
@@ -2855,17 +2756,10 @@ return;
     } catch (error) {
       if (shipPosition && targetDestination) {
 
-    const offshore = 0.04;
-
-    const localRoute: [number, number][] = [
-      [shipPosition.lat, shipPosition.lng],
-      [shipPosition.lat - offshore, shipPosition.lng],
-      [shipPosition.lat - offshore, shipPosition.lng + (targetDestination.lng - shipPosition.lng) * 0.25],
-      [shipPosition.lat - offshore, shipPosition.lng + (targetDestination.lng - shipPosition.lng) * 0.50],
-      [shipPosition.lat - offshore, shipPosition.lng + (targetDestination.lng - shipPosition.lng) * 0.75],
-      [targetDestination.lat - offshore, targetDestination.lng],
-      [targetDestination.lat, targetDestination.lng]
-    ];
+    const localRoute = app.simulation.createLocalOffshoreRoute(
+      shipPosition,
+      targetDestination
+    );
 
     console.log('🧭 FALLBACK LOCAL:', localRoute.length, 'waypoints');
 
@@ -3021,7 +2915,7 @@ return;
       navPlan.targetCoords
     ) {
 
-      setSimulationWaypointIndex(1);
+      app.simulation.resetNavigation(1);
 
 if (plannedPath.length > 1) {
 
@@ -3039,41 +2933,10 @@ if (plannedPath.length > 1) {
     '⚠️ Generando derrota local'
   );
 
-  const offshore = 0.04;
-
-  const localRoute: [number, number][] = [
-    [shipPosition.lat, shipPosition.lng],
-
-    [shipPosition.lat - offshore, shipPosition.lng],
-
-    [
-      shipPosition.lat - offshore,
-      shipPosition.lng +
-      (navPlan.targetCoords.lng - shipPosition.lng) * 0.25
-    ],
-
-    [
-      shipPosition.lat - offshore,
-      shipPosition.lng +
-      (navPlan.targetCoords.lng - shipPosition.lng) * 0.50
-    ],
-
-    [
-      shipPosition.lat - offshore,
-      shipPosition.lng +
-      (navPlan.targetCoords.lng - shipPosition.lng) * 0.75
-    ],
-
-    [
-      navPlan.targetCoords.lat - offshore,
-      navPlan.targetCoords.lng
-    ],
-
-    [
-      navPlan.targetCoords.lat,
-      navPlan.targetCoords.lng
-    ]
-  ];
+  const localRoute = app.simulation.createLocalOffshoreRoute(
+    shipPosition,
+    navPlan.targetCoords
+  );
 
   setRutaActiva(localRoute);
 }
