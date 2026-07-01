@@ -8,9 +8,13 @@ import { RenderingEngine } from "@/rendering/RenderingEngine";
 import { CoreState } from "@/core/CoreState";
 import { TelemetryService } from "@/core/services/TelemetryService";
 import { SimulationService } from "@/core/services/SimulationService";
+import { CoreEvents } from "@/core/events/CoreEvents";
+import { SynchronousCoreEvents } from "@/core/events/SynchronousCoreEvents";
 
 
 export class Application {
+
+    public readonly events: CoreEvents;
 
     public readonly state: CoreState;
 
@@ -30,7 +34,11 @@ export class Application {
 
     constructor() {
 
-    this.state = new CoreState();
+    const events = new SynchronousCoreEvents();
+
+    this.events = events;
+
+    this.state = new CoreState(events);
 
     this.contacts = new ContactRepository(
         new MemoryRepository<Contact>(contact => contact.id)
