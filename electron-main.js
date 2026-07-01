@@ -104,7 +104,7 @@ function initializeServices(window) {
   tacticalEngine.start();
 
   // Servicio NMEA para hardware serial
-  import { TelemetryMessage } from "@/core/types/TelemetryMessage";
+ 
 
 nmeaService = new NMEAService((message) => {
 
