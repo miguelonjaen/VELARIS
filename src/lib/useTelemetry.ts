@@ -39,7 +39,7 @@ export const useTelemetry = ({ selectedShipId, shipPosition, simulatedSog, cog }
   useEffect(() => {
 
   const handleTelemetry = (data: any) => {
-
+    console.log("HOOK handleTelemetry", data.type);
     if (!data?.type) return;
 
     switch (data.type) {

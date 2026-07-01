@@ -104,18 +104,15 @@ function initializeServices(window) {
   tacticalEngine.start();
 
   // Servicio NMEA para hardware serial
-  nmeaService = new NMEAService((line) => {
-    // Se comunica con el hook useAIS y la telemetría de App.tsx
-    console.log(
-  '📡 ENVIANDO TELEMETRIA:',
-  payload
-);
-console.log(
-  '📡 TELEMETRIA SALIENTE:',
-  data
-);
-    window.webContents.send('vessel-telemetry', { type: 'RAW', data: line });
-  });
+  import { TelemetryMessage } from "@/core/types/TelemetryMessage";
+
+nmeaService = new NMEAService((message) => {
+
+    console.log("📡 TELEMETRIA:", message);
+
+    window.webContents.send("vessel-telemetry", message);
+
+});
 
   // Backend local canónico: cartas, salud, Supabase y Gemini.
   startMapServer(8089);

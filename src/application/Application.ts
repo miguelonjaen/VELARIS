@@ -5,9 +5,14 @@ import { Contact } from "@/tactical/contacts/Contact";
 import { TacticalEngine } from "@/tactical/TacticalEngine";
 import { AISService } from "@/services/AISService";
 import { RenderingEngine } from "@/rendering/RenderingEngine";
+import { CoreState } from "@/core/CoreState";
+import { TelemetryService } from "@/core/services/TelemetryService";
+import { SimulationService } from "@/core/services/SimulationService";
 
 
 export class Application {
+
+    public readonly state: CoreState;
 
     public readonly contacts: ContactRepository;
 
@@ -15,27 +20,35 @@ export class Application {
 
     public readonly ais: AISService;
 
+    public readonly telemetry: TelemetryService;
+
     public readonly rendering: RenderingEngine;
+
+    public readonly simulation: SimulationService;
 
 
 
     constructor() {
 
-        this.contacts = new ContactRepository(
+    this.state = new CoreState();
 
-            new MemoryRepository<Contact>(contact => contact.id)
+    this.contacts = new ContactRepository(
+        new MemoryRepository<Contact>(contact => contact.id)
+    );
 
-        );
+    this.tactical = new TacticalEngine(
+        this.contacts
+    );
 
-        this.tactical = new TacticalEngine(
+    this.ais = new AISService(this.contacts);
 
-            this.contacts
+    this.telemetry = new TelemetryService(this.state);
 
-        );
-        this.ais = new AISService(this.contacts);
-        this.rendering = new RenderingEngine();
+    this.simulation = new SimulationService();
 
-    }
+    this.rendering = new RenderingEngine();
+
+}
     
 
 }

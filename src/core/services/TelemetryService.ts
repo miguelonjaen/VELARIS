@@ -1,7 +1,9 @@
+import { CoreState } from "@/core/CoreState";
+
 export class TelemetryService {
 
     constructor(
-        // Dependencias
+        private readonly state: CoreState
     ) {}
 
     public process(data: any): void {
@@ -27,19 +29,21 @@ export class TelemetryService {
             case "NMEA_INVALID":
                 this.processInvalid(data);
                 break;
-
         }
-
     }
 
-    private processGPS(data: any): void {}
+    private processGPS(data: any): void {
 
+    this.state.updatePosition(
+        data.lat,
+        data.lng,
+        data.sog,
+        data.cog
+    );
+
+}
     private processAIS(data: any): void {}
-
     private processWind(data: any): void {}
-
     private processDepth(data: any): void {}
-
     private processInvalid(data: any): void {}
-
 }

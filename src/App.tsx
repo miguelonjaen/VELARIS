@@ -928,14 +928,19 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
 
   // --- NMEA REAL-TIME INTEGRATION ---
   useEffect(() => {
-    //console.log(  'SIMULADOR',  isSimulationMode,  rutaActiva.length,  shipPosition);
+    console.log("🚀 useEffect NMEA MONTADO");
+
     const handleTelemetry = (data: any) => {
+      console.log("RECIBIDO", data);
       if (!data?.type) return;
+      console.log("APP handleTelemetry", data.type, data);
 
       
 
       switch (data.type) {
         case 'GPS':
+          app.telemetry.process(data);
+          console.log("CORE STATE", app.state);
           console.log(
   '🛰️ GPS RECIBIDO',
   data
@@ -1206,8 +1211,7 @@ case 'NMEA_INVALID':
   // MOTOR DE NAVEGACIÓN SIMULADA
 
   useEffect(() => {
-    // console.log('SIMULADOR', isSimulationMode, rutaActiva.length, shipPosition);
-
+    
     if (!isSimulationMode) return;
 
     if (!isTravesiaActive) return;
@@ -1228,6 +1232,9 @@ case 'NMEA_INVALID':
 
       const dLat = targetLat - shipPosition.lat;
       const dLng = targetLng - shipPosition.lng;
+
+      const cog =
+  (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
 
       const distance = Math.sqrt(
         dLat * dLat +
@@ -1256,10 +1263,25 @@ case 'NMEA_INVALID':
       const factor = 0.01 * simulationSpeed;
       //console.log(  'MOVIENDO',  shipPosition,  '→',  target);
 
-      setShipPosition({
-        lat: shipPosition.lat + dLat * factor,
-        lng: shipPosition.lng + dLng * factor
-      });
+      const nextLat = shipPosition.lat + dLat * factor;
+const nextLng = shipPosition.lng + dLng * factor;
+
+const gpsMessage = app.simulation.tick(
+    nextLat,
+    nextLng,
+    simulatedSog,
+    cog
+);
+
+app.telemetry.process(gpsMessage);
+console.log("CORE", app.state);
+
+console.log("SIM GPS", gpsMessage);
+
+setShipPosition({
+    lat: nextLat,
+    lng: nextLng
+});
 
     }, 1000);
 
