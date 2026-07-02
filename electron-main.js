@@ -59,30 +59,44 @@ function setupAutoUpdater() {
  */
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    title: `SmartShip Pro ${packageJson.version}`,
+    width: 1400,
+    height: 900,
+    minWidth: 1200,
+    minHeight: 760,
+
+    show: false,
+
+    title: 'SmartShip Pro',
+    autoHideMenuBar: true,
+
+    icon: path.join(__dirname, 'public', 'icon.ico'),
+
     backgroundColor: '#020617',
+
     webPreferences: {
       preload: path.join(__dirname, 'electron-preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      webSecurity: false, // Permitir carga de teselas locales
+      webSecurity: false,
     },
   });
+
+  mainWindow.removeMenu();
 
   const isDev = !app.isPackaged;
 
   if (isDev) {
-    // En desarrollo cargamos el servidor de Vite
     mainWindow.loadURL('http://localhost:3000').catch(() => {
-      log.warn("Vite no disponible, reintentando...");
+      log.warn('Vite no disponible, reintentando...');
       setTimeout(() => mainWindow.loadURL('http://localhost:3000'), 2000);
     });
   } else {
-    // En producción cargamos el build estático
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
   }
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -92,6 +106,10 @@ function createWindow() {
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
+
+  
+
+  
 
 /**
  * Inicialización de servicios náuticos y servidores locales

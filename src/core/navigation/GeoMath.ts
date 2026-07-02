@@ -1,4 +1,5 @@
 import { GeoPoint } from "./GeoPoint";
+
 export class GeoMath {
 
     private static readonly EARTH_RADIUS_METERS = 6371000;

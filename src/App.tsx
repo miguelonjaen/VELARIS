@@ -126,7 +126,7 @@ import { AlarmToasts } from './components/AlarmToasts';
 import ErrorBoundary from './components/ErrorBoundary';
 import InventoryManager from './components/InventoryManager';
 import packageJson from '../package.json';
-import { CHANGELOG, getLatestVersion } from './config/changelog';
+import { releases } from './content/releases';
 import { ChangelogModal } from './components/ChangelogModal';
 import SailSteerWidget from './components/SailSteerWidget';
 import { getUpwindAngle } from './components/utils/polar';
@@ -303,7 +303,7 @@ function App() {
   const [cartasPath, setCartasPath] = useState<string>('Buscando entorno SmartShip...');
   // --- CONTROL DE NOVEDADES (CHANGELOG) ---
   const [showChangelog, setShowChangelog] = useState(false);
-  const [changelogData, setChangelogData] = useState(getLatestVersion());
+  const [changelogData, setChangelogData] = useState(releases[0]);
   const [simulationSpeed, setSimulationSpeed] = useState(1);
   const [vesselStatus, setVesselStatus] = useState<VesselStatus | null>(null);
 

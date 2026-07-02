@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Zap, ShieldCheck, Settings, Anchor } from 'lucide-react';
-import { ChangelogEntry } from '../config/changelog';
+import { Anchor } from 'lucide-react';
+import type { Release } from '../content/releases';
 import { cn } from '../lib/utils';
 
 interface ChangelogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  data: ChangelogEntry;
+  data: Release;
 }
 
 export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose, data }) => {
@@ -29,39 +29,52 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose,
             className="relative w-full max-w-lg bg-slate-900 border border-cyan-500/30 rounded-[2.5rem] shadow-[0_0_50px_rgba(6,182,212,0.2)] overflow-hidden"
           >
             {/* Header */}
-            <div className="p-8 bg-gradient-to-b from-cyan-500/10 to-transparent border-b border-white/5">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-cyan-500/20 rounded-2xl border border-cyan-500/30">
-                  <Zap className="w-6 h-6 text-cyan-400 animate-pulse" />
-                </div>
-                <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
-                  <X size={20} className="text-slate-500" />
-                </button>
-              </div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter italic">Novedades de Sistemas</h2>
-              <p className="text-[10px] font-bold text-cyan-500 uppercase tracking-[0.2em] mt-1">Versión {data.version} • {data.date}</p>
+            <div className="p-1 bg-gradient-to-b from-cyan-500/10 to-transparent border-b border-white/5">
+              <div className="relative flex justify-center mb-1">
+  <img
+    src="/logo.png"
+    alt="SmartShip Pro"
+    className="w-44 h-44 object-contain"
+  />
+
+  
+</div>
+              <div className="flex flex-col items-center -mt-14 mb-2">
+  <h2 className="text-2xl font-black text-white uppercase tracking-tight text-center">
+    Novedades de Sistemas
+  </h2>
+
+  <p className="mt-1 text-[11px] font-semibold text-cyan-400 uppercase tracking-[0.25em] text-center">
+    Versión {data.version} • {data.date}
+  </p>
+</div>
             </div>
 
             {/* Body */}
             <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <p className="text-sm font-bold text-slate-300 italic">"Almirante, el puente de mando ha sido actualizado con las siguientes capacidades tácticas:"</p>
+              <p className="text-sm font-bold text-slate-300 italic">“{data.summary}”</p>
               
               <div className="space-y-4">
-                {data.features.map((item, idx) => (
-                  <div key={idx} className="flex gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl group hover:border-cyan-500/20 transition-all">
-                    <span className="text-2xl">{item.icon}</span>
-                    <div>
+                {data.sections.map((section, idx) => (
+                  <div key={`${section.title}-${idx}`} className="flex gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl group hover:border-cyan-500/20 transition-all">
+                    <span className="text-2xl">{section.icon}</span>
+                    <div className="flex-1">
                       <p className={cn(
-                        "text-[8px] font-black uppercase tracking-widest mb-1",
-                        item.category === 'tactical' ? "text-cyan-400" : 
-                        item.category === 'security' ? "text-emerald-400" : "text-amber-400"
+                        "text-[8px] font-black uppercase tracking-widest mb-2",
+                        "text-cyan-400"
                       )}>
-                        {item.category === 'tactical' ? 'Navegación Táctica' : 
-                         item.category === 'security' ? 'Seguridad y Resiliencia' : 'Mejora de Sistemas'}
+                        {section.title}
                       </p>
-                      <p className="text-xs text-slate-400 font-medium leading-relaxed group-hover:text-white transition-colors">
-                        {item.text}
-                      </p>
+                      <ul className="space-y-2">
+                        {section.items.map((item, itemIdx) => (
+                          <li
+                            key={`${section.title}-${itemIdx}`}
+                            className="text-xs text-slate-400 font-medium leading-relaxed group-hover:text-white transition-colors"
+                          >
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 ))}

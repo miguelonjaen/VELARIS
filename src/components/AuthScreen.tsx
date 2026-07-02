@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Ship } from 'lucide-react';
+
 import { supabase } from '../supabaseClient';
 
 const AuthScreen = () => {
@@ -80,16 +80,23 @@ const AuthScreen = () => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md bg-slate-950 border-2 border-cyan-500/30 rounded-3xl p-8 shadow-[0_0_80px_rgba(6,182,212,0.15)] relative overflow-hidden"
+        className="w-full max-w-lg bg-slate-950 border-2 border-cyan-500/30 rounded-3xl p-10 shadow-[0_0_80px_rgba(6,182,212,0.15)] relative overflow-hidden"
       >
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
         
         <div className="flex flex-col items-center mb-6">
-          <div className="w-14 h-14 bg-cyan-600/20 rounded-2xl flex items-center justify-center border border-cyan-500/30 mb-3">
-            <Ship className="w-7 h-7 text-cyan-400" />
-          </div>
-          <h1 className="text-xl font-black text-white uppercase tracking-tight">SmartShip PRO</h1>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">Command Center</p>
+          <div className="mb-5 flex justify-center">
+  <img
+    src="/logo.png"
+    alt="SmartShip Pro"
+    className="w-90 h-90 object-contain drop-shadow-[0_0_20px_rgba(6,182,212,0.35)]"
+  />
+           </div>
+          <h1 className="text-2xl font-black text-white tracking-tight">
+   <span className="text-cyan-400"></span>
+</h1>
+
+
         </div>
 
         {error && (

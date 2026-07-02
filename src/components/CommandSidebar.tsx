@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ship, Menu, LogOut, Command, Anchor, Book, Box, BookOpen, User, Settings, ShieldAlert } from 'lucide-react';
+import { Menu, LogOut, Command, Anchor, Book, Box, BookOpen, User, Settings, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@lib/utils';
 import { UserProfile } from '@/shared/types';
@@ -43,24 +43,43 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
       "glass-panel z-[9000] flex flex-col transition-all duration-300 ease-in-out border-r border-white/5", // Transition duration
       isSidebarOpen ? "w-72" : "w-[72px]" // Collapsed width between 72px and 80px
     )}>
-      <div className="p-4 flex items-center justify-between border-b border-white/5 h-16">
-        {isSidebarOpen ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-cyan-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-              <Ship className="w-4 h-4 text-white" />
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-sm font-black uppercase tracking-tighter text-white">SMART<span className="text-cyan-400">SHIP</span></span>
-              <span className="text-[6px] font-mono text-cyan-400/60 uppercase tracking-[0.2em] font-bold">Command</span>
-            </div>
-          </motion.div>
-        ) : (
-          <div className="w-full flex justify-center"><Ship className="w-5 h-5 text-cyan-400" /></div>
-        )}
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-white hover:text-cyan-400 p-2">
-          <Menu size={20} />
-        </button>
-      </div>
+      <div className="border-b border-white/5">
+  {isSidebarOpen ? (
+    <div className="px-5 h-20 flex items-center justify-between">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex items-center gap-3"
+      >
+        <img
+          src="/logo.png"
+          alt="SmartShip Pro"
+          className="w-12 h-12 object-contain"
+        />
+
+        <div className="text-xl font-black tracking-tight text-white">
+          SmartShip <span className="text-cyan-400">PRO</span>
+        </div>
+      </motion.div>
+
+      <button
+        onClick={() => setIsSidebarOpen(false)}
+        className="p-2 text-white hover:text-cyan-400 transition-colors"
+      >
+        <Menu size={20} />
+      </button>
+    </div>
+  ) : (
+    <div className="h-20 flex items-center justify-center">
+      <button
+        onClick={() => setIsSidebarOpen(true)}
+        className="p-2 text-white hover:text-cyan-400 transition-colors"
+      >
+        <Menu size={22} />
+      </button>
+    </div>
+  )}
+</div>
 
       <nav className="flex-1 px-2 py-4 space-y-1">
         {menuItems.map((item) => (
