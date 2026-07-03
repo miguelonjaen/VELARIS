@@ -11,9 +11,10 @@
   "dev:full": "concurrently \"npm run backend\" \"npm run smartship\"",
   "scripts": {
     "dev": "vite --port=3000",
-    "build": "vite build",
+    "build": "npm run build:main && vite build",
+    "build:main": "tsc -p tsconfig.main.json && tsc-alias -p tsconfig.main.json",
     "preview": "vite preview",
-    "clean": "powershell -NoProfile -Command \"Remove-Item -Recurse -Force dist,dist_electron -ErrorAction SilentlyContinue\"",
+    "clean": "powershell -NoProfile -Command \"Remove-Item -Recurse -Force dist,dist_electron,dist-main -ErrorAction SilentlyContinue\"",
     "lint": "tsc --noEmit",
     "server": "node map-server.js",
     "electron:start": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron -r tsx/cjs .\"",
@@ -71,6 +72,7 @@
     "electron-builder": "^25.1.8",
     "tailwindcss": "^4.1.14",
     "typescript": "~5.8.2",
+    "tsc-alias": "^1.15.0",
     "vite": "^6.2.0",
     "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-svgr": "^5.2.0",
@@ -94,18 +96,17 @@
     ],
     "files": [
       "dist/**/*",
+      "dist-main/**/*",
       "public/**/*",
       "electron-main.js",
       "electron-preload.js",
       "aisBridge.js",
-      "NMEAService.ts",
-      "TacticalTicker.ts",
       "map-server.js",
       "package.json"
     ],
     "win": {
       "target": "nsis",
-       "icon": "public/icon.ico"
+      "icon": "public/icon.ico"
     }
   }
 }

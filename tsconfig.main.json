@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "lib": ["ES2022"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@main/*": ["./src/main/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@types/*": ["./src/types/*"]
+    },
+    "moduleResolution": "node",
+    "rootDir": ".",
+    "outDir": "dist-main",
+    "allowJs": true,
+    "noEmit": false,
+    "declaration": false,
+    "sourceMap": false,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "types": ["node"]
+  },
+  "include": [
+    "electron-main.js",
+    "NMEAService.ts",
+    "TacticalTicker.ts",
+    "aisBridge.js",
+    "map-server.js",
+    "electron-preload.js",
+    "types/**/*.d.ts"
+  ]
+}

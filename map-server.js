@@ -7,9 +7,16 @@ const fs = require('fs');
 const MBTiles = require('@mapbox/mbtiles');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const OpenAI = require("openai");
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const apiKey = process.env.OPENAI_API_KEY;
+
+let openai = null;
+
+if (apiKey) {
+    openai = new OpenAI({ apiKey });
+    console.log("✅ OpenAI inicializado");
+} else {
+    console.warn("⚠️ OpenAI deshabilitado: falta OPENAI_API_KEY");
+}
 const { createClient } = require('@supabase/supabase-js');
 const WebSocket = require('ws');
 const app = express();
@@ -335,29 +342,34 @@ ${systemInstruction || 'Aplica el protocolo estándar de asistencia al puente.'}
 
 app.post('/api/chat-openai', async (req, res) => {
 
-  try {
+    if (!openai) {
+        return res.status(503).json({
+            error: "OpenAI no está configurado en este servidor."
+        });
+    }
 
-    const { prompt } = req.body;
+    try {
 
-    const response =
-      await openai.responses.create({
-        model: "gpt-5-mini",
-        input: prompt
-      });
+        const { prompt } = req.body;
 
-    res.json({
-      text: response.output_text
-    });
+        const response = await openai.responses.create({
+            model: "gpt-5-mini",
+            input: prompt
+        });
 
-  } catch (error) {
+        res.json({
+            text: response.output_text
+        });
 
-    console.error(error);
+    } catch (error) {
 
-    res.status(500).json({
-      error: error.message
-    });
+        console.error(error);
 
-  }
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
 
 });
 // Endpoint de Salud

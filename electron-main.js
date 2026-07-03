@@ -1,6 +1,6 @@
 console.log('*** ELECTRON MAIN REAL EJECUTADO ***');
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
-require('tsx/cjs');
+
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
@@ -11,8 +11,9 @@ require('dotenv').config();
 const { connectAIS } = require('./aisBridge');
 
 // Importación de servicios core (ahora en la raíz)
-const { NMEAService } = require('./NMEAService.ts');
-const { TacticalTicker } = require('./TacticalTicker.ts');
+const isProduction = app.isPackaged;
+const { NMEAService } = require(isProduction ? './dist-main/NMEAService.js' : './NMEAService.ts');
+const { TacticalTicker } = require(isProduction ? './dist-main/TacticalTicker.js' : './TacticalTicker.ts');
 const { startMapServer, stopMapServer } = require('./map-server.js');
 
 let mainWindow;
@@ -25,6 +26,14 @@ let tacticalEngine;
 function setupAutoUpdater() {
   autoUpdater.logger = log;
   autoUpdater.logger.transports.file.level = 'info';
+
+  autoUpdater.on("checking-for-update", () => {
+  log.info("🔍 Buscando actualizaciones...");
+});
+
+autoUpdater.on("update-not-available", (info) => {
+  log.info("ℹ️ No hay actualizaciones disponibles:", info.version);
+});
 
   autoUpdater.on('update-available', (info) => {
     log.info('🔄 Actualización disponible:', info.version);
@@ -95,14 +104,20 @@ function createWindow() {
   }
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
+  mainWindow.show();
+
+  // Solo para depuración
+  mainWindow.webContents.openDevTools({
+    mode: 'detach'
   });
+});
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
   if (!isDev) {
+    console.log("CHECKING FOR UPDATES");
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
@@ -190,16 +205,25 @@ ipcMain.on('hw:connect', (event, port) => {
 // === EVENTOS DE CICLO DE VIDA DE LA APP ===
 
 app.whenReady().then(() => {
+  console.log("AUTOUPDATER SETUP");
   setupAutoUpdater();
+  console.log("SETUP AUTOUPDATER");
     createWindow();
   initializeServices(mainWindow);
-  console.log('INITIALIZE SERVICES EJECUTADO');
-   if (process.env.VITE_AISSTREAM_API_KEY) {
-    connectAIS(
-      mainWindow,
-      process.env.VITE_AISSTREAM_API_KEY
-    );
-  }
+    console.log('INITIALIZE SERVICES EJECUTADO');
+    console.log("AIS KEY:", process.env.VITE_AISSTREAM_API_KEY);
+    if (process.env.VITE_AISSTREAM_API_KEY) {
+      // Esperar a que el renderer termine de cargar para no perder mensajes
+      mainWindow.webContents.once('did-finish-load', () => {
+        connectAIS(
+          mainWindow,
+          process.env.VITE_AISSTREAM_API_KEY
+        );
+      });
+    } else {
+      console.warn("❌ No hay API KEY de AISStream");
+
+    }
 });
 
 app.on('window-all-closed', () => {

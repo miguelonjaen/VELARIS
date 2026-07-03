@@ -126,7 +126,7 @@ const shipSize = Math.max(
   cartasActivas?.[chart.name] ? (
     <TileLayer
       key={chart.name}
-      url={`http://localhost:8089/tiles/${chart.name}/{z}/{x}/{y}`}
+      url={`http://localhost:8089/tiles/${chart.name}/{z}/{x}/{y}.png`}
       opacity={1}
     />
   ) : null

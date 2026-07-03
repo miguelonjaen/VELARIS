@@ -3,6 +3,7 @@ import { Menu, LogOut, Command, Anchor, Book, Box, BookOpen, User, Settings, Shi
 import { motion } from 'motion/react';
 import { cn } from '@lib/utils';
 import { UserProfile } from '@/shared/types';
+import logo from "@/assets/logo.png";
 
 interface CommandSidebarProps {
   isSidebarOpen: boolean;
@@ -52,7 +53,7 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
         className="flex items-center gap-3"
       >
         <img
-          src="/logo.png"
+          src={logo}
           alt="SmartShip Pro"
           className="w-12 h-12 object-contain"
         />

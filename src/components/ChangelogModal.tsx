@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Anchor } from 'lucide-react';
 import type { Release } from '../content/releases';
 import { cn } from '../lib/utils';
+import logo from "@/assets/logo.png";
 
 interface ChangelogModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose,
             <div className="p-1 bg-gradient-to-b from-cyan-500/10 to-transparent border-b border-white/5">
               <div className="relative flex justify-center mb-1">
   <img
-    src="/logo.png"
+    src={logo}
     alt="SmartShip Pro"
     className="w-44 h-44 object-contain"
   />

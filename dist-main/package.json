@@ -1,0 +1,112 @@
+{
+    "name": "smartship-pro",
+    "private": true,
+    "version": "1.1.0",
+    "description": "Aplicación de escritorio para gestión náutica y NMEA",
+    "main": "electron-main.js",
+    "author": "MiguelonJaen",
+    "type": "commonjs",
+    "backend": "node map-server.js",
+    "smartship": "npm run electron:start",
+    "dev:full": "concurrently \"npm run backend\" \"npm run smartship\"",
+    "scripts": {
+        "dev": "vite --port=3000",
+        "build": "npm run build:main && vite build",
+        "build:main": "tsc -p tsconfig.main.json && tsc-alias -p tsconfig.main.json",
+        "preview": "vite preview",
+        "clean": "powershell -NoProfile -Command \"Remove-Item -Recurse -Force dist,dist_electron,dist-main -ErrorAction SilentlyContinue\"",
+        "lint": "tsc --noEmit",
+        "server": "node map-server.js",
+        "electron:start": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron -r tsx/cjs .\"",
+        "electron:build": "npm run build && electron-builder",
+        "electron-dev": "electron .",
+        "build-win": "electron-builder --win"
+    },
+    "dependencies": {
+        "@google/genai": "^1.48.0",
+        "@google/generative-ai": "^0.24.1",
+        "@mapbox/mbtiles": "^0.12.1",
+        "@supabase/supabase-js": "^2.106.0",
+        "@tailwindcss/vite": "^4.1.14",
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.2.3",
+        "@vitejs/plugin-react": "^5.0.4",
+        "clsx": "^2.1.1",
+        "cors": "^2.8.6",
+        "dotenv": "^17.4.2",
+        "electron-log": "^5.4.4",
+        "electron-updater": "^6.8.3",
+        "express": "^4.22.2",
+        "firebase": "^12.10.0",
+        "jspdf": "^4.2.1",
+        "jspdf-autotable": "^5.0.7",
+        "leaflet": "^1.9.4",
+        "leaflet-rotatedmarker": "^0.2.0",
+        "localforage": "^1.10.0",
+        "lucide-react": "^0.546.0",
+        "motion": "^12.23.24",
+        "openai": "^6.44.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "react-leaflet": "^5.0.0",
+        "react-markdown": "^10.1.0",
+        "serialport": "^13.0.0",
+        "sql.js": "^1.14.1",
+        "suncalc": "^1.9.0",
+        "tailwind-merge": "^3.5.0",
+        "tsx": "^4.22.4",
+        "vite": "^6.2.0",
+        "ws": "^8.21.0"
+    },
+    "devDependencies": {
+        "@firebase/eslint-plugin-security-rules": "^0.0.2",
+        "@types/cors": "^2.8.19",
+        "@types/express": "^4.17.21",
+        "@types/leaflet": "^1.9.21",
+        "@types/node": "^22.14.0",
+        "@types/sql.js": "^1.4.11",
+        "@types/suncalc": "^1.9.2",
+        "autoprefixer": "^10.4.21",
+        "concurrently": "^9.1.2",
+        "electron": "^34.5.8",
+        "electron-builder": "^25.1.8",
+        "tailwindcss": "^4.1.14",
+        "typescript": "~5.8.2",
+        "tsc-alias": "^1.15.0",
+        "vite": "^6.2.0",
+        "vite-plugin-pwa": "^1.2.0",
+        "vite-plugin-svgr": "^5.2.0",
+        "vite-tsconfig-paths": "^6.1.1",
+        "wait-on": "^8.0.2"
+    },
+    "build": {
+        "appId": "com.smartship.pro",
+        "productName": "SmartShip Pro",
+        "icon": "public/icon.ico",
+        "copyright": "Copyright © 2026 MiguelonJaen",
+        "directories": {
+            "output": "dist_electron"
+        },
+        "publish": [
+            {
+                "provider": "github",
+                "owner": "miguelonjaen",
+                "repo": "Smartship-pro"
+            }
+        ],
+        "files": [
+            "dist/**/*",
+            "dist-main/**/*",
+            "public/**/*",
+            "electron-main.js",
+            "electron-preload.js",
+            "aisBridge.js",
+            "map-server.js",
+            "package.json"
+        ],
+        "win": {
+            "target": "nsis",
+            "icon": "public/icon.ico"
+        }
+    }
+}

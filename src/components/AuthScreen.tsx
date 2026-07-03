@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 
 import { supabase } from '../supabaseClient';
+import logo from "@/assets/logo.png";
 
 const AuthScreen = () => {
   const [isRegister, setIsRegister] = useState(false);
@@ -87,7 +88,7 @@ const AuthScreen = () => {
         <div className="flex flex-col items-center mb-6">
           <div className="mb-5 flex justify-center">
   <img
-    src="/logo.png"
+    src={logo}
     alt="SmartShip Pro"
     className="w-90 h-90 object-contain drop-shadow-[0_0_20px_rgba(6,182,212,0.35)]"
   />
