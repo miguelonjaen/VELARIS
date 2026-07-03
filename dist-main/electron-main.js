@@ -6,16 +6,36 @@ const path = require('path');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 const packageJson = require('./package.json');
-require('dotenv').config();
+const dotenv = require("dotenv");
+const isProduction = app.isPackaged;
+if (!isProduction) {
+    dotenv.config({
+        path: path.join(process.cwd(), ".env"),
+    });
+}
+console.log("DOTENV:", path.join(process.cwd(), ".env"));
+console.log("AIS KEY:", process.env.VITE_AISSTREAM_API_KEY);
 const { connectAIS } = require('./aisBridge');
 // Importación de servicios core (ahora en la raíz)
-const isProduction = app.isPackaged;
 const { NMEAService } = require(isProduction ? './dist-main/NMEAService.js' : './NMEAService.ts');
 const { TacticalTicker } = require(isProduction ? './dist-main/TacticalTicker.js' : './TacticalTicker.ts');
 const { startMapServer, stopMapServer } = require('./map-server.js');
 let mainWindow;
 let nmeaService;
 let tacticalEngine;
+let aisApiKey = process.env.VITE_AISSTREAM_API_KEY || null;
+function connectAISIfAvailable(window) {
+    if (!window || window.isDestroyed() || !aisApiKey)
+        return;
+    if (window.webContents.isLoadingMainFrame()) {
+        window.webContents.once('did-finish-load', () => {
+            connectAIS(window, aisApiKey);
+        });
+    }
+    else {
+        connectAIS(window, aisApiKey);
+    }
+}
 /**
  * Configuración del sistema de actualizaciones automáticas
  */
@@ -160,6 +180,12 @@ ipcMain.on('hw:connect', (event, port) => {
     if (nmeaService)
         nmeaService.connect(port);
 });
+ipcMain.on('ais:set-api-key', (event, apiKey) => {
+    aisApiKey = apiKey || null;
+    if (aisApiKey) {
+        connectAISIfAvailable(mainWindow);
+    }
+});
 // === EVENTOS DE CICLO DE VIDA DE LA APP ===
 app.whenReady().then(() => {
     console.log("AUTOUPDATER SETUP");
@@ -168,15 +194,18 @@ app.whenReady().then(() => {
     createWindow();
     initializeServices(mainWindow);
     console.log('INITIALIZE SERVICES EJECUTADO');
-    console.log("AIS KEY:", process.env.VITE_AISSTREAM_API_KEY);
-    if (process.env.VITE_AISSTREAM_API_KEY) {
-        // Esperar a que el renderer termine de cargar para no perder mensajes
-        mainWindow.webContents.once('did-finish-load', () => {
-            connectAIS(mainWindow, process.env.VITE_AISSTREAM_API_KEY);
-        });
+    const log = require("electron-log");
+    log.info("AIS KEY:", process.env.VITE_AISSTREAM_API_KEY);
+    log.info("===== ARRANQUE AIS =====");
+    log.info("app.isPackaged =", app.isPackaged);
+    log.info("__dirname =", __dirname);
+    log.info("cwd =", process.cwd());
+    log.info("AIS KEY =", process.env.VITE_AISSTREAM_API_KEY);
+    if (aisApiKey) {
+        connectAISIfAvailable(mainWindow);
     }
     else {
-        console.warn("❌ No hay API KEY de AISStream");
+        console.warn("❌ No hay API KEY de AISStream aún; esperando al renderer...");
     }
 });
 app.on('window-all-closed', () => {

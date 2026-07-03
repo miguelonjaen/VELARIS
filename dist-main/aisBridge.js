@@ -26,10 +26,13 @@ console.log('LONGITUD KEY:', process.env.VITE_AISSTREAM_API_KEY?.length);
 function connectAIS(mainWindow, apiKey) {
     if (socket)
         return;
-    console.log('[AIS] Iniciando conexión...');
+    const log = require("electron-log");
+    log.info("[AIS] Iniciando conexión...");
     socket = new WebSocket('wss://stream.aisstream.io/v0/stream');
     socket.on('open', () => {
-        console.log('[AIS] Conectado');
+        const log = require("electron-log");
+        log.info("[AIS] connectAIS() llamado");
+        log.info("[AIS] conectado...");
         const payload = {
             APIKey: apiKey,
             BoundingBoxes: AIS_PROFILES[ACTIVE_PROFILE]
@@ -41,6 +44,7 @@ function connectAIS(mainWindow, apiKey) {
         }, 30000);
     });
     socket.on('message', (data) => {
+        log.info("[AIS] WebSocket abierto");
         // console.log('🚢 AISSTREAM MENSAJE RECIBIDO');
         //console.log(data.toString().substring(0, 300));
         //console.log(
@@ -48,7 +52,9 @@ function connectAIS(mainWindow, apiKey) {
         // );
         try {
             const msg = JSON.parse(data.toString());
-            mainWindow.webContents.send('ais-message', msg);
+            if (!mainWindow.isDestroyed()) {
+                mainWindow.webContents.send("ais-message", msg);
+            }
         }
         catch (err) {
             console.error('[AIS] Parse Error', err);

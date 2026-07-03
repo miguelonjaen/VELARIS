@@ -308,62 +308,68 @@ function App() {
   const [vesselStatus, setVesselStatus] = useState<VesselStatus | null>(null);
 
   useEffect(() => {
-
-    if (!window.smartshipAPI?.onAISMessage) return;
-
-    const unsubscribe =
-      window.smartshipAPI.onAISMessage((msg: any) => {
-        // console.log(
-   //  '🚢 AIS RECIBIDO EN REACT',
-    // msg
-  // );
-
-
-        if (msg.MessageType !== 'PositionReport') return;
-
-        const report = msg.Message?.PositionReport;
-        const meta = msg.MetaData;
-
-        if (!report || !meta) return;
-
-        setAisTargets((prev: any[]) => {
-
-          const filtered = prev.filter(
-            target => target.mmsi !== meta.MMSI
-          );
-
-          const freshTargets = filtered.filter(
-            t => Date.now() - (t.timestamp || 0) < 10 * 60 * 1000
-          );
-
-          return [
-            ...freshTargets,
-            {
-              id: String(meta.MMSI),
-              mmsi: meta.MMSI,
-              nombre: meta.ShipName || `MMSI ${meta.MMSI}`,
-              lat: report.Latitude,
-              lng: report.Longitude,
-              sog: report.Sog,
-              cog: report.Cog,
-              heading:
-                report.TrueHeading === 511
-                  ? report.Cog
-                  : report.TrueHeading,
-              source: 'AISSTREAM',
-              timestamp: Date.now()
-            }
-          ];
-        });
-
-      });
-
-    return () => {
-      unsubscribe?.();
-    };
-
+    if (window.smartshipAPI?.setAISApiKey) {
+      window.smartshipAPI.setAISApiKey(import.meta.env.VITE_AISSTREAM_API_KEY || null);
+    }
   }, []);
 
+  useEffect(() => {
+
+  if (!window.smartshipAPI?.onAISMessage) return;
+
+  const unsubscribe = window.smartshipAPI.onAISMessage((msg: any) => {
+
+    const messageType =
+      msg.MessageType ??
+      msg.Message?.MessageType;
+
+    if (messageType !== "PositionReport") return;
+
+    const report =
+      msg.Message?.PositionReport ??
+      msg.PositionReport ??
+      msg.Report;
+
+    const meta =
+      msg.MetaData ??
+      msg.Meta;
+
+    if (!report || !meta) return;
+
+    setAisTargets(prev => {
+
+      const filtered = prev.filter(
+        t => t.mmsi !== meta.MMSI
+      );
+
+      return [
+        ...filtered,
+        {
+          id: String(meta.MMSI),
+          mmsi: meta.MMSI,
+          nombre: meta.ShipName || `MMSI ${meta.MMSI}`,
+          lat: report.Latitude,
+          lng: report.Longitude,
+          sog: report.Sog ?? 0,
+          cog: report.Cog ?? 0,
+          heading:
+            report.TrueHeading === 511
+              ? (report.Cog ?? 0)
+              : (report.TrueHeading ?? 0),
+          source: "AISSTREAM",
+          timestamp: Date.now()
+        }
+      ];
+
+    });
+
+  });
+
+  return () => {
+    unsubscribe?.();
+  };
+
+}, []);
   useEffect(() => {
     const currentVersion = packageJson.version;
     const lastRunVersion = localStorage.getItem('smartship_last_version');

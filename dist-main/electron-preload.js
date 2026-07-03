@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('smartshipAPI', {
     onTacticalAdvice: (callback) => ipcRenderer.on('tactical-advice', (_, advices) => callback(advices)),
     // Gestión de Hardware
     connectHardware: (port) => ipcRenderer.send('hw:connect', port),
+    setAISApiKey: (apiKey) => ipcRenderer.send('ais:set-api-key', apiKey),
     // Archivos y Cartas (Normalizando nombres de canales)
     selectDirectory: () => ipcRenderer.invoke('select-directory'),
     selectChartsDirectory: () => ipcRenderer.invoke('select-charts-directory'),
