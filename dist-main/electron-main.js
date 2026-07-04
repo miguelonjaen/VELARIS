@@ -1,18 +1,18 @@
-process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-const fs = require('fs');
-const path = require('path');
-const { autoUpdater } = require('electron-updater');
-const log = require('electron-log');
-const packageJson = require('./package.json');
+process.env["ELECTRON_DISABLE_SECURITY_WARNINGS"] = "true";
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const fs = require("fs");
+const path = require("path");
+const { autoUpdater } = require("electron-updater");
+const log = require("electron-log");
 const dotenv = require("dotenv");
+const packageJson = require("./package.json");
+const { connectAIS } = require("./aisBridge");
 const isProduction = app.isPackaged;
 if (!isProduction) {
     dotenv.config({
         path: path.join(process.cwd(), ".env"),
     });
 }
-const { connectAIS } = require('./aisBridge');
 // Importación de servicios core (ahora en la raíz)
 const { NMEAService } = require(isProduction ? './dist-main/NMEAService.js' : './NMEAService.ts');
 const { TacticalTicker } = require(isProduction ? './dist-main/TacticalTicker.js' : './TacticalTicker.ts');
@@ -21,9 +21,13 @@ let mainWindow;
 let nmeaService;
 let tacticalEngine;
 let aisApiKey = process.env.VITE_AISSTREAM_API_KEY || null;
+let aisConnected = false;
 function connectAISIfAvailable(window) {
+    if (aisConnected)
+        return;
     if (!window || window.isDestroyed() || !aisApiKey)
         return;
+    aisConnected = true;
     if (window.webContents.isLoadingMainFrame()) {
         window.webContents.once('did-finish-load', () => {
             connectAIS(window, aisApiKey);
@@ -43,6 +47,7 @@ function setupAutoUpdater() {
         log.info("🔍 Buscando actualizaciones...");
     });
     autoUpdater.on("update-not-available", (info) => {
+        autoUpdater.disableWebInstaller = true;
         log.info("ℹ️ No hay actualizaciones disponibles:", info.version);
     });
     autoUpdater.on('update-available', (info) => {
@@ -60,6 +65,20 @@ function setupAutoUpdater() {
         log.info('✅ Actualización descargada y lista para instalar');
         if (mainWindow) {
             mainWindow.webContents.send('update-downloaded', info);
+        }
+    });
+    autoUpdater.on("update-downloaded", async () => {
+        const result = await dialog.showMessageBox(mainWindow, {
+            type: "info",
+            title: "Actualización disponible",
+            message: "SmartShip Pro se ha actualizado.",
+            detail: "La actualización está lista para instalar. ¿Deseas instalarla ahora?",
+            buttons: ["instalar ahora", "Más tarde"],
+            defaultId: 0,
+            cancelId: 1,
+        });
+        if (result.response === 0) {
+            autoUpdater.quitAndInstall();
         }
     });
     autoUpdater.on('error', (error) => {
@@ -182,17 +201,8 @@ app.whenReady().then(() => {
     setupAutoUpdater();
     createWindow();
     initializeServices(mainWindow);
-    const log = require("electron-log");
-    log.info("AIS KEY:", process.env.VITE_AISSTREAM_API_KEY);
-    log.info("===== ARRANQUE AIS =====");
-    log.info("app.isPackaged =", app.isPackaged);
-    log.info("__dirname =", __dirname);
-    log.info("cwd =", process.cwd());
-    log.info("AIS KEY =", process.env.VITE_AISSTREAM_API_KEY);
     if (aisApiKey) {
         connectAISIfAvailable(mainWindow);
-    }
-    else {
     }
 });
 app.on('window-all-closed', () => {

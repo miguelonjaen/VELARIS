@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import { Clock, Battery, Activity } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -12,11 +12,19 @@ interface StatusBarProps {
 
 export const StatusBar: React.FC<StatusBarProps> = ({ vmg, gpsStatus, battery, shipName, className }) => {
   const [time, setTime] = React.useState(new Date());
+  const [appVersion, setAppVersion] = useState("");
 
   React.useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+  window.smartshipAPI
+    .getAppVersion()
+    .then(setAppVersion)
+    .catch(() => setAppVersion("?"));
+}, []);
 
   return (
     <div className={cn(
@@ -54,6 +62,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({ vmg, gpsStatus, battery, s
             {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
+        <div className="flex items-center gap-2 border-l border-white/10 pl-6">
+  <span className="text-[10px] font-mono font-bold text-cyan-400">
+    v{appVersion}
+  </span>
+</div>
       </div>
     </div>
   );

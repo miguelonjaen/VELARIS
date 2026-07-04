@@ -56,10 +56,12 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
           src={logo}
           alt="SmartShip Pro"
           className="w-12 h-12 object-contain"
+          
         />
 
         <div className="text-xl font-black tracking-tight text-white">
           SmartShip <span className="text-cyan-400">PRO</span>
+          
         </div>
       </motion.div>
 

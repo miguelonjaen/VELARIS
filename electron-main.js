@@ -18,7 +18,6 @@ if (!isProduction) {
   });
 }
 
-const { connectAIS } = require('./aisBridge');
 
 // Importación de servicios core (ahora en la raíz)
 const { NMEAService } = require(isProduction ? './dist-main/NMEAService.js' : './NMEAService.ts');
@@ -36,7 +35,7 @@ function connectAISIfAvailable(window) {
   if (!window || window.isDestroyed() || !aisApiKey) return;
 
   aisConnected = true;
-  
+
   if (window.webContents.isLoadingMainFrame()) {
     window.webContents.once('did-finish-load', () => {
       connectAIS(window, aisApiKey);
@@ -81,6 +80,21 @@ autoUpdater.on("update-not-available", (info) => {
       mainWindow.webContents.send('update-downloaded', info);
     }
   });
+  autoUpdater.on("update-downloaded", async () => {
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: "info",
+    title: "Actualización disponible",
+    message: "SmartShip Pro se ha actualizado.",
+    detail: "La actualización está lista para instalar. ¿Deseas reiniciar ahora?",
+    buttons: ["Reiniciar ahora", "Más tarde"],
+    defaultId: 0,
+    cancelId: 1,
+  });
+
+  if (result.response === 0) {
+    autoUpdater.quitAndInstall();
+  }
+});
 
   autoUpdater.on('error', (error) => {
     log.error('❌ Error de auto-update:', error);
