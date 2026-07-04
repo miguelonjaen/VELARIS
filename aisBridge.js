@@ -25,16 +25,6 @@ const AIS_PROFILES = {
 
 let socket = null;
 
-console.log(
-  'AIS KEY PRESENTE:',
-  !!process.env.VITE_AISSTREAM_API_KEY
-);
-
-console.log(
-  'LONGITUD KEY:',
-  process.env.VITE_AISSTREAM_API_KEY?.length
-);
-
 function connectAIS(mainWindow, apiKey) {
   if (socket) return;
 
@@ -57,29 +47,17 @@ log.info("[AIS] conectado...");
     BoundingBoxes: AIS_PROFILES[ACTIVE_PROFILE]
   };
 
-  console.log(
-    '📡 SUSCRIPCION AIS JSON:',
-    JSON.stringify(payload)
-  );
-
+  
   socket.send(JSON.stringify(payload));
   setTimeout(() => {
     
-  console.log(
-    '⏱️ SIGUE CONECTADO TRAS 30s:',
-    socket.readyState
-  );
+  
 }, 30000);
 });
 
   socket.on('message', (data) => {
-    log.info("[AIS] WebSocket abierto");
-  // console.log('🚢 AISSTREAM MENSAJE RECIBIDO');
-  //console.log(data.toString().substring(0, 300));
-  //console.log(
-   //  '🚢 MENSAJE AISSTREAM'
-  // );
-
+    
+  
   try {
     const msg = JSON.parse(data.toString());
 

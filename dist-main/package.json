@@ -1,7 +1,7 @@
 {
     "name": "smartship-pro",
     "private": true,
-    "version": "1.1.0",
+    "version": "1.1.2",
     "description": "Aplicación de escritorio para gestión náutica y NMEA",
     "main": "electron-main.js",
     "author": "MiguelonJaen",
@@ -83,6 +83,7 @@
         "appId": "com.smartship.pro",
         "productName": "SmartShip Pro",
         "icon": "public/icon.ico",
+        "artifactName": "SmartShip-Pro-Setup-${version}.${ext}",
         "copyright": "Copyright © 2026 MiguelonJaen",
         "directories": {
             "output": "dist_electron"

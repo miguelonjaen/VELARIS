@@ -1,4 +1,3 @@
-console.log('***** MAP-SERVER VERSION NUEVA *****');
 require('dotenv').config(); // Carga las variables de entorno desde el archivo .env
 const express = require('express');
 const cors = require('cors');
@@ -13,9 +12,9 @@ let openai = null;
 
 if (apiKey) {
     openai = new OpenAI({ apiKey });
-    console.log("✅ OpenAI inicializado");
+    
 } else {
-    console.warn("⚠️ OpenAI deshabilitado: falta OPENAI_API_KEY");
+    
 }
 const { createClient } = require('@supabase/supabase-js');
 const WebSocket = require('ws');
@@ -51,7 +50,7 @@ app.post('/api/settings/charts-path', (req, res) => {
     mbtilesInstances[key].close(() => delete mbtilesInstances[key]);
   });
   
-  console.log(`📂 Puerto de cartas establecido en: ${currentChartsPath}`);
+  
   res.json({ success: true, path: currentChartsPath });
 });
 
@@ -88,10 +87,7 @@ const genAI = process.env.GEMINI_API_KEY
   ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   : null;
 
-console.log('[AI CONFIG]', {
-  model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
-  apiKeyConfigured: Boolean(process.env.GEMINI_API_KEY)
-});
+
 
 // --- ENDPOINTS ---
 
@@ -249,11 +245,6 @@ app.post('/api/chat', async (req, res) => {
 
   try {
     const requestStartedAt = Date.now();
-    console.log('[POST /api/chat]', {
-      promptLength: prompt.length,
-      jsonMode: body.isJson === true,
-      toolsCount: Array.isArray(body.tools) ? body.tools.length : 0
-    });
     const position = body.posicionActual;
     const hasValidPosition = position
       && isFiniteCoordinate(position.lat, -90, 90)
@@ -424,7 +415,7 @@ function startMapServer(port = PORT) {
   if (server) return server;
 
   server = app.listen(port, () => {
-    console.log(`[SERVER] SmartShip PRO backend escuchando en http://localhost:${port}`);
+    
   });
 
   server.on('error', (error) => {

@@ -251,7 +251,7 @@ const MapBoundsHandler = ({ path, showControl, showSystems }: { path: [number, n
           paddingBottomRight: [paddingRight, 100],
           maxZoom: 16
         });
-      } catch (err) { console.warn('MapBoundsHandler Error:', err); }
+      } catch (err) {  }
     }
   }, [path, map, showControl, showSystems]);
   return null;
@@ -485,21 +485,20 @@ function App() {
         if (ipcRenderer?.invoke) {
           try {
             nuevaRuta = await ipcRenderer.invoke('select-charts-directory');
-            console.log('[App] ipcRenderer.invoke(select-charts-directory) ->', nuevaRuta);
+           
           } catch (err) {
-            console.warn('[App] select-charts-directory no registrado, intentando select-directory...', err);
+            
             nuevaRuta = await ipcRenderer.invoke('select-directory');
-            console.log('[App] ipcRenderer.invoke(select-directory) ->', nuevaRuta);
+            
           }
         }
       } else {
-        console.error('[App] No hay API de Electron disponible para seleccionar directorio.');
-        alert('No se encontró la API de Electron para seleccionar directorio. Reinicia la app o revisa la configuración de Electron.');
+        
         return;
       }
 
       if (!nuevaRuta) {
-        console.log('[App] Selección de carpeta cancelada o no se devolvió ruta.');
+        
         return;
       }
 

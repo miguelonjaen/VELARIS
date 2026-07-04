@@ -1,13 +1,14 @@
-console.log('*** ELECTRON MAIN REAL EJECUTADO ***');
-process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+process.env["ELECTRON_DISABLE_SECURITY_WARNINGS"] = "true";
 
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-const fs = require('fs');
-const path = require('path');
-const { autoUpdater } = require('electron-updater');
-const log = require('electron-log');
-const packageJson = require('./package.json');
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const fs = require("fs");
+const path = require("path");
+const { autoUpdater } = require("electron-updater");
+const log = require("electron-log");
 const dotenv = require("dotenv");
+
+const packageJson = require("./package.json");
+const { connectAIS } = require("./aisBridge");
 
 const isProduction = app.isPackaged;
 
@@ -17,8 +18,6 @@ if (!isProduction) {
   });
 }
 
-console.log("DOTENV:", path.join(process.cwd(), ".env"));
-console.log("AIS KEY:", process.env.VITE_AISSTREAM_API_KEY);
 const { connectAIS } = require('./aisBridge');
 
 // Importación de servicios core (ahora en la raíz)
@@ -30,10 +29,14 @@ let mainWindow;
 let nmeaService;
 let tacticalEngine;
 let aisApiKey = process.env.VITE_AISSTREAM_API_KEY || null;
+let aisConnected = false;
 
 function connectAISIfAvailable(window) {
+  if (aisConnected) return;
   if (!window || window.isDestroyed() || !aisApiKey) return;
 
+  aisConnected = true;
+  
   if (window.webContents.isLoadingMainFrame()) {
     window.webContents.once('did-finish-load', () => {
       connectAIS(window, aisApiKey);
@@ -55,6 +58,7 @@ function setupAutoUpdater() {
 });
 
 autoUpdater.on("update-not-available", (info) => {
+   autoUpdater.disableWebInstaller = true;
   log.info("ℹ️ No hay actualizaciones disponibles:", info.version);
 });
 
@@ -129,10 +133,7 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
   mainWindow.show();
 
-  // Solo para depuración
-  mainWindow.webContents.openDevTools({
-    mode: 'detach'
-  });
+  
 });
 
   mainWindow.on('closed', () => {
@@ -140,8 +141,7 @@ function createWindow() {
   });
 
   if (!isDev) {
-    console.log("CHECKING FOR UPDATES");
-    autoUpdater.checkForUpdatesAndNotify();
+        autoUpdater.checkForUpdatesAndNotify();
   }
 }
 
@@ -164,8 +164,7 @@ function initializeServices(window) {
 
 nmeaService = new NMEAService((message) => {
 
-    console.log("📡 TELEMETRIA:", message);
-
+    
     window.webContents.send("vessel-telemetry", message);
 
 });
@@ -235,25 +234,14 @@ ipcMain.on('ais:set-api-key', (event, apiKey) => {
 // === EVENTOS DE CICLO DE VIDA DE LA APP ===
 
 app.whenReady().then(() => {
-  console.log("AUTOUPDATER SETUP");
-  setupAutoUpdater();
-  console.log("SETUP AUTOUPDATER");
-    createWindow();
+    setupAutoUpdater();
+      createWindow();
   initializeServices(mainWindow);
-    console.log('INITIALIZE SERVICES EJECUTADO');
-    const log = require("electron-log");
-
-log.info("AIS KEY:", process.env.VITE_AISSTREAM_API_KEY);
-log.info("===== ARRANQUE AIS =====");
-log.info("app.isPackaged =", app.isPackaged);
-log.info("__dirname =", __dirname);
-log.info("cwd =", process.cwd());
-log.info("AIS KEY =", process.env.VITE_AISSTREAM_API_KEY);
+        
 
     if (aisApiKey) {
       connectAISIfAvailable(mainWindow);
-    } else {
-      console.warn("❌ No hay API KEY de AISStream aún; esperando al renderer...");
+         
     }
 });
 

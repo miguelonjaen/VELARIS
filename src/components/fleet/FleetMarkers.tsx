@@ -31,10 +31,15 @@ export const FleetMarkers: React.FC<FleetMarkersProps> = ({
     shipPosition
 }) => {
 
+  console.log("FleetMarkers:", simulatedAisTargets);
+
     return (
 
         <>
         {simulatedAisTargets.map((target) => {
+
+          console.log("TARGET", target);
+
   const tcpaMinutes = target.tcpa ?? 0;
 
 const tcpaDisplay =
@@ -104,7 +109,9 @@ const startLng =
       <Marker
         position={[target.lat, target.lng]}
         icon={VesselRenderer.render(
+          
     {
+      
         lat: target.lat,
         lng: target.lng,
 

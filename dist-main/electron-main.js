@@ -1,4 +1,3 @@
-console.log('*** ELECTRON MAIN REAL EJECUTADO ***');
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
@@ -13,8 +12,6 @@ if (!isProduction) {
         path: path.join(process.cwd(), ".env"),
     });
 }
-console.log("DOTENV:", path.join(process.cwd(), ".env"));
-console.log("AIS KEY:", process.env.VITE_AISSTREAM_API_KEY);
 const { connectAIS } = require('./aisBridge');
 // Importación de servicios core (ahora en la raíz)
 const { NMEAService } = require(isProduction ? './dist-main/NMEAService.js' : './NMEAService.ts');
@@ -106,16 +103,11 @@ function createWindow() {
     }
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
-        // Solo para depuración
-        mainWindow.webContents.openDevTools({
-            mode: 'detach'
-        });
     });
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
     if (!isDev) {
-        console.log("CHECKING FOR UPDATES");
         autoUpdater.checkForUpdatesAndNotify();
     }
 }
@@ -129,7 +121,6 @@ function initializeServices(window) {
     tacticalEngine.start();
     // Servicio NMEA para hardware serial
     nmeaService = new NMEAService((message) => {
-        console.log("📡 TELEMETRIA:", message);
         window.webContents.send("vessel-telemetry", message);
     });
     // Backend local canónico: cartas, salud, Supabase y Gemini.
@@ -188,12 +179,9 @@ ipcMain.on('ais:set-api-key', (event, apiKey) => {
 });
 // === EVENTOS DE CICLO DE VIDA DE LA APP ===
 app.whenReady().then(() => {
-    console.log("AUTOUPDATER SETUP");
     setupAutoUpdater();
-    console.log("SETUP AUTOUPDATER");
     createWindow();
     initializeServices(mainWindow);
-    console.log('INITIALIZE SERVICES EJECUTADO');
     const log = require("electron-log");
     log.info("AIS KEY:", process.env.VITE_AISSTREAM_API_KEY);
     log.info("===== ARRANQUE AIS =====");
@@ -205,7 +193,6 @@ app.whenReady().then(() => {
         connectAISIfAvailable(mainWindow);
     }
     else {
-        console.warn("❌ No hay API KEY de AISStream aún; esperando al renderer...");
     }
 });
 app.on('window-all-closed', () => {
