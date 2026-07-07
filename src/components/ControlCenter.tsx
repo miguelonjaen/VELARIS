@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { TacticalAdvisorPanel } from './TacticalAdvisorPanel';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShipData, VesselStatus, ProcessedWeather, LogEntry, SmartshipAlarm, SecurityThresholds } from '../shared/types';
+import { ShipData, VesselStatus, ProcessedWeather, LogEntry, VELARISAlarm, SecurityThresholds } from '../shared/types';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { COASTAL_ROUTES } from '../navigation/coastalRoutes';
 
@@ -152,7 +152,7 @@ interface ControlCenterProps {
   onClose: () => void;
   userProfile: any;
   depth?: number;
-  alarms: SmartshipAlarm[];
+  alarms: VELARISAlarm[];
   thresholds: SecurityThresholds;
   telemetry: {
     internalTemp: number;
@@ -299,11 +299,11 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   const [destinationSearch, setDestinationSearch] = useState('');
   const [isAdvisorOpen, setIsAdvisorOpen] = useState(false);
 
-  const getAlarmFor = (type: SmartshipAlarm['type']) => {
+  const getAlarmFor = (type: VELARISAlarm['type']) => {
     return alarms.find(a => a.type === type);
   };
 
-  const isAlarming = (type: SmartshipAlarm['type']) => !!getAlarmFor(type);
+  const isAlarming = (type: VELARISAlarm['type']) => !!getAlarmFor(type);
 
 
   // Procesador de Comandos Náuticos vía Gemini LLM

@@ -395,15 +395,18 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
             <Gauge className="w-5 h-5 text-cyan-400" />
           </div>
           <div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-white">Sistemas</h2>
-            <p className="text-[8px] font-bold text-cyan-500 uppercase tracking-widest">Protocolo Activo</p>
-          </div>
+            <h2 className="text-sm font-black tracking-[0.18em] text-white">
+  Command Center</h2>
+  <p className="text-[8px] font-bold text-cyan-500 uppercase tracking-widest">
+  VELARIS Core
+</p>
+           </div>
         </div>
         <button 
           onClick={onClose}
           className="p-2 hover:bg-red-500/10 rounded-full transition-colors group z-[110]"
         >
-          <X className="w-6 h-6 text-slate-500 group-hover:text-red-500" />
+          <X className="w-4 h-4 text-slate-500 group-hover:text-red-500" />
         </button>
       </div>
 

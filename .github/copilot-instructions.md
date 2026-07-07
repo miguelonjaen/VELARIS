@@ -212,11 +212,12 @@ Do not delete these files; evolve them as the project changes.
 
 
 
+
 <!-- github-copilot-toolbox:mcp-skills-awareness-begin -->
 
 ### MCP & Skills awareness (GitHub Copilot Toolbox)
 
-_Last synced: 2026-06-05T06:28:54.885Z._
+_Last synced: 2026-07-07T05:32:18.390Z._
 
 - **Full report:** `.github/copilot-toolbox-mcp-skills-awareness.md` in this workspace (auto-overwritten on each scan). Use it as ground truth for configured servers and skill folders.
 - **MCP:** For **live tools**, use **Copilot Chat → Agent** and **trust/start** the right servers in the MCP UI.
@@ -225,7 +226,7 @@ _Last synced: 2026-06-05T06:28:54.885Z._
 
 #### Workspace MCP
 
-- `c:\Smartship\.vscode\mcp.json` _(workspace: Smartship)_ — _file missing_
+- `c:\VELARIS\.vscode\mcp.json` _(workspace: VELARIS)_ — _file missing_
 
 _No active workspace servers in mcp.json._
 

@@ -16,7 +16,7 @@ export const releases: Release[] = [
   {
     version: '1.1.0',
     date: '2026-07-02',
-    title: 'SmartShip Pro 1.1.0',
+    title: 'VELARIS 1.1.0',
     summary:
       'Mejoras en navegación, alertas tácticas y experiencia general para la operación diaria.',
     sections: [

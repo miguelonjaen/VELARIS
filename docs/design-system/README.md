@@ -1,8 +1,8 @@
-# SmartShip Design System (SSDS)
+# VELARIS Design System (SSDS)
 
 ## Objetivo
 
-Crear un sistema gráfico vectorial propio para SmartShip-PRO.
+Crear un sistema gráfico vectorial propio para VELARIS-PRO.
 
 No se utilizarán iconos descargados de terceros.
 
@@ -72,4 +72,4 @@ Offline
 
 ## Objetivo final
 
-Crear la identidad visual completa de SmartShip-PRO.
+Crear la identidad visual completa de VELARIS-PRO.

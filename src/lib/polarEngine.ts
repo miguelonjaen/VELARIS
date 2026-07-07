@@ -1,5 +1,5 @@
 /**
- * Motor de Polares Táctico - SmartShip Pro
+ * Motor de Polares Táctico - VELARIS
  * Gestiona el rendimiento teórico vs real y cálculos de VMG.
  */
 

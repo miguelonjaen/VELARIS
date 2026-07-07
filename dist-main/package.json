@@ -1,5 +1,5 @@
 {
-    "name": "smartship-pro",
+    "name": "VELARIS",
     "private": true,
     "version": "1.1.4",
     "description": "Aplicación de escritorio para gestión náutica y NMEA",
@@ -7,8 +7,8 @@
     "author": "MiguelonJaen",
     "type": "commonjs",
     "backend": "node map-server.js",
-    "smartship": "npm run electron:start",
-    "dev:full": "concurrently \"npm run backend\" \"npm run smartship\"",
+    "VELARIS": "npm run electron:start",
+    "dev:full": "concurrently \"npm run backend\" \"npm run VELARIS\"",
     "scripts": {
         "dev": "vite --port=3000",
         "build": "npm run build:main && vite build",
@@ -80,10 +80,10 @@
         "wait-on": "^8.0.2"
     },
     "build": {
-        "appId": "com.smartship.pro",
-        "productName": "SmartShip Pro",
+        "appId": "com.VELARIS",
+        "productName": "VELARIS",
         "icon": "public/icon.ico",
-        "artifactName": "SmartShip-Pro-Setup-${version}.${ext}",
+        "artifactName": "VELARIS-Setup-${version}.${ext}",
         "copyright": "Copyright © 2026 MiguelonJaen",
         "directories": {
             "output": "dist_electron"
@@ -92,7 +92,7 @@
             {
                 "provider": "github",
                 "owner": "miguelonjaen",
-                "repo": "Smartship-pro"
+                "repo": "VELARIS"
             }
         ],
         "files": [

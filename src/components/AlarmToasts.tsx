@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertTriangle, Info, BellOff, X, Zap } from 'lucide-react';
-import { SmartshipAlarm } from '../shared/types';
+import { VELARISAlarm } from '../shared/types';
 
 interface AlarmToastsProps {
-  alarms: SmartshipAlarm[];
+  alarms: VELARISAlarm[];
   onRemove: (id: string) => void;
   isMuted: boolean;
   onMuteToggle: () => void;

@@ -128,7 +128,7 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
             <Navigation className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white">SMARTSHIP-PRO COMMAND CENTER</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white">VELARIS COMMAND CENTER</p>
             <p className="text-[7px] font-bold uppercase tracking-[0.2em] text-slate-500">TACTICAL NAVIGATION SYSTEM</p>
           </div>
         </div>

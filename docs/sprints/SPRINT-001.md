@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build the foundations of SmartShip-PRO without changing the application's behaviour.
+Build the foundations of VELARIS-PRO without changing the application's behaviour.
 
 The objective of this sprint is not to add visible functionality.
 
@@ -69,7 +69,7 @@ Status:
 * Every object displayed on the chart is a Contact.
 * Rendering and business logic remain separated.
 * Repositories abstract the storage implementation.
-* SmartShip is composed of independent engines.
+* VELARIS is composed of independent engines.
 
 ---
 

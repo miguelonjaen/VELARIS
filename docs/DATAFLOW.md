@@ -1,4 +1,4 @@
-# SmartShip-PRO Data Flow
+# VELARIS-PRO Data Flow
 
 > **Data should always move in one direction.**
 >
@@ -9,7 +9,7 @@
 
 # 1. Philosophy
 
-SmartShip-PRO follows a unidirectional data flow.
+VELARIS-PRO follows a unidirectional data flow.
 
 Information always moves from raw sensor data to user presentation.
 

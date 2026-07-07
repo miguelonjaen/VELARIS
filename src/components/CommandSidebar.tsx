@@ -1,9 +1,9 @@
 import React from 'react';
-import { Menu, LogOut, Command, Anchor, Book, Box, BookOpen, User, Settings, ShieldAlert } from 'lucide-react';
+import { Menu, LogOut, Command, Anchor, Book, Box, BookOpen, User, Settings, ShieldAlert, Info } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@lib/utils';
 import { UserProfile } from '@/shared/types';
-import logo from "@/assets/logo.png";
+
 
 interface CommandSidebarProps {
   isSidebarOpen: boolean;
@@ -15,6 +15,7 @@ interface CommandSidebarProps {
   onSignOut: () => void;
   lang: string;
   setLang: (lang: any) => void;
+  onShowAbout: () => void;
 }
 
 export const CommandSidebar: React.FC<CommandSidebarProps> = ({
@@ -24,6 +25,7 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
   setActiveTab,
   userProfile,
   t,
+  onShowAbout,
   onSignOut,
   lang,
   setLang
@@ -53,16 +55,14 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
         className="flex items-center gap-3"
       >
         <img
-          src={logo}
-          alt="SmartShip Pro"
-          className="w-12 h-12 object-contain"
+          src="/logo.png"
+          alt="VELARIS"
+          className="w-16 h-16 object-contain"
           
         />
-
-        <div className="text-xl font-black tracking-tight text-white">
-          SmartShip <span className="text-cyan-400">PRO</span>
-          
-        </div>
+<div className="text-lg font-black tracking-[0.18em] text-white uppercase">
+  VELARIS
+</div>
       </motion.div>
 
       <button
@@ -101,24 +101,96 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
         ))}
       </nav>
 
-      <div className="p-3 mt-auto border-t border-white/5 space-y-2">
-        {userProfile && isSidebarOpen && (
-          <div className="p-4 rounded-2xl bg-black/40 border border-white/5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center overflow-hidden shrink-0">
-              {userProfile.photoUrl ? <img src={userProfile.photoUrl} alt="" className="w-full h-full object-cover" /> : 
-                <span className="font-black text-xs text-cyan-400">{userProfile.name.charAt(0).toUpperCase()}</span>}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black text-white uppercase truncate">{userProfile.name}</p>
-              <p className="text-[8px] font-mono text-cyan-400/60 uppercase">{t.admiral}</p>
-            </div>
-            <button onClick={onSignOut} className="text-slate-600 hover:text-red-500 transition-colors"><LogOut size={14} /></button>
-          </div>
-        )}
-        {!isSidebarOpen && (
-          <button onClick={onSignOut} className="w-full h-10 flex items-center justify-center text-slate-600 hover:text-red-500 transition-colors bg-white/5 rounded-xl"><LogOut size={16} /></button>
-        )}
+      <div className="p-3 mt-auto border-t border-white/5">
+
+  {userProfile && isSidebarOpen && (
+
+    <div className="p-4 rounded-2xl bg-black/40 border border-white/5">
+
+      {/* Usuario */}
+
+      <div className="flex items-center gap-3">
+
+        <div className="w-12 h-12 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center overflow-hidden shrink-0">
+
+          {userProfile.photoUrl ? (
+            <img
+              src={userProfile.photoUrl}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="font-black text-sm text-cyan-400">
+              {userProfile.name.charAt(0).toUpperCase()}
+            </span>
+          )}
+
+        </div>
+
+        <div className="flex-1 min-w-0">
+
+          <p className="text-xs font-black text-white truncate">
+            {userProfile.name}
+          </p>
+
+          <p className="text-[9px] font-mono uppercase text-cyan-400/70">
+            {userProfile.role.toUpperCase()}
+          </p>
+
+        </div>
+
       </div>
+
+      {/* Separador */}
+
+      <div className="my-4 border-t border-white/5"></div>
+
+      {/* About */}
+
+      <button
+        onClick={onShowAbout}
+        className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-white/5 transition-all"
+      >
+        <Info size={15} />
+
+        <div className="flex flex-col items-start">
+          <span className="text-[10px] font-bold uppercase tracking-widest">
+            About VELARIS
+          </span>
+
+          <span className="text-[8px] text-slate-500">
+            Build 1.1.4 • Stable
+          </span>
+        </div>
+
+      </button>
+
+      {/* Logout */}
+
+      <button
+        onClick={onSignOut}
+        className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl text-slate-500 hover:text-red-500 hover:bg-white/5 transition-all"
+      >
+        <LogOut size={15} />
+        <span className="text-[10px] font-bold uppercase tracking-widest">
+          Sign Out
+        </span>
+      </button>
+
+    </div>
+
+  )}
+
+  {!isSidebarOpen && (
+    <button
+      onClick={onSignOut}
+      className="w-full h-10 flex items-center justify-center text-slate-600 hover:text-red-500 transition-colors bg-white/5 rounded-xl"
+    >
+      <LogOut size={16} />
+    </button>
+  )}
+
+</div>
     </aside>
   );
 };

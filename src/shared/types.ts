@@ -219,7 +219,7 @@ export interface VesselStatus {
 
 export type AlarmSeverity = 'normal' | 'warning' | 'critical';
 
-export interface SmartshipAlarm {
+export interface VELARISAlarm {
   id: string;
   type: 'depth' | 'engine_temp' | 'fuel' | 'ais_collision' | 'internal_temp' | 'humidity' | 'layline_deviation' | 'anchor_drift' | 'anchor_drag' | 'sensor_quality';
   severity: AlarmSeverity;

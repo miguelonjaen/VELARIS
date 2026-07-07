@@ -37,7 +37,7 @@ export class TripLogger {
   private logInterval: NodeJS.Timeout | null = null;
   private currentSession: TripSession | null = null;
   private db: IDBDatabase | null = null;
-  private readonly dbName = 'SmartShipTripLogs';
+  private readonly dbName = 'VELARISTripLogs';
   private readonly storeName = 'sessions';
 
   constructor() {

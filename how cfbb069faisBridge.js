@@ -1,5 +1,5 @@
 [33mcfbb069f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m MBTiles funcionando en TacticalMap
-[33m104947a4[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m SmartShip UI overhaul: ZeusSidebar, TacticalTerminal, chartplotter layout and Gemini integration fixes
+[33m104947a4[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m VELARIS UI overhaul: ZeusSidebar, TacticalTerminal, chartplotter layout and Gemini integration fixes
 [33md8fc5bb6[m Motor de simulacion fase 1 completada
 [33mc854def5[m Limpieza backend, AIS y consola de desarrollo
 [33m69930426[m AIS tactico funcional con CPA TCPA y perfiles de cobertura

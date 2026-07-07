@@ -1,15 +1,15 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { ShieldCheck, AlertTriangle, Info, BellOff, Bell, Zap, Activity, Trash2, Droplets, Thermometer, Fuel, Waves } from 'lucide-react';
-import { SmartshipAlarm, SecurityThresholds, AlarmSeverity } from '../shared/types';
+import { VELARISAlarm, SecurityThresholds, AlarmSeverity } from '../shared/types';
 import { cn } from '../lib/utils';
 
 interface WatchdogPanelProps {
-  alarms: SmartshipAlarm[];
+  alarms: VELARISAlarm[];
   alarmHistory: any[];
   thresholds: SecurityThresholds;
   onRemoveAlarm: (id: string) => void;
-  onAddAlarm: (type: SmartshipAlarm['type'], severity: AlarmSeverity, message: string, value: number) => void;
+  onAddAlarm: (type: VELARISAlarm['type'], severity: AlarmSeverity, message: string, value: number) => void;
   isMuted: boolean;
   onMuteToggle: () => void;
 }
@@ -50,7 +50,7 @@ export const WatchdogPanel: React.FC<WatchdogPanelProps> = ({
             <ShieldCheck className="text-emerald-400" size={32} />
           </div>
           <div>
-            <h2 className="text-4xl font-black text-white tracking-tight uppercase">SmartShip Shield</h2>
+            <h2 className="text-4xl font-black text-white tracking-tight uppercase">VELARIS Shield</h2>
             <p className="text-slate-400 font-mono text-sm uppercase tracking-widest">Protocolo de Seguridad Watchdog v2.4</p>
           </div>
         </div>

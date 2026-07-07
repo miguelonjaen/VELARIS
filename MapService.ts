@@ -93,7 +93,7 @@ export class MapService {
           console.log(`🤖 Intentando con modelo: ${modelName}`);
           const model = this.genAI.getGenerativeModel({ 
             model: modelName,
-            systemInstruction: systemInstruction || "Eres IA_OFFICER de SmartShip PRO."
+            systemInstruction: systemInstruction || "Eres IA_OFFICER de VELARIS."
           });
 
           const result = await model.generateContent({

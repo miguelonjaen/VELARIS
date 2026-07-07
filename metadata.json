@@ -1,5 +1,5 @@
 {
-  "name": "SmartShip PRO",
+  "name": "VELARIS",
   "description": "Professional nautical navigation and fleet management SaaS system.",
   "requestFramePermissions": ["geolocation"]
 }

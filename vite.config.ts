@@ -21,8 +21,8 @@ export default defineConfig(({mode}) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         manifest: {
-          name: 'SmartShip PRO',
-          short_name: 'SmartShip',
+          name: 'VELARIS',
+          short_name: 'VELARIS',
           description: 'Gestión Náutica Profesional y Resiliente',
           theme_color: '#0f172a',
           icons: [

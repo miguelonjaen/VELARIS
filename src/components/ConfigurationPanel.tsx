@@ -12,6 +12,7 @@ interface ConfigPanelProps {
   onCambiarCarpeta: () => void; // 📁 Añadido para el control de cartas
   simulationSpeed: number;
   setSimulationSpeed: React.Dispatch<React.SetStateAction<number>>;
+  onShowAbout: () => void;
 }
 
 export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
@@ -22,7 +23,8 @@ export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
   cartasPath, // 📁 Recibido desde App.tsx
   onCambiarCarpeta, // 📁 Recibido desde App.tsx
   simulationSpeed,
-  setSimulationSpeed
+  setSimulationSpeed,
+  onShowAbout
 }) => {
     const [simulatedTime, setSimulatedTime] = React.useState(new Date());
 
@@ -167,7 +169,7 @@ export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        {/* SMARTSHIP SHIELD WATCHDOG THRESHOLDS */}
+        {/* VELARIS SHIELD WATCHDOG THRESHOLDS */}
         <div className="col-span-full bg-slate-950/50 p-6 rounded-3xl border border-slate-800">
           <div className="flex items-center gap-2 text-slate-300 mb-6">
             <ShieldCheck size={20} className="text-emerald-400" />
@@ -289,7 +291,7 @@ export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
             <input type="text" placeholder="IP: 192.168.1.1" className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-white" />
             <input type="text" placeholder="Puerto: 10110" className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-white" />
           </div>
-        </div>
+          </div>
 
         {/* 📁 SECCIÓN DE CARTAS NÁUTICAS (NUEVA) */}
         <div className="col-span-full bg-slate-950/50 p-6 rounded-3xl border border-slate-800">

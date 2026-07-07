@@ -1,4 +1,4 @@
-# SmartShip-PRO Vision
+# VELARIS-PRO Vision
 
 > *"No queremos desarrollar otro software náutico. Queremos construir la plataforma de conciencia situacional marítima más clara, modular y agradable de utilizar."*
 
@@ -6,7 +6,7 @@
 
 # Nuestra misión
 
-SmartShip-PRO nace con un objetivo muy simple:
+VELARIS-PRO nace con un objetivo muy simple:
 
 **Ayudar al navegante a comprender su entorno con la menor carga cognitiva posible.**
 
@@ -20,7 +20,7 @@ Buscamos mostrar únicamente la información correcta, en el momento correcto y 
 
 Cada decisión técnica debe responder a una única pregunta:
 
-> **¿Hace que SmartShip-PRO sea más fácil de mantener dentro de cinco años?**
+> **¿Hace que VELARIS-PRO sea más fácil de mantener dentro de cinco años?**
 
 Si la respuesta es "no", probablemente exista una solución mejor.
 
@@ -69,7 +69,7 @@ Nunca debe distraer al usuario.
 
 ## Rendimiento
 
-SmartShip-PRO debe seguir siendo fluido incluso mostrando cientos o miles de objetivos simultáneamente.
+VELARIS-PRO debe seguir siendo fluido incluso mostrando cientos o miles de objetivos simultáneamente.
 
 El rendimiento forma parte del diseño.
 
@@ -102,7 +102,7 @@ Todos deben poder evolucionar de forma independiente.
 
 # Objetivo final
 
-SmartShip-PRO no pretende competir únicamente con aplicaciones de navegación.
+VELARIS-PRO no pretende competir únicamente con aplicaciones de navegación.
 
 Pretende convertirse en una plataforma completa de conciencia situacional marítima.
 

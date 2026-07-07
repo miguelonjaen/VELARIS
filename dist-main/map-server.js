@@ -229,7 +229,7 @@ app.post('/api/chat', async (req, res) => {
         const modelConfiguration = {
             model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
             systemInstruction: `
-Eres Nucleus AI, asistente táctico de SmartShip PRO. Responde de forma concisa, profesional y náutica.
+Eres Nucleus AI, asistente táctico de VELARIS. Responde de forma concisa, profesional y náutica.
 
 POSICIÓN DEL BUQUE
 ${locationReport}

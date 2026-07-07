@@ -308,7 +308,7 @@ export const H5000WindHub: React.FC<H5000WindHubProps> = ({
                 </div>
                 <div className="flex justify-between border-b border-white/10 pb-2">
                   <span>Polar model</span>
-                  <span className="text-white">SmartShip base</span>
+                  <span className="text-white">VELARIS base</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Alarm profile</span>

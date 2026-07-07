@@ -1,4 +1,4 @@
-# 🔄 Guía de Auto-Update en SmartShip Pro
+# 🔄 Guía de Auto-Update en VELARIS
 
 ## Estado Actual ✅
 
@@ -11,7 +11,7 @@ El sistema de auto-update está **completamente configurado** y listo para usar.
 ### 1. **Búsqueda Automática de Actualizaciones**
 - Se ejecuta automáticamente al iniciar la app
 - Solo en modo **producción** (app empaquetada)
-- Verifica releases en: `https://github.com/miguelonjaen/Smartship-pro/releases`
+- Verifica releases en: `https://github.com/miguelonjaen/VELARIS-pro/releases`
 
 ### 2. **Flujo de Actualización**
 ```
@@ -66,22 +66,22 @@ npm run electron:build
 npm run build-win
 ```
 
-Esto genera: `dist_electron/SmartShip Pro Setup 1.0.8.exe`
+Esto genera: `dist_electron/VELARIS Setup 1.0.8.exe`
 
 ### **Paso 3: Crear Release en GitHub**
 
 ```bash
 # Opción A: Usando GitHub CLI (recomendado)
 gh release create v1.0.8 \
-  --title "SmartShip Pro v1.0.8" \
+  --title "VELARIS v1.0.8" \
   --notes "Mejoras de navegación y correcciones de bugs" \
-  dist_electron/SmartShip\ Pro\ Setup\ 1.0.8.exe
+  dist_electron/VELARIS\ Pro\ Setup\ 1.0.8.exe
 
 # Opción B: Usar la interfaz web de GitHub
-# 1. Ve a: https://github.com/miguelonjaen/Smartship-pro/releases/new
+# 1. Ve a: https://github.com/miguelonjaen/VELARIS-pro/releases/new
 # 2. Crea "New Release"
 # 3. Tag: v1.0.8
-# 4. Title: SmartShip Pro v1.0.8
+# 4. Title: VELARIS v1.0.8
 # 5. Description: [notas de cambio]
 # 6. Attach binaries: Arrastra el .exe
 # 7. Publish Release
@@ -96,7 +96,7 @@ gh release view v1.0.8
 # Resultado esperado:
 # Tag: v1.0.8
 # Assets:
-#   SmartShip Pro Setup 1.0.8.exe
+#   VELARIS Setup 1.0.8.exe
 ```
 
 ---
@@ -124,8 +124,8 @@ gh release view v1.0.8
 ### **Verificar Logs**
 
 Los logs de auto-update se guardan en:
-- **Windows:** `%APPDATA%\SmartShip Pro\logs\main.log`
-- **macOS:** `~/Library/Logs/SmartShip Pro/main.log`
+- **Windows:** `%APPDATA%\VELARIS\logs\main.log`
+- **macOS:** `~/Library/Logs/VELARIS/main.log`
 
 Busca líneas con:
 - `🔄 Actualización disponible`
@@ -140,7 +140,7 @@ Busca líneas con:
 ### **Escenario 1: Hay Actualización Disponible**
 
 ```
-Usuario abre SmartShip Pro v1.0.7
+Usuario abre VELARIS v1.0.7
     ↓
 [Background] Se descarga v1.0.8
     ↓
@@ -171,13 +171,13 @@ El token se usará automáticamente en `setupAutoUpdater()`.
 
 ```json
 "build": {
-  "appId": "com.smartship.pro",
-  "productName": "SmartShip Pro",
+  "appId": "com.VELARIS.pro",
+  "productName": "VELARIS",
   "publish": [
     {
       "provider": "github",
       "owner": "miguelonjaen",
-      "repo": "Smartship-pro"
+      "repo": "VELARIS-pro"
     }
   ],
   "win": {
@@ -196,13 +196,13 @@ El token se usará automáticamente en `setupAutoUpdater()`.
 
 1. Verifica que la versión en GitHub sea MAYOR que la actual
 2. Espera 5-10 minutos (GitHub CDN puede tener latencia)
-3. Revisa los logs en `%APPDATA%\SmartShip Pro\logs\main.log`
+3. Revisa los logs en `%APPDATA%\VELARIS\logs\main.log`
 4. Confirma que el archivo `.exe` esté en la release de GitHub
 
 ### **❌ "Error: Cannot find matching version"**
 
 - El nombre del archivo `.exe` debe coincidir exactamente con lo esperado
-- Verifica que sea: `SmartShip Pro Setup X.X.X.exe`
+- Verifica que sea: `VELARIS Setup X.X.X.exe`
 - No renombres el archivo después de compilar
 
 ### **❌ "Error: 403 Forbidden (repo privado)"**
@@ -217,7 +217,7 @@ El token se usará automáticamente en `setupAutoUpdater()`.
 - Para probar con build empaquetado:
   ```bash
   npm run electron:build
-  # Ejecuta dist_electron/SmartShip Pro Setup.exe
+  # Ejecuta dist_electron/VELARIS Setup.exe
   ```
 
 ---
@@ -257,10 +257,10 @@ window.ipcRenderer.on('update-error', (data) => {
 |-----------|--------|---------|
 | **electron-updater** | ✅ Instalado | v6.8.3 |
 | **electron-log** | ✅ Agregado | v5.1.2 (para debug) |
-| **GitHub Provider** | ✅ Configurado | miguelonjaen/Smartship-pro |
+| **GitHub Provider** | ✅ Configurado | miguelonjaen/VELARIS-pro |
 | **Event Listeners** | ✅ Implementados | update-available, error, etc. |
 | **IPC Handlers** | ✅ Listos | check-for-updates, install-update, get-app-version |
-| **Logging** | ✅ Habilitado | Guarda en `%APPDATA%\SmartShip Pro\logs\` |
+| **Logging** | ✅ Habilitado | Guarda en `%APPDATA%\VELARIS\logs\` |
 | **Build Config** | ✅ Correcto | package.json `publish.provider: github` |
 
 ---
@@ -276,7 +276,7 @@ window.ipcRenderer.on('update-error', (data) => {
 - [ ] Adjunta el `.exe` a la release
 - [ ] Publica la release
 - [ ] Espera 5-10 minutos
-- [ ] Abre SmartShip Pro para verificar que detecta la actualización
+- [ ] Abre VELARIS para verificar que detecta la actualización
 
 ---
 

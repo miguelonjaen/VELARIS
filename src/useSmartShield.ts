@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { UserProfile, ShipData, SmartshipAlarm, AlarmSeverity, SecurityThresholds } from '@/shared/types';
+import { UserProfile, ShipData, VELARISAlarm, AlarmSeverity, SecurityThresholds } from '@/shared/types';
 import { SensorQualityMap } from './lib/sensorQuality';
 
 interface SmartShieldProps {
@@ -35,7 +35,7 @@ export const useSmartShield = ({
   sensorQuality,
   anchorWatch
 }: SmartShieldProps) => {
-  const [alarms, setAlarms] = useState<SmartshipAlarm[]>([]);
+  const [alarms, setAlarms] = useState<VELARISAlarm[]>([]);
   const [alarmHistory, setAlarmHistory] = useState<any[]>([]);
   const [isAlertMuted, setIsAlertMuted] = useState(false);
   const [thresholds, setThresholds] = useState<SecurityThresholds>({
@@ -75,11 +75,11 @@ export const useSmartShield = ({
     setAlarms(prev => prev.filter(a => a.id !== id));
   }, []);
 
-  const removeAlarmByType = useCallback((type: SmartshipAlarm['type']) => {
+  const removeAlarmByType = useCallback((type: VELARISAlarm['type']) => {
     setAlarms(prev => prev.filter(a => a.type !== type));
   }, []);
 
-  const addAlarm = useCallback(async (type: SmartshipAlarm['type'], severity: AlarmSeverity, message: string, value: number) => {
+  const addAlarm = useCallback(async (type: VELARISAlarm['type'], severity: AlarmSeverity, message: string, value: number) => {
     const existing = alarms.find(a => a.type === type);
     if (existing && existing.severity === severity) return;
     

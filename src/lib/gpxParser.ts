@@ -180,7 +180,7 @@ export function exportRouteToGPX(routeName: string, waypoints: GPXWaypoint[]): s
   const now = new Date().toISOString();
   
   let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="SmartShip Pro">
+<gpx version="1.1" creator="VELARIS">
   <metadata>
     <name>${escapeXML(routeName)}</name>
     <time>${now}</time>

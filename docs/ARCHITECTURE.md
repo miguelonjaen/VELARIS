@@ -1,4 +1,4 @@
-# SmartShip-PRO Architecture
+# VELARIS-PRO Architecture
 
 > **Architecture is a long-term decision.**
 >
@@ -8,7 +8,7 @@
 
 # 1. Vision
 
-SmartShip-PRO is not simply a nautical navigation application.
+VELARIS-PRO is not simply a nautical navigation application.
 
 It is a **Maritime Situational Awareness Platform**.
 
@@ -287,7 +287,7 @@ UI → Tactical calculations
 
 Performance is a feature.
 
-SmartShip-PRO must remain responsive with large numbers of contacts.
+VELARIS-PRO must remain responsive with large numbers of contacts.
 
 Every rendering decision must consider scalability.
 

@@ -7,14 +7,14 @@ ${entry.features.map(f => `* ${f.icon} [${f.category.toUpperCase()}] ${f.text}`)
 `).join('\n');
 
 export const MANUAL_MARKDOWN = `
-# ⚓ MANUAL DEL ALMIRANTE: SMARTSHIP PRO
+# ⚓ MANUAL DEL ALMIRANTE: VELARIS
 **Estación de Trabajo Integrada para el Puente de Mando**
 *Edición Oficial de Operaciones Tácticas*
 
 ---
 
 ## 1. ⚓ ARQUITECTURA: EL CEREBRO DEL BUQUE
-SmartShip PRO opera mediante un núcleo distribuido diseñado para la resiliencia en alta mar.
+VELARIS opera mediante un núcleo distribuido diseñado para la resiliencia en alta mar.
 * **Interfaz React 19**: Respuesta instantánea para maniobras críticas.
 * **Puente Electron**: Comunicación directa con hardware NMEA 0183/2000.
 * **Cartografía Offline**: Servidor MBTiles local (Puerto 8089) para navegación sin internet.
@@ -42,7 +42,7 @@ El sistema analiza el entorno meteorológico para sugerir:
 Registro automatizado cada 10 minutos. Los datos se encriptan y se sincronizan con el búnker Supabase cuando hay cobertura, garantizando la trazabilidad jurídica de la travesía.
 
 ## 6. 🛠️ MANTENIMIENTO PREVENTIVO (HORAS DE MOTOR)
-SmartShip PRO monitoriza las horas de funcionamiento de sus propulsores para garantizar la integridad mecánica. El sistema utiliza los siguientes intervalos estándar de mantenimiento preventivo:
+VELARIS monitoriza las horas de funcionamiento de sus propulsores para garantizar la integridad mecánica. El sistema utiliza los siguientes intervalos estándar de mantenimiento preventivo:
 
 * **Cada 50 Horas**: Revisión inicial de niveles, tensión de correas y estanqueidad de prensaestopas.
 * **Cada 100 - 200 Horas**: Cambio de aceite del motor y filtros de combustible. Inspección del rodete (*impeller*) de la bomba de agua salada.

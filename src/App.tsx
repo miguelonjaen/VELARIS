@@ -97,7 +97,7 @@ import {
 } from './lib/sensorQuality';
 import { calculateLaylineDeviation, calculateAnchorDrift, calculateETA } from '@lib/laylineCalculator';
 import { GPXRoute, GPXWaypoint } from './lib/gpxParser';
-import { UserProfile, ShipData, LogEntry, VesselStatus, WeatherResponse, ProcessedWeather, InventoryItem, SmartshipAlarm, SecurityThresholds, AlarmSeverity } from '@/shared/types';
+import { UserProfile, ShipData, LogEntry, VesselStatus, WeatherResponse, ProcessedWeather, InventoryItem, VELARISAlarm, SecurityThresholds, AlarmSeverity } from '@/shared/types';
 // ... (rest of imports remains same, just fixing firebase ones)
 import AuthScreen from './components/AuthScreen';
 import TestSubidaFoto from './components/TestSubidaFoto';
@@ -133,13 +133,14 @@ import { getUpwindAngle } from './components/utils/polar';
 import { AISStreamService } from './services/aisStreamService';
 import { app } from "@/application";
 import { updateRealSensors } from "@/telemetry/helpers/SensorQualityUpdater";
+import { AboutVelarisModal } from './components/AboutVelarisModal';
 
 
 const Vademecum = lazy(() => import('./components/Vademecum'));
 
 declare global {
   interface Window {
-    smartshipAPI: any;
+    VELARISAPI: any;
   }
 }
 
@@ -214,6 +215,7 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
   return null;
 };
 // --- Constants ---
+
 
 const APP_ID = "react-example";
 const GEMINI_MODEL = "gemini-2.5-flash";
@@ -300,24 +302,25 @@ const MapEventsHandler: React.FC<MapEventsHandlerProps> = ({
 
 function App() {
   // 🏷️ [ETIQUETA: CARTAS LOCALES - ESTADOS Y EFECTOS]
-  const [cartasPath, setCartasPath] = useState<string>('Buscando entorno SmartShip...');
+  const [cartasPath, setCartasPath] = useState<string>('Buscando entorno VELARIS...');
   // --- CONTROL DE NOVEDADES (CHANGELOG) ---
   const [showChangelog, setShowChangelog] = useState(false);
   const [changelogData, setChangelogData] = useState(releases[0]);
+  const [showAbout, setShowAbout] = useState(false);
   const [simulationSpeed, setSimulationSpeed] = useState(1);
   const [vesselStatus, setVesselStatus] = useState<VesselStatus | null>(null);
 
   useEffect(() => {
-    if (window.smartshipAPI?.setAISApiKey) {
-      window.smartshipAPI.setAISApiKey(import.meta.env.VITE_AISSTREAM_API_KEY || null);
+    if (window.VELARISAPI?.setAISApiKey) {
+      window.VELARISAPI.setAISApiKey(import.meta.env.VITE_AISSTREAM_API_KEY || null);
     }
   }, []);
 
   useEffect(() => {
 
-  if (!window.smartshipAPI?.onAISMessage) return;
+  if (!window.VELARISAPI?.onAISMessage) return;
 
-  const unsubscribe = window.smartshipAPI.onAISMessage((msg: any) => {
+  const unsubscribe = window.VELARISAPI.onAISMessage((msg: any) => {
 
     const messageType =
       msg.MessageType ??
@@ -372,13 +375,13 @@ function App() {
 }, []);
   useEffect(() => {
     const currentVersion = packageJson.version;
-    const lastRunVersion = localStorage.getItem('smartship_last_version');
+    const lastRunVersion = localStorage.getItem('VELARIS_last_version');
 
     if (lastRunVersion !== currentVersion) {
       // Si es una versión nueva, mostramos las novedades
       setShowChangelog(true);
       // Actualizamos el registro para que no vuelva a salir hasta la siguiente update
-      localStorage.setItem('smartship_last_version', currentVersion);
+      localStorage.setItem('VELARIS_last_version', currentVersion);
     }
   }, []);
 
@@ -415,7 +418,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const savedChartsPath = localStorage.getItem('smartship_charts_path');
+    const savedChartsPath = localStorage.getItem('VELARIS_charts_path');
 
     if (savedChartsPath) {
       setCartasPath(savedChartsPath);
@@ -440,8 +443,8 @@ function App() {
       return;
     }
 
-    if (window.smartshipAPI && window.smartshipAPI.getDefaultChartsPath) {
-      window.smartshipAPI.getDefaultChartsPath()
+    if (window.VELARISAPI && window.VELARISAPI.getDefaultChartsPath) {
+      window.VELARISAPI.getDefaultChartsPath()
         .then(async (pathStr: string) => {
           setCartasPath(pathStr);
 
@@ -474,12 +477,12 @@ function App() {
 
   const handleCambiarCarpeta = async () => {
     try {
-      const api = (window as any).smartshipAPI;
+      const api = (window as any).VELARISAPI;
       let nuevaRuta: string | null = null;
 
       if (api && typeof api.selectChartsDirectory === 'function') {
         nuevaRuta = await api.selectChartsDirectory();
-        console.log('[App] smartshipAPI.selectChartsDirectory ->', nuevaRuta);
+        console.log('[App] VELARISAPI.selectChartsDirectory ->', nuevaRuta);
       } else if ((window as any).require) {
         const { ipcRenderer } = (window as any).require('electron');
         if (ipcRenderer?.invoke) {
@@ -503,7 +506,7 @@ function App() {
       }
 
       setCartasPath(nuevaRuta);
-      localStorage.setItem('smartship_charts_path', nuevaRuta);
+      localStorage.setItem('VELARIS_charts_path', nuevaRuta);
 
       await fetch('http://localhost:8089/api/settings/charts-path', {
         method: 'POST',
@@ -995,7 +998,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
   const [isNightMode, setIsNightMode] = useState(() => {
     // Load night mode preference from localStorage on mount
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('smartship_night_mode');
+      const saved = localStorage.getItem('VELARIS_night_mode');
       return saved ? JSON.parse(saved) : false;
     }
     return false;
@@ -1083,16 +1086,16 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
       }
     };
 
-    const api = window.smartshipAPI;
+    const api = window.VELARISAPI;
     const telemetryStarted = app.electronTelemetry.start(api, handleTelemetry);
 
     if (!telemetryStarted) {
       console.info("[NMEA] Puente Electron no disponible; telemetria en modo local.");
 
       if (!api) {
-        console.warn("[NMEA] window.smartshipAPI no esta definido.");
+        console.warn("[NMEA] window.VELARISAPI no esta definido.");
       } else {
-        console.warn("[NMEA] Metodos on/removeListener no disponibles en smartshipAPI.");
+        console.warn("[NMEA] Metodos on/removeListener no disponibles en VELARISAPI.");
       }
     }
 
@@ -1118,7 +1121,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
     } else {
       document.body.classList.remove('night-mode');
     }
-    localStorage.setItem('smartship_night_mode', JSON.stringify(isNightMode));
+    localStorage.setItem('VELARIS_night_mode', JSON.stringify(isNightMode));
   }, [isNightMode]);
 
 
@@ -1565,7 +1568,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
       // Weather fallback logic
       const weatherContext = `Despejado, 22°C, Viento ${windValue}kts`;
 
-      const systemInstruction = "Eres el núcleo de inteligencia del SmartShip. Eres experto en navegación, meteorología y logística náutica. Tu tono es el de un oficial leal, culto y eficiente. Responde siempre de forma concisa para que el texto quepa en la Advisor Bar.";
+      const systemInstruction = "Eres el núcleo de inteligencia del VELARIS. Eres experto en navegación, meteorología y logística náutica. Tu tono es el de un oficial leal, culto y eficiente. Responde siempre de forma concisa para que el texto quepa en la Advisor Bar.";
 
       const prompt = `Almirante en el puente. Analiza situación actual:
       ${weatherContext}
@@ -1643,7 +1646,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
     });
 
     try {
-      const prompt = `Analiza: ${msg}. Responde como el núcleo táctico del SmartShip. Sé conciso y profesional.`;
+      const prompt = `Analiza: ${msg}. Responde como el núcleo táctico del VELARIS. Sé conciso y profesional.`;
       const responseText = await callGemini(prompt);
 
       setAdvisorMessage(responseText.text);
@@ -1881,7 +1884,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
     });
   }, [setAdvisorMessage]);
 
-  // Auto-collapse SmartShip sidebar when navigation is active
+  // Auto-collapse VELARIS sidebar when navigation is active
   useEffect(() => {
     if (isTravesiaActive) {
       setIsSidebarOpen(false);
@@ -3999,9 +4002,11 @@ if (plannedPath.length > 1) {
                 onCambiarCarpeta={handleCambiarCarpeta}
                 simulationSpeed={simulationSpeed}
                 setSimulationSpeed={setSimulationSpeed}
+                onShowAbout={() => setShowAbout(true)}
               />
             </div>
           );
+          
         default: // Control Center
           return null;
       }
@@ -4031,6 +4036,7 @@ if (plannedPath.length > 1) {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           userProfile={userProfile}
+          onShowAbout={() => setShowAbout(true)}
           t={t}
           onSignOut={() => supabase.auth.signOut()}
           lang={lang}
@@ -4635,6 +4641,10 @@ if (plannedPath.length > 1) {
           onClose={() => setShowChangelog(false)}
           data={changelogData}
         />
+        <AboutVelarisModal
+  isOpen={showAbout}
+  onClose={() => setShowAbout(false)}
+/>
 
         <AnimatePresence>
           {isLogbookOpen && (

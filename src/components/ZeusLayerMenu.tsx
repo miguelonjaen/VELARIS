@@ -136,7 +136,7 @@ export const ZeusLayerMenu: React.FC<ZeusLayerMenuProps> = ({
             {/* Pie de Panel Informnativo */}
             <div className="p-4 border-t border-white/5 bg-black/40">
               <p className="text-[8px] text-slate-600 font-mono leading-tight uppercase tracking-tighter">
-                SmartShip Tactical Engine v2.1<br />
+                VELARIS Tactical Engine v2.1<br />
                 B&G Zeus³S Emulation Layer
               </p>
             </div>

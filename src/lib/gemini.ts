@@ -1,5 +1,5 @@
 /**
- * Núcleo de Inteligencia Gemini - SmartShip PRO
+ * Núcleo de Inteligencia Gemini - VELARIS
  * Implementación con Resiliencia Náutica y Modo Offline de Contingencia.
  */
 
@@ -53,7 +53,7 @@ const getLocalNauticalFallback = (prompt: string): string => {
     return "Análisis logístico en modo local. Verifique niveles en el panel de control. Sensores de propulsión informan estado NOMINAL.";
   }
 
-  return "Comando SmartShip PRO: Servidor saturado o sin red. Ejecutando protocolos de reserva. Sistemas del buque operativos.";
+  return "Comando VELARIS: Servidor saturado o sin red. Ejecutando protocolos de reserva. Sistemas del buque operativos.";
 };
 
 export const callGemini = async (

@@ -71,7 +71,7 @@ function setupAutoUpdater() {
         const result = await dialog.showMessageBox(mainWindow, {
             type: "info",
             title: "Actualización disponible",
-            message: "SmartShip Pro se ha actualizado.",
+            message: "VELARIS se ha actualizado.",
             detail: "La actualización está lista para instalar. ¿Deseas instalarla ahora?",
             buttons: ["instalar ahora", "Más tarde"],
             defaultId: 0,
@@ -98,13 +98,14 @@ function createWindow() {
         minWidth: 1200,
         minHeight: 760,
         show: false,
-        title: 'SmartShip Pro',
+        title: 'VELARIS',
         autoHideMenuBar: true,
         icon: path.join(__dirname, 'public', 'icon.ico'),
         backgroundColor: '#020617',
         webPreferences: {
             preload: path.join(__dirname, 'electron-preload.js'),
             contextIsolation: true,
+            
             nodeIntegration: false,
             webSecurity: false,
         },
@@ -156,7 +157,7 @@ ipcMain.handle('get-app-version', () => {
     return app.getVersion();
 });
 ipcMain.handle('get-default-charts-path', () => {
-    const defaultPath = path.join(app.getPath('documents'), 'SmartShip_Cartas');
+    const defaultPath = path.join(app.getPath('documents'), 'VELARIS_Cartas');
     if (!fs.existsSync(defaultPath)) {
         fs.mkdirSync(defaultPath, { recursive: true });
     }

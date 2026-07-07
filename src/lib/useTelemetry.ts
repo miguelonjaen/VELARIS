@@ -102,7 +102,7 @@ export const useTelemetry = ({ selectedShipId, shipPosition, simulatedSog, cog }
 
   };
 
-  const api = window.smartshipAPI;
+  const api = window.VELARISAPI;
 
   if (api?.on) {
 

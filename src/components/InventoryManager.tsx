@@ -238,7 +238,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
           <div>
             <h2 className="text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
               <Box className="w-8 h-8 text-cyan-500" />
-              Gestión de Inventario <span className="text-cyan-500">SmartShip</span>
+              Gestión de Inventario <span className="text-cyan-500">VELARIS</span>
             </h2>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">Control de Stock y Caducidades</p>
           </div>

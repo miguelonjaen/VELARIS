@@ -1,5 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
-contextBridge.exposeInMainWorld('smartshipAPI', {
+contextBridge.exposeInMainWorld('VELARISAPI', {
     // Telemetría en tiempo real
     onVesselUpdate: (callback) => ipcRenderer.on('vessel-update', (_, data) => callback(data)),
     // AIS REAL

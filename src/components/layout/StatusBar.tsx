@@ -20,7 +20,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ vmg, gpsStatus, battery, s
   }, []);
 
   useEffect(() => {
-  window.smartshipAPI
+  window.VELARISAPI
     .getAppVersion()
     .then(setAppVersion)
     .catch(() => setAppVersion("?"));

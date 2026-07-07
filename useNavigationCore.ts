@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { calculateDistanceNM, calculateBearing } from '@lib/utils';
 import { calculateLaylineDeviation, calculateAnchorDrift, calculateETA } from '@lib/laylineCalculator';
-import { SmartshipAlarm, AlarmSeverity, ProcessedWeather, ShipData } from '@/shared/types';
+import { VELARISAlarm, AlarmSeverity, ProcessedWeather, ShipData } from '@/shared/types';
 
 interface NavigationCoreProps {
   shipPosition: { lat: number; lng: number } | null;
@@ -9,8 +9,8 @@ interface NavigationCoreProps {
   selectedShip: ShipData | null;
   simulatedSog: number;
   isTravesiaActive: boolean;
-  addAlarm: (type: SmartshipAlarm['type'], severity: AlarmSeverity, message: string, value: number) => void;
-  removeAlarmByType: (type: SmartshipAlarm['type']) => void;
+  addAlarm: (type: VELARISAlarm['type'], severity: AlarmSeverity, message: string, value: number) => void;
+  removeAlarmByType: (type: VELARISAlarm['type']) => void;
 }
 
 export const useNavigationCore = ({

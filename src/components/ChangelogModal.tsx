@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Anchor } from 'lucide-react';
 import type { Release } from '../content/releases';
 import { cn } from '../lib/utils';
-import logo from "@/assets/logo.png";
 
 interface ChangelogModalProps {
   isOpen: boolean;
@@ -33,27 +32,28 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose,
             <div className="p-1 bg-gradient-to-b from-cyan-500/10 to-transparent border-b border-white/5">
               <div className="relative flex justify-center mb-1">
   <img
-    src={logo}
-    alt="SmartShip Pro"
-    className="w-44 h-44 object-contain"
+    src="/logo.png"
+    alt="VELARIS"
+    className="w-50 h-50 object-contain"
   />
 
   
 </div>
-              <div className="flex flex-col items-center -mt-14 mb-2">
+              <div className="flex flex-col items-center -mt-8 mb-2">
   <h2 className="text-2xl font-black text-white uppercase tracking-tight text-center">
-    Novedades de Sistemas
+    What's New
   </h2>
 
   <p className="mt-1 text-[11px] font-semibold text-cyan-400 uppercase tracking-[0.25em] text-center">
-    Versión {data.version} • {data.date}
+    Build {data.version} • Stable
   </p>
 </div>
             </div>
 
             {/* Body */}
             <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <p className="text-sm font-bold text-slate-300 italic">“{data.summary}”</p>
+              <p className="text-sm font-medium text-slate-300 leading-relaxed">
+  {data.summary}</p>
               
               <div className="space-y-4">
                 {data.sections.map((section, idx) => (
@@ -88,7 +88,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose,
                 onClick={onClose}
                 className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-2"
               >
-                <Anchor size={16} /> Entendido, Almirante
+                <Anchor size={16} /> Entendido
               </button>
             </div>
           </motion.div>

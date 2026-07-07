@@ -108,7 +108,7 @@ const WindInstrument: React.FC<WindInstrumentProps> = ({
           </div>
           <div>
             <p className="text-[9px] font-black uppercase tracking-[0.24em] text-cyan-300">H5000 WIND</p>
-            <p className="text-[8px] font-bold uppercase tracking-[0.22em] text-slate-500">SmartShip tactical bus</p>
+            <p className="text-[8px] font-bold uppercase tracking-[0.22em] text-slate-500">VELARIS tactical bus</p>
           </div>
         </div>
         <div className="grid grid-cols-2 overflow-hidden rounded border border-white/10 bg-black text-[9px] font-black uppercase tracking-[0.16em]">

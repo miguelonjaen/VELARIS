@@ -32,7 +32,7 @@ export const H5000Frame: React.FC<H5000FrameProps> = ({
             )}
           />
           <span className="text-[9px] font-black text-cyan-300 uppercase tracking-[0.25em] font-sans">
-            SmartShip PRO
+            VELARIS
           </span>
         </div>
 
