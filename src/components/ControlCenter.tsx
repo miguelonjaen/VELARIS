@@ -36,9 +36,9 @@ import { RUTAS_FRECUENTES } from '../rutasFrecuentes';
 import { RouteBriefing } from './RouteBriefing';
 import { TacticalHUD } from './TacticalHUD';
 import { calculateDistanceNM } from '../lib/utils';
-import { WindInstrument } from './WindInstrument';
+import { WindInstrument } from '../features/instruments/components/WindInstrument';
 import { callGemini } from '../lib/gemini';
-import H5000Frame from './H5000Frame';
+import H5000Frame from '../features/instruments/components/H5000Frame';
 
 const NAUTICAL_PORTS: Record<string, [number, number]> = {
   'adra': [36.744, -3.015],

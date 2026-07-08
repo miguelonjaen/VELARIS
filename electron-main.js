@@ -1,6 +1,6 @@
 process.env["ELECTRON_DISABLE_SECURITY_WARNINGS"] = "true";
 
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, globalShortcut } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { autoUpdater } = require("electron-updater");
@@ -146,11 +146,7 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
   mainWindow.show();
-  if (isDev) {
-  mainWindow.webContents.openDevTools({
-    mode: 'detach',
-  });
-}
+ 
 
   
 });
@@ -255,6 +251,23 @@ ipcMain.on('ais:set-api-key', (event, apiKey) => {
 app.whenReady().then(() => {
     setupAutoUpdater();
       createWindow();
+
+      if (!app.isPackaged) {
+  globalShortcut.register("CommandOrControl+Shift+I", () => {
+
+    if (!mainWindow) return;
+
+    if (mainWindow.webContents.isDevToolsOpened()) {
+      mainWindow.webContents.closeDevTools();
+    } else {
+      mainWindow.webContents.openDevTools({
+        mode: "left",
+      });
+    }
+
+  });
+}
+
   initializeServices(mainWindow);
         
 
@@ -274,4 +287,7 @@ app.on('before-quit', () => {
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
 });

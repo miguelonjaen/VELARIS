@@ -1,0 +1,1 @@
+// Archivos como GuideVademecum.tsx, PanelAlmirantazgo.tsx, Vademecum.tsx irían aquí.

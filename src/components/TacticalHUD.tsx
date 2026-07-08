@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AnchorWatchPage } from './AnchorWatchPage';
-import { H5000WindHub } from './H5000WindHub';
+import { H5000WindHub } from '../features/instruments/components/H5000WindHub';
 
 interface TacticalHUDProps {
   isOpen: boolean;

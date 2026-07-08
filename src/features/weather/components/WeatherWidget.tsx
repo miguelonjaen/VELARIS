@@ -1,30 +1,24 @@
 import React from 'react';
-import { Cloud, Sun, CloudRain, Wind } from 'lucide-react';
-import { ProcessedWeather } from '@shared/types';
+import { Wind, Thermometer, Cloud } from 'lucide-react';
 
 interface WeatherWidgetProps {
-  weather: ProcessedWeather;
+  weather: any;
+  className?: string;
 }
 
-export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather }) => {
-  const getIcon = (condition: string) => {
-    switch (condition.toLowerCase()) {
-      case 'clear': return <Sun className="w-4 h-4 text-yellow-400" />;
-      case 'rain': return <CloudRain className="w-4 h-4 text-blue-400" />;
-      default: return <Cloud className="w-4 h-4 text-gray-400" />;
-    }
-  };
-
-  const windKnots = (weather.wind * 1.94384).toFixed(1);
-
+export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, className }) => {
   return (
-    <div className="absolute top-6 left-6 z-[10000] bg-[#070b14]/80 backdrop-blur-xl px-3 py-2 rounded-xl border border-white/10 text-white shadow-lg flex items-center gap-2 font-mono">
-      {getIcon(weather.condition)}
-      <div>
-        <div className="text-sm font-black">{weather.temp.toFixed(1)}°C</div>
-        <div className="flex items-center gap-1 text-[10px] font-bold text-cyan-300">
-          <Wind className="w-4 h-4" />
-          {windKnots} kn
+    <div
+  className={`absolute top-24 left-6 z-[1000] w-[90px] h-[45px] bg-[#070b14]/75 backdrop-blur-xl border border-white/10 rounded-2xl p-1 shadow-2xl pointer-events-auto flex items-center justify-center ${className || ''}`}
+>
+          <div className="flex items-center gap-1"> {/* Combined into a single flex row */}
+        <Cloud size={8} className="text-slate-600 flex-shrink-0" /> {/* Smaller icon */}
+        <span className="text-[9px] font-mono font-black text-white">{weather.temp}°</span> {/* Smaller text */}
+        
+        <Wind size={10} className="text-cyan-400 ml-1" /> {/* Smaller icon, slight margin */}
+        <span className="text-[9px] font-mono font-black text-white">{weather.wind.toFixed(0)}<span className="text-[6px] text-slate-500 ml-0.5 uppercase font-bold">kt</span></span> {/* Smaller text */}
+        <div className="w-2 h-2 flex items-center justify-center text-cyan-400" style={{ transform: `rotate(${weather.windDir}deg)` }}>
+          <div className="w-0 h-0 border-l-[2px] border-r-[2px] border-b-[4px] border-l-transparent border-r-transparent border-b-current" />
         </div>
       </div>
     </div>

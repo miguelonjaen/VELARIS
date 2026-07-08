@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
-import  SailSteerWidget  from './SailSteerWidget';
+import SailSteerWidget from '../features/instruments/components/SailSteerWidget';
 
 type ZeusPageId = 'chart' | 'sailsteer' | 'race' | 'laylines' | 'windplot' | 'pilot' | 'weather' | 'charts';
 

@@ -3,7 +3,7 @@ import { MemoryRepository } from "@/data/memory/MemoryRepository";
 
 import { Contact } from "@/tactical/contacts/Contact";
 import { TacticalEngine } from "@/tactical/TacticalEngine";
-import { AISService } from "@/services/AISService";
+import { AISService } from "@/features/traffic/services/AISService";
 import { RenderingEngine } from "@/rendering/RenderingEngine";
 import { CoreState } from "@/core/CoreState";
 import { TelemetryService } from "@/core/services/TelemetryService";

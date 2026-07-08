@@ -1,14 +1,11 @@
 {
-    "name": "VELARIS",
+    "name": "velaris",
     "private": true,
     "version": "1.1.4",
-    "description": "Aplicación de escritorio para gestión náutica y NMEA",
+    "description": "Professional Marine Navigation Suite",
     "main": "electron-main.js",
     "author": "MiguelonJaen",
     "type": "commonjs",
-    "backend": "node map-server.js",
-    "VELARIS": "npm run electron:start",
-    "dev:full": "concurrently \"npm run backend\" \"npm run VELARIS\"",
     "scripts": {
         "dev": "vite --port=3000",
         "build": "npm run build:main && vite build",
@@ -20,7 +17,15 @@
         "electron:start": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron -r tsx/cjs .\"",
         "electron:build": "npm run build && electron-builder",
         "electron-dev": "electron .",
-        "build-win": "electron-builder --win"
+        "build-win": "electron-builder --win",
+        "devkit:init": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts init",
+        "devkit:scan": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts scan",
+        "devkit:context": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts context",
+        "VELARIS": "npm run electron:start",
+        "dev:full": "concurrently \"npm run backend\" \"npm run VELARIS\"",
+        "devkit:search": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts search",
+        "devkit:doctor": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts doctor",
+        "devkit:build": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts build"
     },
     "dependencies": {
         "@google/genai": "^1.48.0",
@@ -72,7 +77,7 @@
         "electron-builder": "^25.1.8",
         "tailwindcss": "^4.1.14",
         "typescript": "~5.8.2",
-        "tsc-alias": "^1.15.0",
+        "tsc-alias": "^1.9.0",
         "vite": "^6.2.0",
         "vite-plugin-pwa": "^1.2.0",
         "vite-plugin-svgr": "^5.2.0",
@@ -80,10 +85,10 @@
         "wait-on": "^8.0.2"
     },
     "build": {
-        "appId": "com.VELARIS",
+        "appId": "com.VELARIS.pro",
         "productName": "VELARIS",
         "icon": "public/icon.ico",
-        "artifactName": "VELARIS-Setup-${version}.${ext}",
+        "artifactName": "VELARIS-Pro-Setup-${version}.${ext}",
         "copyright": "Copyright © 2026 MiguelonJaen",
         "directories": {
             "output": "dist_electron"
@@ -92,7 +97,7 @@
             {
                 "provider": "github",
                 "owner": "miguelonjaen",
-                "repo": "VELARIS"
+                "repo": "VELARIS-pro"
             }
         ],
         "files": [

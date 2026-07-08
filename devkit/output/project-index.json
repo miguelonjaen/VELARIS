@@ -1,0 +1,546 @@
+{
+  ".cursorrules": "file",
+  ".env": "file",
+  ".github": {
+    "agents": {
+      "nexus.agent.md": "file"
+    },
+    "copilot-instructions.md": "file",
+    "copilot-toolbox-mcp-skills-awareness.md": "file"
+  },
+  ".gitignore": "file",
+  "AGENTS.md": "file",
+  "aisBridge.js": "file",
+  "AUTO_UPDATE_GUIDE.md": "file",
+  "build": {
+    "icon.ico": "file"
+  },
+  "devkit": {
+    "output": {},
+    "scripts": {},
+    "src": {
+      "commands": {
+        "scan.ts": "file"
+      },
+      "index.ts": "file"
+    },
+    "templates": {},
+    "tsconfig.json": "file"
+  },
+  "docs": {
+    "AGENT.md": "file",
+    "ai": {},
+    "ARCHITECTURE.md": "file",
+    "CODING_RULES.md": "file",
+    "DATAFLOW.md": "file",
+    "design-system": {
+      "ANIMATIONS.md": "file",
+      "COLORS.md": "file",
+      "COMPONENTS.md": "file",
+      "ICONS.md": "file",
+      "README.md": "file",
+      "ROADMAP.md": "file"
+    },
+    "knowledge": {
+      "Dock.md": "file",
+      "SmartCharts.md": "file",
+      "TacticalMap.md": "file",
+      "UI.md": "file"
+    },
+    "memory": {
+      "CHANGELOG.md": "file",
+      "DECISIONS.md": "file",
+      "LESSONS.md": "file"
+    },
+    "PRINCIPLES.md": "file",
+    "PROJECT.md": "file",
+    "prompts": {
+      "Architect.md": "file",
+      "Backend.md": "file",
+      "Frontend.md": "file",
+      "Reviewer.md": "file"
+    },
+    "RELEASE_PROCESS.md": "file",
+    "sprints": {
+      "SPRINT-001.md": "file"
+    },
+    "VISION.md": "file"
+  },
+  "electron-main.js": "file",
+  "electron-preload.js": "file",
+  "estructura.txt": "file",
+  "firebase-applet-config.json": "file",
+  "firebase-blueprint.json": "file",
+  "firestore.rules": "file",
+  "how cfbb069faisBridge.js": "file",
+  "index.html": "file",
+  "map-server.js": "file",
+  "MapService.ts": "file",
+  "memory-bank": {
+    "activeContext.md": "file",
+    "productContext.md": "file",
+    "progress.md": "file",
+    "projectbrief.md": "file",
+    "systemPatterns.md": "file",
+    "techContext.md": "file"
+  },
+  "metadata.json": "file",
+  "NMEAService.js": "file",
+  "NMEAService.ts": "file",
+  "package-lock.json": "file",
+  "package.json": "file",
+  "public": {
+    "balizas": {
+      "aguas-navegables.png": "file",
+      "cardinal-este.png": "file",
+      "cardinal-norte.png": "file",
+      "cardinal-oeste.png": "file",
+      "cardinal-sur.png": "file",
+      "lateral-babor.png": "file",
+      "lateral-estribor.png": "file",
+      "marca-especial.jpg": "file",
+      "peligro-aislado.png": "file"
+    },
+    "barco-player.png": "file",
+    "favicon.ico": "file",
+    "icon.ico": "file",
+    "icon1.ico": "file",
+    "logo.png": "file",
+    "logo1.png": "file",
+    "logo3.png": "file",
+    "nubes": {
+      "altocumulos.jpg": "file",
+      "altoestratos.jpg": "file",
+      "cirrocumulos.jpg": "file",
+      "cirros.jpg": "file",
+      "cirrostrato.jpg": "file",
+      "cumulonimbos.jpg": "file",
+      "cumulos.jpg": "file",
+      "estratocumulos.jpg": "file",
+      "estratos.jpg": "file",
+      "nimbostratos.jpg": "file"
+    },
+    "nudos": {
+      "as-de-guia.jpg": "file",
+      "ballestrinque.jpg": "file",
+      "nudo-en-ocho.png": "file",
+      "nudo-llano.png": "file",
+      "vuelta-de-rezon.jpg": "file"
+    },
+    "sql-wasm.wasm": "file"
+  },
+  "publish.ps1": "file",
+  "README.md": "file",
+  "src": {
+    "AISTacticalDrawer.tsx": "file",
+    "AITacticalTerminal.tsx": "file",
+    "App.tsx": "file",
+    "application": {
+      "Application.ts": "file",
+      "index.ts": "file"
+    },
+    "assets": {
+      "graphics": {
+        "blueprint": {
+          "ship_master.svg": "file",
+          "velaris-logo.svg": "file"
+        },
+        "vessels": {
+          "motorboat": {
+            "deck.svg": "file",
+            "hull.svg": "file",
+            "roof.svg": "file"
+          }
+        }
+      },
+      "logo2.png": "file"
+    },
+    "Bootstrap.tsx": "file",
+    "components": {
+      "AboutVelarisModal.tsx": "file",
+      "AdminPanel.tsx": "file",
+      "AlarmToasts.tsx": "file",
+      "AnchorWatchPage.tsx": "file",
+      "AsesorTactico.tsx": "file",
+      "AuthScreen.tsx": "file",
+      "BasicDataPage.tsx": "file",
+      "ChangelogModal.tsx": "file",
+      "CommandCenter.tsx": "file",
+      "CommandSidebar.tsx": "file",
+      "ConfigurationPanel.tsx": "file",
+      "ControlCenter.tsx": "file",
+      "ErrorBoundary.tsx": "file",
+      "fleet": {},
+      "GPSPage.tsx": "file",
+      "GuideVademecum.tsx": "file",
+      "InventoryManager.tsx": "file",
+      "layout": {},
+      "Logbook.tsx": "file",
+      "navigation": {},
+      "PanelAlmirantazgo.tsx": "file",
+      "ProfileEditor.tsx": "file",
+      "SafetyModal.tsx": "file",
+      "SplashScreen.tsx": "file",
+      "TacticalAdvisor.tsx": "file",
+      "TacticalAdvisorBar.tsx": "file",
+      "TacticalAdvisorPanel.tsx": "file",
+      "TacticalHUD.tsx": "file",
+      "TacticalTerminal.tsx": "file",
+      "TestSubidaFoto.tsx": "file",
+      "TravelLogPage.tsx": "file",
+      "TravesiaDashboard.tsx": "file",
+      "Untitled-1.md": "file",
+      "utils": {
+        "polar.ts": "file"
+      },
+      "Vademecum.tsx": "file",
+      "vessels": {
+        "createShipIcon.ts": "file",
+        "index.ts": "file",
+        "README.md": "file",
+        "Ship.module.css": "file",
+        "Ship.tsx": "file",
+        "VesselRenderer.ts": "file"
+      },
+      "WatchdogPanel.tsx": "file",
+      "Zeus3SChartplotterOverlay.tsx": "file",
+      "ZeusLayerMenu.tsx": "file"
+    },
+    "config": {
+      "changelog.ts": "file",
+      "manualContent.ts": "file"
+    },
+    "constants.ts": "file",
+    "content": {
+      "releases.ts": "file"
+    },
+    "core": {
+      "CoreState.ts": "file",
+      "events": {
+        "CoreEvents.ts": "file",
+        "SynchronousCoreEvents.ts": "file"
+      },
+      "index.ts": "file",
+      "navigation": {
+        "GeoMath.test.ts": "file",
+        "GeoMath.ts": "file",
+        "GeoPoint.ts": "file"
+      },
+      "services": {
+        ".gitkeep": "file",
+        "NavigationService.ts": "file",
+        "NMEAParser.ts": "file",
+        "SimulationService.ts": "file",
+        "TelemetryService.ts": "file"
+      },
+      "types": {
+        ".gitkeep": "file",
+        "TelemetryMessage.ts": "file"
+      },
+      "utils": {
+        ".gitkeep": "file"
+      }
+    },
+    "data": {
+      "ContactRepository.ts": "file",
+      "index.ts": "file",
+      "IRepository.ts": "file",
+      "memory": {
+        "MemoryRepository.ts": "file"
+      },
+      "providers": {
+        "SupabaseRepository.ts": "file"
+      },
+      "vademecumData.ts": "file",
+      "vademecumData2.ts": "file"
+    },
+    "features": {
+      "instruments": {
+        "components": {
+          "DepthPage.tsx": "file",
+          "EnginePage.tsx": "file",
+          "H5000Frame.tsx": "file",
+          "H5000WindHub.tsx": "file",
+          "index.ts": "file",
+          "InstrumentGridPage.tsx": "file",
+          "PilotStatusPage.tsx": "file",
+          "RaceTimerPage.tsx": "file",
+          "SailSteerPage.tsx": "file",
+          "SailSteerWidget.tsx": "file",
+          "SteeringPage.tsx": "file",
+          "WindAnalogPage.tsx": "file",
+          "WindInstrument.tsx": "file",
+          "WindPlotPage.tsx": "file"
+        },
+        "hooks": {},
+        "index.ts": "file",
+        "models": {},
+        "services": {},
+        "types": {},
+        "utils": {}
+      },
+      "layout": {
+        "dock": {
+          "Dock.tsx": "file",
+          "DockButton.tsx": "file",
+          "DockContext.tsx": "file",
+          "dockItems.ts": "file",
+          "index.ts": "file",
+          "types.ts": "file"
+        },
+        "index.ts": "file",
+        "overlays": {
+          "index.ts": "file"
+        },
+        "panels": {
+          "BottomPanel.tsx": "file",
+          "index.ts": "file",
+          "LeftPanel.tsx": "file",
+          "RightPanel.tsx": "file"
+        },
+        "sidebar": {
+          "index.ts": "file",
+          "SideBar.tsx": "file",
+          "ZeusSidebar.tsx": "file"
+        },
+        "statusbar": {
+          "index.ts": "file",
+          "StatusBar.tsx": "file"
+        },
+        "topbar": {
+          "index.ts": "file",
+          "TopBar.tsx": "file"
+        },
+        "windows": {
+          "index.ts": "file"
+        }
+      },
+      "navigation": {
+        "components": {
+          "index.ts": "file",
+          "LaylinesPage.tsx": "file",
+          "Map.tsx": "file",
+          "MapControls.tsx": "file",
+          "MBTileLayer.tsx": "file",
+          "Navigation3DPage.tsx": "file",
+          "NavigationDashboard.tsx": "file",
+          "OfflineTileLayer.tsx": "file",
+          "OwnShipLayer.tsx": "file",
+          "PlotPage.tsx": "file",
+          "RouteBriefing.tsx": "file",
+          "SmartNavigationPanel.tsx": "file",
+          "TacticalMap.tsx": "file",
+          "WaypointManager.tsx": "file"
+        },
+        "hooks": {
+          "index.ts": "file",
+          "useNavigationCore.ts": "file"
+        },
+        "index.ts": "file",
+        "services": {
+          "index.ts": "file"
+        },
+        "types": {
+          "index.ts": "file"
+        },
+        "utils": {
+          "index.ts": "file"
+        }
+      },
+      "traffic": {
+        "components": {
+          "AISPage.tsx": "file",
+          "FleetManager.tsx": "file",
+          "index.ts": "file"
+        },
+        "hooks": {
+          "index.ts": "file"
+        },
+        "index.ts": "file",
+        "models": {
+          "index.ts": "file"
+        },
+        "renderers": {
+          "FleetLayer.tsx": "file",
+          "FleetMarkers.tsx": "file",
+          "FleetPrediction.tsx": "file",
+          "FleetSafety.tsx": "file",
+          "index.ts": "file"
+        },
+        "services": {
+          "AISService.ts": "file",
+          "aisStreamService.ts": "file",
+          "index.ts": "file"
+        },
+        "types": {
+          "index.ts": "file"
+        },
+        "utils": {
+          "index.ts": "file"
+        }
+      },
+      "weather": {
+        "components": {
+          ".gitkeep": "file",
+          "index.ts": "file",
+          "TidePage.tsx": "file",
+          "WeatherPage.tsx": "file",
+          "WeatherWidget.tsx": "file"
+        },
+        "hooks": {
+          ".gitkeep": "file",
+          "index.ts": "file"
+        },
+        "index.ts": "file",
+        "models": {
+          "index.ts": "file"
+        },
+        "services": {
+          ".gitkeep": "file",
+          "index.ts": "file",
+          "WeatherService.ts": "file"
+        },
+        "types": {
+          ".gitkeep": "file",
+          "index.ts": "file"
+        },
+        "utils": {
+          "index.ts": "file"
+        }
+      }
+    },
+    "firebase.ts": "file",
+    "global.d.ts": "file",
+    "GPSPage.tsx": "file",
+    "hooks": {
+      "useTacticalAdvisor.ts": "file"
+    },
+    "i18n.ts": "file",
+    "index.css": "file",
+    "lib": {
+      "ais.ts": "file",
+      "aisMath.ts": "file",
+      "aisUtils.ts": "file",
+      "anchorManager.ts": "file",
+      "gemini.ts": "file",
+      "gpxParser.ts": "file",
+      "laylineCalculator.test.ts": "file",
+      "laylineCalculator.ts": "file",
+      "pdfGenerator.ts": "file",
+      "pdfService.ts": "file",
+      "polarEngine.ts": "file",
+      "routing": {
+        "RoutePlanner.ts": "file",
+        "types.ts": "file"
+      },
+      "safetyCompliance.ts": "file",
+      "sailPolars.ts": "file",
+      "sensorQuality.ts": "file",
+      "supabaseRepository.ts": "file",
+      "superbase.ts": "file",
+      "tacticalAlertSystem.ts": "file",
+      "tacticalAlertSystemIntegration.ts": "file",
+      "tools.ts": "file",
+      "tripLogger.ts": "file",
+      "useAIS.ts": "file",
+      "useTacticalAI.ts": "file",
+      "useTelemetry.ts": "file",
+      "useWeather.ts": "file",
+      "utils.ts": "file",
+      "vademecumdata.ts": "file"
+    },
+    "main.tsx": "file",
+    "MainLayout.tsx": "file",
+    "Map.tsx": "file",
+    "MapService.ts.bak": "file",
+    "MapSubComponents.tsx": "file",
+    "navigation": {
+      "calculateBearing.ts": "file",
+      "coastalRoutes.ts": "file"
+    },
+    "Navigation3DPage.tsx": "file",
+    "NavigationDashboard.tsx": "file",
+    "platform": {
+      "telemetry": {
+        "ElectronTelemetryAdapter.ts": "file"
+      }
+    },
+    "PlotPage.tsx": "file",
+    "polarTable.ts": "file",
+    "rendering": {
+      "RenderingEngine.ts": "file",
+      "VesselRenderData.ts": "file",
+      "ZoomStyleResolver.ts": "file"
+    },
+    "rutasFrecuentes.ts": "file",
+    "shared": {
+      "components": {
+        "AboutVelarisModal.tsx": "file",
+        "AlarmToasts.tsx": "file",
+        "ChangelogModal.tsx": "file",
+        "ErrorBoundary.tsx": "file",
+        "SplashScreen.tsx": "file"
+      },
+      "index.ts": "file",
+      "pdf": {
+        "pdfGenerator.ts": "file",
+        "pdfService.ts": "file"
+      },
+      "types.ts": "file"
+    },
+    "supabaseClient.ts": "file",
+    "tactical": {
+      "ContactRenderer.ts": "file",
+      "contacts": {
+        "AISContact.ts": "file",
+        "Buoy.ts": "file",
+        "Contact.ts": "file",
+        "ContactType.ts": "file",
+        "OwnShip.ts": "file",
+        "Vessel.ts": "file",
+        "Waypoint.ts": "file"
+      },
+      "ContactTypes.ts": "file",
+      "index.ts": "file",
+      "mappers": {
+        "AISMapper.ts": "file",
+        "IMapper.ts": "file",
+        "TacticalTargetMapper.ts": "file",
+        "TelemetryTargetMapper.ts": "file"
+      },
+      "models": {
+        "TacticalTarget.ts": "file",
+        "TargetAIS.ts": "file"
+      },
+      "renderers": {
+        "ContactRenderer.ts": "file",
+        "VesselRenderer.ts": "file"
+      },
+      "TacticalEngine.ts": "file"
+    },
+    "TacticalDataOverlay.tsx": "file",
+    "TacticalTicker.ts": "file",
+    "telemetry": {
+      "helpers": {
+        "SensorQualityUpdater.ts": "file"
+      }
+    },
+    "types": {
+      "ais.ts": "file"
+    },
+    "Untitled-1.md": "file",
+    "useMapHandlers.tsx": "file",
+    "useSmartShield.ts": "file",
+    "useSmartShield.tsx": "file",
+    "useTacticalRouting.ts": "file",
+    "vite-env.d.ts": "file",
+    "WaypointManager.tsx": "file",
+    "WeatherLayer.tsx": "file"
+  },
+  "TacticalTicker.ts": "file",
+  "tsconfig.json": "file",
+  "tsconfig.main.json": "file",
+  "types.ts": "file",
+  "useNavigationCore.ts": "file",
+  "vite.config.ts": "file"
+}
