@@ -48,7 +48,9 @@ export const useNavigationCore = ({
     };
   }, [simulatedSog]);
 
-  const updateNavigationPlan = useCallback((coords: { lat: number; lng: number }, name: string) => {
+  const updateNavigationPlan = useCallback((coords: { lat: number; lng: number }, name: string) =>
+     {
+      
     const currentPos = shipPosition || { lat: 36.7215, lng: -3.5235 };
     const { distance, eta } = calculateRoute(currentPos, coords);
     const btw = calculateBearing(currentPos.lat, currentPos.lng, coords.lat, coords.lng);

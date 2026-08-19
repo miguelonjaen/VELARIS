@@ -142,8 +142,8 @@
     "assets": {
       "graphics": {
         "blueprint": {
-          "ship_master.svg": "file",
-          "velaris-logo.svg": "file"
+          "ship_master.svg": "file"
+          
         },
         "vessels": {
           "motorboat": {

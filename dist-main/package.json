@@ -1,7 +1,7 @@
 {
     "name": "velaris",
     "private": true,
-    "version": "1.1.4",
+    "version": "1.0.0",
     "description": "Professional Marine Navigation Suite",
     "main": "electron-main.js",
     "author": "MiguelonJaen",
@@ -25,7 +25,8 @@
         "dev:full": "concurrently \"npm run backend\" \"npm run VELARIS\"",
         "devkit:search": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts search",
         "devkit:doctor": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts doctor",
-        "devkit:build": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts build"
+        "devkit:build": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts build",
+        "devkit:docs": "tsx --tsconfig devkit/tsconfig.json devkit/src/index.ts docs"
     },
     "dependencies": {
         "@google/genai": "^1.48.0",
@@ -75,9 +76,10 @@
         "concurrently": "^9.1.2",
         "electron": "^34.5.8",
         "electron-builder": "^25.1.8",
+        "supabase": "^2.109.1",
         "tailwindcss": "^4.1.14",
-        "typescript": "~5.8.2",
         "tsc-alias": "^1.9.0",
+        "typescript": "~5.8.2",
         "vite": "^6.2.0",
         "vite-plugin-pwa": "^1.2.0",
         "vite-plugin-svgr": "^5.2.0",
@@ -85,10 +87,10 @@
         "wait-on": "^8.0.2"
     },
     "build": {
-        "appId": "com.VELARIS.pro",
+        "appId": "com.velaris.pro",
         "productName": "VELARIS",
-        "icon": "public/icon.ico",
-        "artifactName": "VELARIS-Pro-Setup-${version}.${ext}",
+        "icon": "build/icon.ico",
+        "artifactName": "VELARIS-Setup-${version}.${ext}",
         "copyright": "Copyright © 2026 MiguelonJaen",
         "directories": {
             "output": "dist_electron"
@@ -97,7 +99,7 @@
             {
                 "provider": "github",
                 "owner": "miguelonjaen",
-                "repo": "VELARIS-pro"
+                "repo": "VELARIS"
             }
         ],
         "files": [
@@ -113,7 +115,7 @@
         ],
         "win": {
             "target": "nsis",
-            "icon": "public/icon.ico"
+            "icon": "build/icon.ico"
         }
     }
 }

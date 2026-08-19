@@ -5,6 +5,7 @@ import { cn } from '@lib/utils';
 import { Language, translations } from '@/i18n';
 import { SensorQualityMap } from '@lib/sensorQuality';
 
+
 interface NavData {
   lat: number;
   lng: number;

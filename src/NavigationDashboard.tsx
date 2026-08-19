@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { cn } from './lib/utils';
 import { Language, translations } from './i18n';
 import { SensorQualityMap } from './lib/sensorQuality';
+console.log("🚨 DASHBOARD ROOT");
 
 interface NavData {
   lat: number;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '../../../lib/utils';
 
 export const RaceTimerPage = ({ onFinished }: { onFinished: () => void }) => {
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds

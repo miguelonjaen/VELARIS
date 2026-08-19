@@ -23,7 +23,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 
 import { cn } from '../lib/utils';
 
-import { RouteBriefing } from './RouteBriefing';
+// import { RouteBriefing } from './RouteBriefing';
 import { TacticalHUD } from './TacticalHUD';
 import { calculateDistanceNM } from '../lib/utils';
 
@@ -232,9 +232,21 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
       .eq('barco_id', selectedShipId)
       .maybeSingle()
       .then(({ data }) => {
+        console.log("SUPABASE STATUS", data);
         if (data) {
+
+           console.log(
+        "FETCH STATUS -> Supabase:",
+        data.is_navigating,
+        "| React:",
+        isTravesiaActive
+      );
           setVesselStatus(data);
           if (data.is_navigating !== isTravesiaActive) {
+            console.log(
+                ">>> SUPABASE ACTIVA LA TRAVESIA",
+                data.is_navigating
+            );
             setIsTravesiaActive(data.is_navigating);
           }
         }
@@ -253,8 +265,22 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
         },
         (payload) => {
           const newData = payload.new as VesselStatus;
+
+          console.log(
+    "REALTIME STATUS -> Supabase:",
+    newData.is_navigating,
+    "| React:",
+    isTravesiaActive
+  );
+
           setVesselStatus(newData);
           if (newData.is_navigating !== isTravesiaActive) {
+
+            console.log(
+      ">>> REALTIME CAMBIA EL ESTADO A",
+      newData.is_navigating
+    );
+
             setIsTravesiaActive(newData.is_navigating);
             if (!newData.is_navigating) {
               setCurrentPath([]);

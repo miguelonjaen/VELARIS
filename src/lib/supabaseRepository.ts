@@ -67,15 +67,25 @@ export const logRepository = {
     return supabase.from('bitacora').insert([entry]).select();
   },
   async getActiveLog(barcoId: string | null) {
-    if (!barcoId) return { data: null, error: null };
-    return supabase.from('bitacora')
-      .select('id, titulo, destino_planificado, tipo_navegacion')
-      .eq('barco_id', barcoId)
-      .is('fecha_fin', null)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-  },
+  if (!barcoId) return { data: null, error: null };
+
+  return supabase
+    .from('bitacora')
+    .select(`
+      id,
+      titulo,
+      destino_planificado,
+      tipo_navegacion,
+      registro_tipo,
+      es_alarma,
+      tipo_evento
+    `)
+    .eq('barco_id', barcoId)
+    .is('fecha_fin', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+},
   async updateLog(logId: string | number, data: any) {
     return supabase.from('bitacora').update(data).eq('id', logId);
   },

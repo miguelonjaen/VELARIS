@@ -4,7 +4,6 @@ import Bootstrap from './Bootstrap';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
     <Bootstrap />
-  </StrictMode>,
+ 
 );

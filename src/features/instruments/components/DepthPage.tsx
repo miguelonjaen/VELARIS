@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { cn } from '../lib/utils';
-import { supabase } from '../supabaseClient';
+import { cn } from '../../../lib/utils';
+import { supabase } from '../../../supabaseClient';
 
 export const DepthPage = ({ currentDepth, depthHistory, shipId }: any) => {
   const [period, setPeriod] = useState(10);

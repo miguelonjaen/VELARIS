@@ -19,13 +19,24 @@ export const StatusBar: React.FC<StatusBarProps> = ({ vmg, gpsStatus, battery, s
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-  window.VELARISAPI
-    .getAppVersion()
-    .then(setAppVersion)
-    .catch(() => setAppVersion("?"));
-}, []);
+ useEffect(() => {
+  const loadVersion = async () => {
+    // Ejecutando en Vite
+    if (!window.VELARISAPI?.getAppVersion) {
+      setAppVersion("DEV");
+      return;
+    }
 
+    try {
+      const version = await window.VELARISAPI.getAppVersion();
+      setAppVersion(version);
+    } catch {
+      setAppVersion("?");
+    }
+  };
+
+  loadVersion();
+}, []);
   return (
     <div className={cn(
       "h-8 bg-black/90 backdrop-blur-md border-b border-white/10 px-6 flex items-center justify-between z-[7000] select-none text-slate-100",

@@ -51,11 +51,11 @@ export interface SimulationTickInput {
 
 export class SimulationService {
 
-    private waypointIndex = 1;
+    private waypointIndex = 0;
 
     private destinationReached = false;
 
-    public resetNavigation(waypointIndex = 1): void {
+    public resetNavigation(waypointIndex = 0): void {
         this.waypointIndex = waypointIndex;
         this.destinationReached = false;
     }
@@ -160,14 +160,22 @@ export class SimulationService {
         if (!target) return null;
 
         const targetLat = target[0];
-        const targetLng = target[1];
-        const dLat = targetLat - input.position.lat;
-        const dLng = targetLng - input.position.lng;
-        const cog = (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
-        const distance = Math.sqrt(
-            dLat * dLat +
-            dLng * dLng
-        );
+const targetLng = target[1];
+
+const dLat = targetLat - input.position.lat;
+const dLng = targetLng - input.position.lng;
+
+const cog =
+    (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
+
+// Distancia en grados
+const distance = Math.sqrt(dLat * dLat + dLng * dLng);
+
+// Aproximación a millas náuticas
+const dtw = distance * 60;
+
+// Tiempo estimado
+const etaHours = input.sog > 0 ? dtw / input.sog : 0;
 
         this.destinationReached = false;
 
@@ -185,12 +193,19 @@ export class SimulationService {
         const nextLat = input.position.lat + dLat * factor;
         const nextLng = input.position.lng + dLng * factor;
 
-        return {
-            type: "GPS",
-            lat: nextLat,
-            lng: nextLng,
-            sog: input.sog,
-            cog
-        };
+       return {
+    type: "GPS",
+    lat: nextLat,
+    lng: nextLng,
+    sog: input.sog,
+    cog,
+
+    nav: {
+        btw: cog,
+        dtw,
+        xte: 0,
+        eta: etaHours
+    }
+} as any;
     }
 }

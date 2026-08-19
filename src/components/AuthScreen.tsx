@@ -5,11 +5,15 @@ import { supabase } from '../supabaseClient';
 import logo from "@/assets/logo.png";
 
 const AuthScreen = () => {
+  console.log("******** AUTHSCREEN RENDER ********");
   const [isRegister, setIsRegister] = useState(false);
   
   // 1. Estados iniciales (dejamos que el useEffect mande)
-  const [email, setEmail] = useState('miguelonjaen@hotmail.com');
-  const [password, setPassword] = useState('22032203');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(
+  localStorage.getItem("VELARIS_rememberMe") === "true"
+);
   
   const [nombre, setNombre] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,15 +23,22 @@ const AuthScreen = () => {
   // 2. FUNCIÓN DE CARGA BLINDADA
   useEffect(() => {
     const recuperar = () => {
-      const sEmail = localStorage.getItem('VELARIS_email_dev');
-      const sPass = localStorage.getItem('VELARIS_pass_dev');
-      
-      if (sEmail) setEmail(sEmail);
-      if (sPass) setPassword(sPass);
-    };
+  const sEmail = localStorage.getItem('VELARIS_email_dev');
+  const sPass = localStorage.getItem('VELARIS_pass_dev');
+  const sRemember = localStorage.getItem('VELARIS_rememberMe');
+
+  if (sEmail) setEmail(sEmail);
+  if (sPass) setPassword(sPass);
+
+  if (sRemember) {
+    setRememberMe(sRemember === 'true');
+  }
+};
 
     // Intentamos cargar 3 veces en diferentes tiempos por si la app limpia al inicio
-    recuperar();
+    recuperar(
+      
+    );
     setTimeout(recuperar, 100); 
     setTimeout(recuperar, 500);
   }, []);
@@ -41,7 +52,9 @@ const AuthScreen = () => {
   }
 };
 
-cargarVersion();
+useEffect(() => {
+  
+}, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +64,10 @@ cargarVersion();
     // 3. GUARDADO CRÍTICO
     try {
       // console.log("💾 Escribiendo en localStorage...");
+      console.log("Voy a guardar en localStorage");
+console.log(email);
       localStorage.setItem('VELARIS_email_dev', email);
+      console.log("Guardado:", localStorage.getItem("VELARIS_email_dev"));
       localStorage.setItem('VELARIS_pass_dev', password);
       
       // Verificación inmediata
@@ -137,6 +153,19 @@ cargarVersion();
             type="password" required placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-sm outline-none focus:border-cyan-500/50 transition-all"
           />
+          <div className="flex items-center py-2">
+  <label className="flex items-center gap-2 cursor-pointer">
+    <input
+      type="checkbox"
+      checked={rememberMe}
+      onChange={(e) => setRememberMe(e.target.checked)}
+      className="w-4 h-4 accent-cyan-500"
+    />
+    <span className="text-sm text-slate-400">
+      Recordarme
+    </span>
+  </label>
+</div>
           <button 
             type="submit" disabled={loading}
             className="w-full py-2.5 hover:scale-[1.02] active:scale-[0.98] bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 text-white font-bold rounded-xl transition-all uppercase tracking-widest text-xs shadow-lg shadow-cyan-900/20"

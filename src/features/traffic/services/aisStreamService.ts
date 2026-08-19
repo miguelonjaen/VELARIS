@@ -1,5 +1,5 @@
 
-import { AISTarget } from '../types/ais';
+import { AISTarget } from '../../../types/ais';
 
 export class AISStreamService {
   private socket: WebSocket | null = null;

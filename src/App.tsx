@@ -101,7 +101,6 @@ import { UserProfile, ShipData, LogEntry, VesselStatus, WeatherResponse, Process
 // ... (rest of imports remains same, just fixing firebase ones)
 import AuthScreen from './components/AuthScreen';
 import TestSubidaFoto from './components/TestSubidaFoto';
-import { ControlCenter } from './components/ControlCenter';
 import Logbook from './components/Logbook';
 import FleetManager from './features/traffic/components/FleetManager';
 import AdminPanel from './components/AdminPanel';
@@ -134,6 +133,12 @@ import { AISStreamService } from './features/traffic/services/aisStreamService';
 import { app } from "@/application";
 import { updateRealSensors } from "@/telemetry/helpers/SensorQualityUpdater";
 import { AboutVelarisModal } from './shared/components/AboutVelarisModal';
+import NavPage from "./features/navigation/components/nav/NavPage";
+import { RouteBuilder } from "./navigation/engine/RouteBuilder";
+import { RouteManager } from "./navigation/engine/RouteManager";
+import { Waypoint } from "./tactical/contacts/Waypoint";
+import { MissionService } from "@/features/navigation/mission";
+import MissionControlPanel from "@/features/navigation/components/MissionControl/MissionControlPanel";
 
 
 const Vademecum = lazy(() => import('./components/Vademecum'));
@@ -232,7 +237,7 @@ const MBTILES_ZONES = [
   { id: 'andaluciaoccidental', name: 'Andalucía Occ.', center: [36.5, -6.2] as [number, number], zoom: 9, file: '/mapas/andaluciaoccidental.mbtiles' },
 ];
 
-const SUPABASE_URL = "https://puxkefnscvzzrdsmckjt.supabase.co";
+const SUPABASE_URL = "https://tgcamohglqnrhbpxjyjr.supabase.co";
 const SUPABASE_ANON_KEY_VAL = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1eGtlZm5zY3Z6enJkc21ja2p0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTUwMDIsImV4cCI6MjA5MDQzMTAwMn0.b02TnDBYir17BtzA79pec1EO8Lkf3CYJsMGD4ldAXbE";
 
 
@@ -301,6 +306,8 @@ const MapEventsHandler: React.FC<MapEventsHandlerProps> = ({
 // --- Main App Component ---
 
 function App() {
+  const routeBuilder = useRef(new RouteBuilder()).current;
+const routeManager = useRef(new RouteManager()).current;
   // 🏷️ [ETIQUETA: CARTAS LOCALES - ESTADOS Y EFECTOS]
   const [cartasPath, setCartasPath] = useState<string>('Buscando entorno VELARIS...');
   // --- CONTROL DE NOVEDADES (CHANGELOG) ---
@@ -309,6 +316,7 @@ function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [simulationSpeed, setSimulationSpeed] = useState(1);
   const [vesselStatus, setVesselStatus] = useState<VesselStatus | null>(null);
+  
 
   useEffect(() => {
     if (window.VELARISAPI?.setAISApiKey) {
@@ -663,12 +671,12 @@ function App() {
   const ownShipVector = useMemo<VesselVector | null>(() => {
     if (!shipPosition) return null;
     return {
-      lat: shipPosition.lat,
-      lng: shipPosition.lng,
-      sog: simulatedSog || selectedShip?.sog || 0,
-      cog: selectedShip?.cog || 0,
-    };
-  }, [shipPosition, simulatedSog, selectedShip?.sog, selectedShip?.cog]);
+  lat: shipPosition.lat,
+  lng: shipPosition.lng,
+  sog: app.state.sog,
+  cog: app.state.cog,
+};
+  }, [shipPosition, coreTelemetryRevision]);
   const tacticalAisTargets = useMemo(
     () => aisTargets.map(target => enrichAisTarget(ownShipVector, target)),
     [aisTargets, ownShipVector]
@@ -707,11 +715,11 @@ function App() {
 
   // --- AIS SIMULADO CORE ---
   const ownAISData = useMemo(() => shipPosition ? ({
-    lat: shipPosition.lat,
-    lng: shipPosition.lng,
-    sog: simulatedSog,
-    cog: selectedShip?.cog || 0
-  }) : null, [shipPosition, simulatedSog, selectedShip]);
+  lat: shipPosition.lat,
+  lng: shipPosition.lng,
+  sog: app.state.sog,
+  cog: app.state.cog
+}) : null, [shipPosition, coreTelemetryRevision]);
 
   const simulatedAisTargets = useAIS(ownAISData);
 
@@ -732,7 +740,7 @@ useEffect(() => {
     shipPos: shipPosition,
     targetPos: targetDestination,
     sog: simulatedSog,
-    cog: selectedShip?.cog || 0,
+    cog: app.state.cog,
     tws: weather?.wind || 0,
     twd: weather?.windDir || 0
   });
@@ -741,7 +749,7 @@ useEffect(() => {
     shipPos: shipPosition,
     targetPos: targetDestination,
     sog: simulatedSog,
-    cog: selectedShip?.cog || 0,
+    cog: app.state.cog,
     windSpeed: weather?.wind || 0,
     windDir: weather?.windDir || 0,
     currentSailConfig: isEngineOn ? 'motor' : 'full',
@@ -808,6 +816,51 @@ useEffect(() => {
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 30;
     setIsAutoScrollEnabled(isAtBottom);
   };
+
+  const handleMissionDispatch = (modo: "Libre" | "IA") => {
+    setPendingTravesiaData({ modo });
+    setShowSafetyModal(true);
+};
+
+  const handleUndoWaypoint = () => {
+
+    routeBuilder.removeLastWaypoint();
+
+    routeManager.setRoute(
+        routeBuilder.getRoute()
+    );
+
+    const route = routeManager.getRoute();
+
+    if (!route) return;
+
+    const path = route.waypoints.map(
+        w => [w.lat, w.lng] as [number, number]
+    );
+
+    setRutaActiva(path);
+    setPlannedPath(path);
+    setCurrentPath(path);
+
+    console.log("UNDO WAYPOINT", path);
+
+};
+
+  const handleClearRoute = () => {
+
+    routeBuilder.clear();
+
+    routeManager.setRoute(
+        routeBuilder.getRoute()
+    );
+
+    setRutaActiva([]);
+    setPlannedPath([]);
+    setCurrentPath([]);
+
+    console.log("ROUTE CLEARED");
+
+};
 
   const prevMessagesLength = useRef(0);
 
@@ -1018,12 +1071,17 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
     const handleTelemetry = (data: any) => {
       console.log("RECIBIDO", data);
       if (!data?.type) return;
-      console.log("APP handleTelemetry", data.type, data);
+      // console.log("APP handleTelemetry", data.type, data);
 
       switch (data.type) {
         case 'GPS':
           console.log("CORE STATE", app.state);
           console.log('GPS RECIBIDO', data);
+
+          console.log("GPS COG =", data.cog);
+  console.log("GPS SOG =", data.sog);
+  console.log("GPS LAT =", data.lat);
+  console.log("GPS LNG =", data.lng);
 
           if (!isSimulationMode) {
             console.log('SIM', shipPosition);
@@ -1031,20 +1089,56 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
 
           updateRealSensors(['gps', 'heading', 'sog'], setSensorQuality, setDataSource);
 
-          if (selectedShipId) {
-            setFleet(prev => prev.map(s =>
-              s.id === selectedShipId
-                ? {
-                    ...s,
-                    lat: data.lat,
-                    lng: data.lng,
-                    cog: data.cog,
-                    sog: data.sog
-                  }
-                : s
-            ));
-          }
-          break;
+console.log("========== GPS ==========");
+console.log("selectedShipId:", selectedShipId);
+console.log("GPS data:", data);
+
+console.log("selectedShipId =", selectedShipId);
+
+if (selectedShipId) {
+
+  console.log("ENTRO EN EL IF");
+
+  setFleet(prev =>
+    prev.map(s => {
+
+      console.log("Comparando:", s.id, "==", selectedShipId);
+
+      if (s.id === selectedShipId) {
+
+        console.log("✅ MATCH");
+        console.log("ACTUALIZANDO:", s.nombre);
+        console.log("COG recibido:", data.cog);
+
+        return {
+          ...s,
+          lat: data.lat,
+          lng: data.lng,
+          cog: data.cog,
+          sog: data.sog
+        };
+      }
+
+      return s;
+    })
+  );
+
+}
+
+if ((data as any).nav) {
+  setNavData(prev => ({
+    ...prev,
+    btw: (data as any).nav.btw,
+    dtw: (data as any).nav.dtw,
+    xte: (data as any).nav.xte,
+    eta:
+      (data as any).nav.eta > 0
+        ? `${(data as any).nav.eta.toFixed(1)} h`
+        : "--:--"
+  }));
+}
+
+break;
 
         case 'WIND':
           setWeather(prev => ({
@@ -1100,15 +1194,22 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
     }
 
     return () => {
+      console.log("NMEA cleanup");
       app.electronTelemetry.stop();
     };
 
-  }, [selectedShipId, ownShipVector, isSimulationMode, shipPosition, refreshCoreTelemetry]);
+  }, [
+  selectedShipId,
+  isSimulationMode
+]);
 
   useEffect(() => {
+    console.log(">>> MONTA interval");
+
     const interval = setInterval(() => {
       setSensorQuality(prev => refreshSensorQualityMap(prev, dataSource));
     }, 1000);
+      console.log("<<< DESMONTA interval");
 
     return () => clearInterval(interval);
   }, [dataSource]);
@@ -1144,6 +1245,8 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
       setAdvisorMessage(`ORDEN EJECUTADA: ${boatName} es ahora el Buque de Operaciones activo. Base de datos sincronizada.`);
 
       // Actualizar flota localmente para reflejar el cambio de is_active inmediatamente
+      console.log("selectedShipId =", selectedShipId);
+
       setFleet(prev => prev.map(s => ({
         ...s,
         is_active: s.id === shipId
@@ -1258,7 +1361,13 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
     const interval = setInterval(() => {
       if (!isTravesiaActive) return;
 
-      const gpsMessage = app.simulation.tick({
+      console.log(
+  "TRAVESIA ACTIVA:",
+  isTravesiaActive,
+  "WAYPOINTS:",
+  rutaActiva.length
+);
+const gpsMessage = app.simulation.tick({
         position: shipPosition,
         route: rutaActiva,
         sog: simulatedSog,
@@ -1294,7 +1403,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
   // --- KERNEL PANIC RECOVERY ---
   useEffect(() => {
     try {
-      localStorage.clear();
+      // localStorage.clear();
       // Safe Mode Delay
       const timer = setTimeout(() => setIsSafeMode(false), 4000);
       return () => clearTimeout(timer);
@@ -1761,6 +1870,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
   const [isTripRunning, setIsTripRunning] = useState(false);
 
   // Navigation simulation
+  /*
   useEffect(() => {
     const interval = setInterval(() => {
       setNavData((prev) => {
@@ -1770,6 +1880,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+  */
 
   // Engine Simulation
   useEffect(() => {
@@ -1813,7 +1924,10 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
   const [showControl, setShowControl] = useState(false);
   const [showSystems, setShowSystems] = useState(false);
   const [zeusPage, setZeusPage] = useState<'chart' | 'sailsteer' | 'race' | 'laylines' | 'windplot' | 'pilot' | 'weather' | 'charts'>('chart');
-  const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New state for weather panel
+  const [dockPage, setDockPage] = useState<
+  "chart" | "nav" | "sail" | "race"
+>("chart");
+const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New state for weather panel
   const [isLaylinesActive, setIsLaylinesActive] = useState(false); // New state for laylines
   const [isSailSteerWidgetOpen, setIsSailSteerWidgetOpen] = useState(false); // New state for SailSteer widget
 
@@ -2107,6 +2221,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
   const [selectedBarco, setSelectedBarco] = useState<ShipData | null>(null);
   const [historial, setHistorial] = useState<any[]>([]);
   const [aiLogs, setAiLogs] = useState<any[]>([]);
+  const isNavFocusMode = dockPage === "nav";
 
   const fetchAiLogs = async (barcoId: string | null) => {
     if (!barcoId) return;
@@ -2908,30 +3023,30 @@ return;
     saveLogEntry('Evento Automático', `Navegación: Rumbo alterado a ${newCourse.toFixed(0)}°`, 'Navegación');
   };
 
-  const handleStartTravesia = async (modo: 'Libre' | 'IA', levels?: { fuel_level: number; water_level: number }, crew?: any[]) => {
-    console.log('App: handleStartTravesia called', { modo, userProfile, selectedShipId, levels, crew });
-
-    const activeCrew = crew && crew.length > 0 ? crew : (userProfile ? [{
-      id: 'captain-' + userProfile.id,
-      nombre: userProfile.name,
-      rango: 'Capitán',
-      is_captain: true
-    }] : []);
-
-    if (activeCrew.length > 0) {
-      console.log('App: Transitioning to Watch Selection with crew:', activeCrew.map(c => c.nombre));
-      setCrewOnBoard(activeCrew);
-      setPendingTravesiaData({ modo, levels });
-      setShowWatchSelection(true);
-      return;
-    }
-
-    console.log('App: Absolutely no crew available, proceeding directly');
-    await proceedWithStartTravesia(modo, levels);
-  };
+  const handleStartTravesia = async (
+  modo: "Libre" | "IA",
+  levels?: {
+    fuel_level: number;
+    water_level: number;
+  },
+  crew?: any[]
+) => {
+  await MissionService.handleStartTravesia({
+    modo,
+    levels,
+    crew,
+    userProfile,
+    selectedShipId,
+    setCrewOnBoard,
+    setPendingTravesiaData,
+    setShowWatchSelection,
+    proceedWithStartTravesia,
+  });
+};
 
   const proceedWithStartTravesia = async (modo: 'Libre' | 'IA', levels?: { fuel_level: number; water_level: number }, startingOfficerId?: string) => {
-    console.log('App: proceedWithStartTravesia called', { modo, levels, startingOfficerId });
+    console.trace(
+  "🚀 proceedWithStartTravesia() ejecutado", { modo, levels, startingOfficerId });
 
 
     const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
@@ -3272,38 +3387,40 @@ if (plannedPath.length > 1) {
     }, [isAnchorWatchActive, anchorPosition, shipPosition, anchorSettings, weather.wind, anchorTrend, selectedShip?.nombre]);
 
     useEffect(() => {
-      // Check initial session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          fetchProfile(session.user.id);
-          fetchFleet(session.user.id);
-        } else {
-          setIsInitialLoading(false);
-        }
-      });
+  supabase.auth.getSession().then(({ data: { session } }) => {
 
-      // Listen for auth changes
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) {
-          fetchProfile(session.user.id);
-          // Load fleet on login - FORCED MOTRIL POSITION
-          fetchFleet(session.user.id);
-        } else {
-          setIsLoggedIn(false);
-          setUserProfile(null);
-          setIsInitialLoading(false);
-        }
-      });
+    console.log("===== INICIO APP =====");
+    console.log("Session:", session);
 
-      return () => subscription.unsubscribe();
-    }, []);
+    if (session?.user) {
+      fetchProfile(session.user.id);
+      fetchFleet(session.user.id);
+    } else {
+      setIsInitialLoading(false);
+    }
+  });
+
+  const { data: { subscription } } =
+    supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchProfile(session.user.id);
+        fetchFleet(session.user.id);
+      } else {
+        setIsLoggedIn(false);
+        setUserProfile(null);
+        setIsInitialLoading(false);
+      }
+    });
+
+  return () => subscription.unsubscribe();
+}, []);
 
 
     const fetchProfile = async (userId: string) => {
       const { data, error } = await userRepository.getProfile(userId);
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        
         // Fallback: If auth exists but profile fetch failed, try to use auth data anyway
         // to avoid locking out the user completely
         const authUser = (await supabase.auth.getUser()).data.user;
@@ -3386,25 +3503,43 @@ if (plannedPath.length > 1) {
         }
 
         // 2. Check ANY active log in bitacora (MASTER SOURCE OF TRUTH)
-        const { data: activeLog, error: bitacoraError } = await logRepository.getActiveLog(barcoIdReal);
+const { data: activeLog, error: bitacoraError } =
+  await logRepository.getActiveLog(barcoIdReal);
 
-        if (bitacoraError) {
-          console.error('App: bitacora fetch error:', bitacoraError);
-        }
+if (bitacoraError) {
+  console.error('App: bitacora fetch error:', bitacoraError);
+}
 
-        if (activeLog) {
-          setIsTravesiaActive(true);
-          if (activeLog.destino_planificado) {
-            setNavigationDestination(activeLog.destino_planificado);
-            setTargetDestination({ lat: 38.9067, lng: 1.4206 }); // Fallback to Ibiza for visualization
-          }
-          if (activeLog.tipo_navegacion) {
-            setNavigationMode(activeLog.tipo_navegacion as any);
-          }
-        } else {
-          setIsTravesiaActive(false);
-          setNavigationDestination('');
-        }
+if (
+  activeLog &&
+  activeLog.registro_tipo === 'TRAVESIA'
+) {
+
+  console.log('🧭 Travesía recuperada', activeLog);
+
+  setIsTravesiaActive(true);
+
+  if (activeLog.destino_planificado) {
+    setNavigationDestination(activeLog.destino_planificado);
+
+    setTargetDestination({
+      lat: 38.9067,
+      lng: 1.4206
+    });
+  }
+
+  if (activeLog.tipo_navegacion) {
+    setNavigationMode(activeLog.tipo_navegacion as any);
+  }
+
+} else {
+
+  console.log('✅ No existe travesía activa');
+
+  setIsTravesiaActive(false);
+  setNavigationDestination('');
+
+}
       };
       fetchActiveRoute();
     }, [selectedShipId, fleet.length]); // Better dependencies to avoid loops
@@ -3512,6 +3647,8 @@ if (plannedPath.length > 1) {
 
       // Verificar sesión antes de subir
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("1. Session:", session);
+
       if (!session) {
         setAdvisorMessage('Almirante, la sesión ha expirado. Por favor, vuelva a entrar.');
         return;
@@ -3522,12 +3659,20 @@ if (plannedPath.length > 1) {
         (userProfile?.plan_nivel === 'plata' && fleet.length < 5) ||
         (userProfile?.plan_nivel === 'gratis' && fleet.length < 1);
 
+        console.log("2. canAddShip =", canAddShip);
+console.log("2b. Fleet =", fleet.length);
+console.log("2c. Plan =", userProfile?.plan_nivel);
+console.log("2d. Role =", userProfile?.role);
+
+
       if (!canAddShip) {
         setAdvisorMessage('Límite de flota alcanzado para su plan actual. Actualice para añadir más unidades.');
         return;
       }
 
       setIsUploading(true);
+
+      console.log("3. Empieza el try");
 
       try {
         let foto_url = null;
@@ -3554,6 +3699,8 @@ if (plannedPath.length > 1) {
           }
         }
 
+        console.log("4. Voy a crear shipToInsert");
+
         const shipToInsert = {
           nombre: newShip.nombre,
           marca: newShip.marca,
@@ -3568,14 +3715,22 @@ if (plannedPath.length > 1) {
           ultimo_mantenimiento_motor: newShip.ultimo_mantenimiento_motor || null,
           ultima_revision_balsa: newShip.ultima_revision_balsa || null,
           foto_url: foto_url,
+           user_id: session.user.id,
           capitan_id: session.user.id,
           // FORCED MOTRIL POSITION
           lat: 36.7215,
           lng: -3.5235
         };
 
+        console.log("5. shipToInsert =", shipToInsert);
+        console.log("6. Llamando a insertVessel");
+
+
 
         const { error } = await vesselRepository.insertVessel(shipToInsert);
+
+        console.log("7. insertVessel terminado");
+        console.log("7b. error =", error);
 
         if (error) {
           if (error.message.includes('permission') || error.code === '42501') {
@@ -3979,6 +4134,7 @@ if (plannedPath.length > 1) {
         case 'shield':
           return (
             <div className="h-full overflow-hidden">
+              {!isNavFocusMode && (
               <WatchdogPanel
                 alarms={alarms}
                 alarmHistory={alarmHistory}
@@ -3988,6 +4144,7 @@ if (plannedPath.length > 1) {
                 isMuted={isAlertMuted}
                 onMuteToggle={() => setIsAlertMuted(!isAlertMuted)}
               />
+              )}
             </div>
           );
         case 'config':
@@ -4012,7 +4169,7 @@ if (plannedPath.length > 1) {
       }
     };
 
-
+   
     if (isInitialLoading) {
       return (
         <div className="h-screen w-full bg-slate-950 flex items-center justify-center">
@@ -4026,6 +4183,7 @@ if (plannedPath.length > 1) {
 
     if (!isLoggedIn) return <AuthScreen />;
 
+    
     return (
       <div className="h-screen w-full bg-[#0a0f18] flex font-sans overflow-hidden relative">
         <AlarmToasts alarms={alarms} onRemove={removeAlarm} isMuted={isAlertMuted} onMuteToggle={() => setIsAlertMuted(!isAlertMuted)} />
@@ -4038,7 +4196,10 @@ if (plannedPath.length > 1) {
           userProfile={userProfile}
           onShowAbout={() => setShowAbout(true)}
           t={t}
-          onSignOut={() => supabase.auth.signOut()}
+          onSignOut={async () => {
+  localStorage.removeItem("VELARIS_rememberMe");
+  await supabase.auth.signOut();
+}}
           lang={lang}
           setLang={setLang}
         />
@@ -4062,21 +4223,29 @@ if (plannedPath.length > 1) {
             {activeTab === 'control' ? (
               <div className="h-full w-full rounded-[2.5rem] glass-panel relative neon-glow">
 
-                <TacticalTerminal
-                  messages={messages}
-                  onClearHistory={() => setMessages([])}
-                  isIntMin={isIntMin}
-                  setIsIntMin={setIntMin}
-                />
-
+                {!isNavFocusMode && (
+                  <TacticalTerminal
+                    messages={messages}
+                    onClearHistory={() => setMessages([])}
+                    isIntMin={isIntMin}
+                    setIsIntMin={setIntMin}
+                  />
+                )}
+                
                 <div className="absolute inset-0 flex flex-col">
                   <ErrorBoundary fallbackName="Mapa Táctico">
                     <div className="relative flex-1 bg-slate-950 select-none overflow-hidden">
+                      {(dockPage === "chart" || dockPage === "sail") && (
+                      
                       <TacticalMap
                         isLaylinesActive={false}
+                        isSailSteerWidgetOpen={isSailSteerWidgetOpen}
                         center={mapCenter}
                         zoom={15}
                         shipPosition={shipPosition}
+                        twd={weather?.windDir || 0}
+                        waypointBearing={navPlan.btw || 0}
+                        heading={app.state.cog}
                         shipName={
                           typeof fleet !== 'undefined' && fleet.length > 0
                             ? (
@@ -4091,24 +4260,79 @@ if (plannedPath.length > 1) {
                         targetDestination={targetDestination}
                         currentPath={currentPath}
                         onMapClick={(lat, lng) => {
-                          if (showShipForm) {
-                            setNewShip?.((prev: any) => ({ ...prev, lat, lng }));
-                            setAdvisorMessage(
-                              `Coordenadas fijadas: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
-                            );
-                          } else {
-                            setDestination({ lat, lng });
-                            setAdvisorMessage(
-                              `Destino fijado: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
-                            );
 
-                            if (!navPlan?.targetCoords) {
-                              setNavigationDestination(
-                                `${lat.toFixed(4)}, ${lng.toFixed(4)}`
-                              );
-                            }
-                          }
-                        }}
+    if (showShipForm) {
+
+        setNewShip?.((prev: any) => ({
+            ...prev,
+            lat,
+            lng
+        }));
+
+        setAdvisorMessage(
+            `Coordenadas fijadas: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+        );
+
+    } else {
+
+        // ===== NUEVO MOTOR =====
+
+        const waypoint = new Waypoint(
+            crypto.randomUUID(),
+            lat,
+            lng
+        );
+
+        routeBuilder.addWaypoint(waypoint);
+        
+
+        routeManager.setRoute(
+            routeBuilder.getRoute()
+        );
+        const route = routeManager.getRoute();
+
+        if (route) {
+
+    const path = route.waypoints.map(w => [w.lat, w.lng] as [number, number]);
+
+    setRutaActiva(path);
+    setPlannedPath(path);
+    console.log("PATH COMPLETO", path);
+    setCurrentPath(path);
+
+}
+
+console.table(
+    route?.waypoints.map(w => ({
+        id: w.id,
+        lat: w.lat,
+        lng: w.lng
+    }))
+);
+
+        console.log(
+            routeManager.getRoute()
+        );
+
+        // ===== CÓDIGO ACTUAL =====
+
+        setDestination({ lat, lng });
+
+        setAdvisorMessage(
+            `Destino fijado: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+        );
+
+        if (!navPlan?.targetCoords) {
+
+            setNavigationDestination(
+                `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+            );
+
+        }
+
+    }
+
+}}
                         onMapRightClick={handleMapRightClick}
                         onDragStart={() => setIsAutoCenter(false)}
                         listaCartas={listaCartas}
@@ -4195,14 +4419,34 @@ if (plannedPath.length > 1) {
                         )}
 
                       </TacticalMap>
+                      )}
+                      
+  {dockPage === "nav" && (
+    <NavPage
+        heading={app.state.cog}
+        center={mapCenter}
+        shipPosition={shipPosition}
+        shipName={selectedShip?.nombre || "Buque"}
+        navPlan={navPlan}
+        currentPath={currentPath}
+        listaCartas={listaCartas}
+        cartasActivas={cartasActivas}
+        sog={simulatedSog}
+        cog={app.state.cog}
+        depth={depth}
+        autopilotMode={autopilotMode}
+    />
+)}
+
+
 
                       <Zeus3SChartplotterOverlay
                         sog={simulatedSog}
-                        hdg={selectedShip?.cog || 0}
-                        cog={selectedShip?.cog || 0}
+                        hdg={app.state.cog}
+                        cog={app.state.cog}
                         tws={weather?.wind || 0}
                         twd={weather?.windDir || 0}
-                        twa={((weather?.windDir || 0) - (selectedShip?.cog || 0) + 360) % 360}
+                        twa={((weather?.windDir || 0) - app.state.cog + 360) % 360}
                         depth={depth}
                         dtw={navPlan.distanceNM || 0}
                         btw={navPlan.btw}
@@ -4228,6 +4472,7 @@ if (plannedPath.length > 1) {
                         onEndNavigation={handleEndTravesia}
                         isSailSteerWidgetOpen={isSailSteerWidgetOpen}
                         onCloseSailSteerWidget={() => setIsSailSteerWidgetOpen(false)}
+                        isNavFocusMode={isNavFocusMode}
 
 
 
@@ -4235,8 +4480,8 @@ if (plannedPath.length > 1) {
                       />
 
                       <ZeusSidebar
-                        activePage={zeusPage}
-                        onSelect={(page) => setZeusPage(page as any)}
+                        activePage={dockPage}
+                        onSelect={(page) => setDockPage(page as any)}
                         onToggleMenu={() => setShowSystems(!showSystems)}
                         isNavigating={isTravesiaActive}
                         listaCartas={listaCartas}
@@ -4278,11 +4523,11 @@ if (plannedPath.length > 1) {
                         isOpen={showControl}
                         onClose={() => setShowControl(false)}
                         sog={simulatedSog}
-                        hdg={selectedShip?.cog || 0}
+                        hdg={app.state.cog}
                         twd={weather?.windDir || 0}
                         tws={weather?.wind || 0}
-                        twa={((weather?.windDir || 0) - (selectedShip?.cog || 0) + 360) % 360}
-                        awa={((weather?.windDir || 0) - (selectedShip?.cog || 0) - 20 + 360) % 360}
+                        twa={((weather?.windDir || 0) - app.state.cog + 360) % 360}
+                        awa={((weather?.windDir || 0) - app.state.cog - 20 + 360) % 360}
                         aws={(weather?.wind || 0) * 1.2}
                         vmg={navPlan.vmg}
                         onTabChange={(tab: any) => setActiveTab(tab)}
@@ -4320,112 +4565,32 @@ if (plannedPath.length > 1) {
                       />
                     </div>
                   )}
-                  {showSystems && (
-                    <div className="pointer-events-auto h-full">
-                      <ControlCenter
-                        isNightMode={isNightMode}
-                        setIsNightMode={setIsNightMode}
-                        fleet={fleet}
-                        selectedShipId={selectedShipId}
-                        setSelectedShipId={handleShipSelection}
-                        destination={destination}
-                        setDestination={setDestination}
-                        weather={weather}
-                        isAdvisorOpen={isAdvisorOpen}
-                        setIsAdvisorOpen={setIsAdvisorOpen}
-                        advisorMessage={advisorMessage}
-                        setAdvisorMessage={setAdvisorMessage}
-                        getTacticalAdvice={getTacticalAdvice}
-                        closeAdvisor={closeAdvisor}
-                        getShipEmoji={getShipEmoji}
-                        getShipIcon={getShipIcon}
-                        getDefaultShipImage={getDefaultShipImage}
-                        showShipForm={showShipForm}
-                        activeTab={activeTab}
-                        setActiveTab={setActiveTab as any}
-                        setNewShip={setNewShip as any}
-                        isTravesiaActive={isTravesiaActive}
-                        setIsTravesiaActive={setIsTravesiaActive}
-                        isEngineOn={isEngineOn}
-                        setIsEngineOn={setIsEngineOn}
-                        tripDistance={tripDistance}
-                        setTripDistance={setTripDistance}
-                        startTime={startTime}
-                        setStartTime={setStartTime}
-                        onEndNavigation={handleEndTravesia}
-                        setShowSafetyModal={setShowSafetyModal}
-                        supabase={supabase}
-                        saveLogEntry={saveTechnicalLog}
-                        isProcessing={isAdvisorProcessing}
-                        isSelectingNavigationMode={isSelectingNavigationMode}
-                        setIsSelectingNavigationMode={setIsSelectingNavigationMode}
-                        setNavigationMode={setNavigationMode}
-                        setNavigationDestination={setNavigationDestination}
-                        currentPath={currentPath}
-                        setCurrentPath={setCurrentPath}
-                        aiBriefing={aiBriefing}
-                        setIsLogbookOpen={(val) => {
-                          if (val) setActiveTab('logbook');
-                        }}
-                        shipPosition={shipPosition}
-                        onDispatch={(modo) => {
-                          setPendingTravesiaData({ modo });
-                          setShowSafetyModal(true);
-                        }}
-                        logEntries={logEntries}
-                        setLogEntries={setLogEntries as any}
-                        simulatedSog={simulatedSog}
-                        setSimulatedSog={setSimulatedSog}
-                        saveTechnicalEvent={saveTechnicalLog}
-                        lightsOn={lightsOn}
-                        setLightsOn={setLightsOn}
-                        mobActive={mobActive}
-                        setMobActive={setMobActive}
-                        isAnchorWatchActive={isAnchorWatchActive}
-                        onToggleAnchorWatch={toggleAnchorWatch}
-                        currentAnchorDistance={currentAnchorDistance}
-                        anchorTrend={anchorTrend}
-                        anchorPosition={anchorPosition}
-                        tacticalAdvisorActions={tacticalAdvisor.actions}
-                        tacticalAdvisorAlertCount={tacticalAdvisor.alerts.length}
-                        onMotor={() => {
-                          setPropulsionMode('MOTOR');
-                          saveTechnicalLog('Sistema de Propulsión', 'Cambio a propulsión a MOTOR');
-                        }}
-                        onVela={() => {
-                          setPropulsionMode('VELA');
-                          saveTechnicalLog('Sistema de Propulsión', 'Cambio a propulsión a VELA');
-                        }}
-                        propulsionMode={propulsionMode}
-                        targetDestination={targetDestination}
-                        setTargetDestination={setTargetDestination}
-                        aiLogs={aiLogs}
-                        refreshAiLogs={() => fetchAiLogs(selectedShipId)}
-                        plannedPath={plannedPath}
-                        setPlannedPath={setPlannedPath}
-                        rutaActiva={rutaActiva}
-                        setRutaActiva={setRutaActiva}
-                        tacticalAdvice={tacticalAdvice}
-                        setTacticalAdvice={setTacticalAdvice}
-                        handleAcceptTactical={handleAcceptTactical}
-                        activeRouteId={activeRouteId}
-                        isAutoCenter={isAutoCenter}
-                        setIsAutoCenter={setIsAutoCenter}
-                        navigationDestination={navigationDestination}
-                        onClose={() => setShowSystems(false)}
-                        userProfile={userProfile}
-                        depth={depth}
-                        alarms={alarms}
-                        thresholds={thresholds}
-                        telemetry={telemetry}
-                        captainPreferences={captainPreferences}
-                        navPlan={navPlan}
-                        PORT_LIST={PORT_LIST}
-                        updateNavigationPlan={updateNavigationPlan}
-                      />
-                    </div>
-                  )}
+                                                     
+                       
+                   {showSystems && !isNavFocusMode && (
+  <div className="pointer-events-auto absolute top-6 right-6 z-50">
+    <MissionControlPanel
+      mission={{
+        isTravesiaActive,
+        navigationMode,
+        startTime,
+        rutaActiva,
+        currentOfficer: {
+          nombre: "CAPTAIN",
+        },
+        navPlan,
+      }}
+      onStart={() => handleMissionDispatch("IA")}
+      onStop={handleEndTravesia}
+      onUndo={handleUndoWaypoint}
+      onClear={handleClearRoute}
+      onClose={() => setShowSystems(false)}
+    />
+  </div>
+)}
+                  
                 </div>
+                
               </div>
             ) : (
               <div className="h-full w-full bg-slate-950 overflow-hidden">
@@ -4439,21 +4604,54 @@ if (plannedPath.length > 1) {
           </div>
 
           {/* Input de Comandos Sticky (Original restored) */}
-          {activeTab === 'control' && (
-            <div className="absolute bottom-4 left-6 right-70 z-[7500] px-4 py-2 bg-gradient-to-r from-slate-900/40 via-cyan-900/20 to-slate-900/40 border border-cyan-500/30 backdrop-blur-md rounded-xl flex items-center gap-3">
-              <form onSubmit={(e) => { e.preventDefault(); handleTacticalOrder(input); }} className="w-full flex gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ejecutar comando táctico..."
-                  className="flex-1 bg-transparent border-none text-white focus:outline-none font-mono text-sm h-8"
-                />
-                <button type="submit" disabled={isProcessing || !input.trim()} className="h-8 w-8 flex items-center justify-center bg-cyan-600 rounded-lg text-white hover:bg-cyan-500">
-                  <Send size={16} />
-                </button>
-              </form>
-            </div>
+          {activeTab === 'control' && !isNavFocusMode && (
+            <div className="
+    absolute
+    bottom-3
+    left-6
+    w-[520px]
+    px-3
+    py-1.5
+    bg-gradient-to-r
+    from-slate-900/40
+    via-cyan-900/20
+    to-slate-900/40
+    border
+    border-cyan-500/30
+    backdrop-blur-md
+    rounded-lg
+    flex
+    items-center
+    gap-2
+    z-[7500]
+  ">
+
+  <form
+    onSubmit={(e) => {
+      e.preventDefault();
+      handleTacticalOrder(input);
+    }}
+    className="w-full flex gap-2"
+  >
+    <input
+      type="text"
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      placeholder="Ejecutar comando táctico..."
+      className="flex-1 bg-transparent border-none text-white focus:outline-none font-mono text-xs h-7"
+    />
+
+    <button
+      type="submit"
+      disabled={isProcessing || !input.trim()}
+      className="h-7 w-7 flex items-center justify-center bg-cyan-600 rounded-md text-white hover:bg-cyan-500"
+    >
+      <Send size={14} />
+    </button>
+
+  </form>
+
+</div>
           )}
         </main>
 
@@ -4592,7 +4790,25 @@ if (plannedPath.length > 1) {
                   {crewOnBoard.map(member => (
                     <button
                       key={member.id}
-                      onClick={() => proceedWithStartTravesia(pendingTravesiaData!.modo, pendingTravesiaData!.levels, member.id)}
+                      onClick={async () => {
+
+    try {
+
+        await proceedWithStartTravesia(
+            pendingTravesiaData!.modo,
+            pendingTravesiaData!.levels,
+            member.id
+        );
+
+        setShowWatchSelection(false);
+
+    } catch (err) {
+
+        console.error(err);
+
+    }
+
+}}
                       className="flex items-center gap-4 p-4 bg-slate-950/50 border border-slate-800 rounded-2xl hover:border-cyan-500 hover:bg-cyan-950/20 transition-all group"
                     >
                       <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-xs font-black text-slate-400 group-hover:bg-cyan-600 group-hover:text-white transition-all">

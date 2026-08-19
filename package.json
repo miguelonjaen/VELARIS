@@ -1,12 +1,11 @@
 {
   "name": "velaris",
   "private": true,
-  "version": "1.1.4",
+  "version": "1.1.0",
   "description": "Professional Marine Navigation Suite",
   "main": "electron-main.js",
   "author": "MiguelonJaen",
   "type": "commonjs",
-  
   "scripts": {
     "dev": "vite --port=3000",
     "build": "npm run build:main && vite build",
@@ -77,9 +76,10 @@
     "concurrently": "^9.1.2",
     "electron": "^34.5.8",
     "electron-builder": "^25.1.8",
+    "supabase": "^2.109.1",
     "tailwindcss": "^4.1.14",
-    "typescript": "~5.8.2",
     "tsc-alias": "^1.9.0",
+    "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-svgr": "^5.2.0",
@@ -87,10 +87,10 @@
     "wait-on": "^8.0.2"
   },
   "build": {
-    "appId": "com.VELARIS.pro",
+    "appId": "com.velaris.pro",
     "productName": "VELARIS",
-    "icon": "public/icon.ico",
-    "artifactName": "VELARIS-Pro-Setup-${version}.${ext}",
+    "icon": "build/icon.ico",
+    "artifactName": "VELARIS-Setup-${version}.${ext}",
     "copyright": "Copyright © 2026 MiguelonJaen",
     "directories": {
       "output": "dist_electron"
@@ -99,7 +99,7 @@
       {
         "provider": "github",
         "owner": "miguelonjaen",
-        "repo": "VELARIS-pro"
+        "repo": "VELARIS"
       }
     ],
     "files": [
@@ -115,7 +115,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "public/icon.ico"
+      "icon": "build/icon.ico"
     }
   }
 }

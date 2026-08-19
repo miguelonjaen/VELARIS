@@ -8,13 +8,15 @@ interface OwnShipLayerProps {
   shipName: string;
   heading?: number;
   iconSize?: number;
+  hudMode?: boolean;
 }
 
 const OwnShipLayer: React.FC<OwnShipLayerProps> = ({
   shipPosition,
   shipName,
   heading = 0,
-  iconSize = 36
+  iconSize = 36,
+  hudMode = false
 }) => {
   if (!shipPosition) return null;
   
@@ -32,7 +34,7 @@ const OwnShipLayer: React.FC<OwnShipLayerProps> = ({
           display:flex;
           align-items:center;
           justify-content:center;
-          transform: rotate(${(heading + 180) % 360}deg);
+          transform: rotate(${hudMode ? 180 : (heading + 180) % 360}deg);
           transition: transform 0.25s linear;
         "
       >

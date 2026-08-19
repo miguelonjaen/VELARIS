@@ -39,13 +39,7 @@ const SailSteerWidget: React.FC<SailSteerWidgetProps> = ({
   const center = size / 2;
   const radius = center - 20;
   const targetTack = getUpwindAngle(tws);
-  const windLAbelX =
-  center +
-  (radius - 5) * Math.sin((twd * Math.PI) / 180);
-
-const windLabelY =
-  center -
-  (radius - 5) * Math.cos((twd * Math.PI) / 180);
+  
   const noGoAngle = Math.max(30, targetTack - 5);
   const actualAngle =
   Math.abs(twa) > 180
@@ -73,6 +67,16 @@ const waypointY =
   (radius - 25) * Math.cos(waypointRad);
 
 const angleError = Math.round(actualAngle - targetTack);
+console.log("----- WAYPOINT -----");
+console.log({
+  isNavigating,
+  center,
+  radius,
+  waypointBearing,
+  waypointRad,
+  waypointX,
+  waypointY,
+});
 
 // Best Tack Intelligent Calculation
 const portLayline = (twd - targetTack + 360) % 360;
@@ -294,45 +298,6 @@ const angleError = Math.round(actualAngle - targetTack);
               A ${radius} ${radius} 0 0 1 ${x2} ${y2}
               Z
             `}
-            fill="rgba(34,197,94,0.22)"
-            stroke="rgba(34,197,94,0.25)"
-            strokeWidth="1"
-          />
-        );
-      })}
-    </>
-  );
-})()}{/* Upwind Target Sectors */}
-{(() => {
-  const noGo = 40;
-  const target = 45;
-
-  const sectors = [
-    [twd - target - 8, twd - target + 8],
-    [twd + target - 8, twd + target + 8],
-  ];
-
-  return (
-    <>
-      {sectors.map(([start, end], idx) => {
-        const startRad = (start * Math.PI) / 180;
-        const endRad = (end * Math.PI) / 180;
-
-        const x1 = center + radius * Math.sin(startRad);
-        const y1 = center - radius * Math.cos(startRad);
-
-        const x2 = center + radius * Math.sin(endRad);
-        const y2 = center - radius * Math.cos(endRad);
-
-        return (
-          <path
-            key={idx}
-            d={`
-              M ${center} ${center}
-              L ${x1} ${y1}
-              A ${radius} ${radius} 0 0 1 ${x2} ${y2}
-              Z
-            `}
             fill="rgba(34,197,94,0.15)"
             stroke="rgba(34,197,94,0.25)"
             strokeWidth="1"
@@ -348,9 +313,7 @@ const angleError = Math.round(actualAngle - targetTack);
                 const targetTack = getUpwindAngle(tws);
                 const portRad = (twd - targetTack) * (Math.PI / 180);
                 const stbdRad = (twd + targetTack) * (Math.PI / 180);
-                const upwindAngle = targetTack;
-                const portLayline = twd - upwindAngle;
-                const starboardLayline = twd + upwindAngle;
+                
                 return (
                   <g className="opacity-30">
                     <line x1={center} y1={center} x2={center + (radius - 20) * Math.sin(portRad)} y2={center - (radius - 20) * Math.cos(portRad)} stroke="#ef4444" strokeWidth="2" strokeDasharray="4,4" />
@@ -360,32 +323,35 @@ const angleError = Math.round(actualAngle - targetTack);
               })()}
 
               {/* Waypoint Tactical Line (Magenta) */}
-              {isNavigating && (
-                <>
-                  <motion.line 
-                    animate={{ 
-                      x2: center + (radius - 15) * Math.sin(waypointRad), 
-                      y2: center - (radius - 15) * Math.cos(waypointRad) 
-                    }} 
-                    x1={center} y1={center} 
-                    stroke={waypointColor} strokeWidth="2.5" strokeDasharray="6,3" 
-                    className="drop-shadow-[0_0_8px_rgba(255,0,255,0.6)]"
-                  />
-                  <motion.g animate={{ x: center + radius * Math.sin(waypointRad), y: center - radius * Math.cos(waypointRad) }}>
-                    <path d="M -6 -6 L 6 -6 L 0 8 Z" fill="#ff00ff" transform="rotate(180)" />
-                    <text y="-12" textAnchor="middle" className="fill-[#ff00ff] text-[8px] font-black uppercase">
-                      {waypointName.substring(0, 5)}
-                    </text>
-                  </motion.g>
-                </>
-              )}
 
               {/* COG Line */}
-              <motion.line animate={{ x2: center + (radius - 5) * Math.sin(cog * Math.PI / 180), y2: center - (radius - 5) * Math.cos(cog * Math.PI / 180) }} x1={center} y1={center} stroke="#a855f7" strokeWidth="2" className="drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
-
+              <motion.line
+  x1={center}
+  y1={center}
+  x2={center}
+  y2={center}
+  animate={{
+    x2: center + (radius - 5) * Math.sin(cog * Math.PI / 180),
+    y2: center - (radius - 5) * Math.cos(cog * Math.PI / 180),
+  }}
+  stroke="#a855f7"
+  strokeWidth="2"
+  className="drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+/>
               {/* HDG Line */}
-              <motion.line animate={{ x2: center + (radius - 5) * Math.sin(hdg * Math.PI / 180), y2: center - (radius - 5) * Math.cos(hdg * Math.PI / 180) }} x1={center} y1={center} stroke="#22d3ee" strokeWidth="3" className="drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
-
+              <motion.line
+  x1={center}
+  y1={center}
+  x2={center}
+  y2={center}
+  animate={{
+    x2: center + (radius - 5) * Math.sin(hdg * Math.PI / 180),
+    y2: center - (radius - 5) * Math.cos(hdg * Math.PI / 180),
+  }}
+  stroke="#22d3ee"
+  strokeWidth="3"
+  className="drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+/>
               {/* TRUE WIND DIRECTION */}
 <g transform={`rotate(${twd} ${center} ${center})`}>
   <line
@@ -425,7 +391,9 @@ const angleError = Math.round(actualAngle - targetTack);
   
 </text>
 {/* WAYPOINT */}
-{waypointBearing !== undefined && (
+
+{Number.isFinite(waypointX) &&
+ Number.isFinite(waypointY) && (
   <>
     <line
       x1={center}
@@ -444,12 +412,12 @@ const angleError = Math.round(actualAngle - targetTack);
       r="5"
       fill={waypointColor}
       className={
-  waypointColor === "#22c55e"
-    ? "drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]"
-    : waypointColor === "#f59e0b"
-    ? "drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]"
-    : "drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]"
-}
+        waypointColor === "#22c55e"
+          ? "drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]"
+          : waypointColor === "#f59e0b"
+          ? "drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]"
+          : "drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]"
+      }
     />
 
     <text

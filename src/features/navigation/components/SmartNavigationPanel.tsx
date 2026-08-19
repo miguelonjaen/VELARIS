@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { AlertTriangle, TrendingUp, Compass, Clock, AlertCircle, Anchor, Wind } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { LaylineData, AnchorWatchData } from '../lib/laylineCalculator';
+import { cn } from '../../../lib/utils';
+import { LaylineData, AnchorWatchData } from '../../../lib/laylineCalculator';
 
 interface SmartNavigationPanelProps {
   eta?: string;

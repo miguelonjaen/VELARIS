@@ -31,14 +31,14 @@ export const FleetMarkers: React.FC<FleetMarkersProps> = ({
     shipPosition
 }) => {
 
-  console.log("FleetMarkers:", simulatedAisTargets);
+  //console.log("FleetMarkers:", simulatedAisTargets);
 
     return (
 
         <>
         {simulatedAisTargets.map((target) => {
 
-          console.log("TARGET", target);
+          // console.log("TARGET", target);
 
   const tcpaMinutes = target.tcpa ?? 0;
 

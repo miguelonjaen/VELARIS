@@ -58,6 +58,7 @@ interface Zeus3SChartplotterOverlayProps {
   onToggleAutopilot: () => void;
     isSailSteerWidgetOpen: boolean;
   onCloseSailSteerWidget: () => void;
+  isNavFocusMode: boolean;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   className?: string;
@@ -99,7 +100,7 @@ const DataBox = ({ label, value, unit }: { label: string; value: string; unit?: 
 export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps> = ({
   sog, hdg, cog, tws, twd, twa, depth, dtw, btw, eta, xte, waypointName,
    chartMode, activeChartName, aisEnabled, windEnabled, collisionFilter,
-  isNavigating, autopilotMode, activePage, onSelectPage, onOpenHud,
+  isNavigating, autopilotMode, isNavFocusMode, activePage, onSelectPage, onOpenHud,
   onOpenSystems, onCycleChart, onToggleAIS, onToggleWind,
   onToggleCollisionFilter, onStartNavigation, onEndNavigation,
   onToggleAutopilot, onZoomIn, onZoomOut, className,  isSailSteerWidgetOpen,
@@ -122,7 +123,8 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
     <div className={cn('pointer-events-none absolute inset-0 z-[6400]', className)}>
       <div className="absolute inset-0 pointer-events-none border-[10px] border-[#111827]/85 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08),inset_0_0_40px_rgba(0,0,0,0.45)]" />
 
-      <header className="pointer-events-auto absolute left-56 right-24 top-4 flex items-center justify-between gap-2 border border-white/10 bg-[#07111e]/88 px-4 py-1.5 shadow-2xl backdrop-blur-md"> {/* Reduced padding and gap */}
+      {!isNavFocusMode && (
+        <header className="pointer-events-auto absolute left-56 right-24 top-4 flex items-center justify-between gap-2 border border-white/10 bg-[#07111e]/88 px-4 py-1.5 shadow-2xl backdrop-blur-md"> {/* Reduced padding and gap */}
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-sm border border-cyan-400/40 bg-cyan-400/10 text-cyan-300">
             <Navigation className="h-4 w-4" />
@@ -140,7 +142,9 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
 <DataBox label="DEPTH" value={depth.toFixed(1)} unit="m" />
         </div>
       </header>
-      <div className="absolute top-[62px] left-[300px] z-[6500] pointer-events-none">
+      )}
+      {!isNavFocusMode && (
+        <div className="absolute top-[62px] left-[300px] z-[6500] pointer-events-none">
   <div className="bg-[#07111e]/92 backdrop-blur-md border border-cyan-500/20 rounded-xl px-4 py-1.5 w-[360px] shadow-xl">
 
     
@@ -185,6 +189,8 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
 
   </div>
 </div>
+)}
+{/*
 <SailSteerWidget
   isOpen={isSailSteerWidgetOpen}
   onClose={onCloseSailSteerWidget}
@@ -200,6 +206,8 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
   sog={sog}
   vmg={vmg}
 />
+*/}
+
       
       
     

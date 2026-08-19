@@ -183,15 +183,24 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
       active={btn.active}
       onClick={() => {
 
-        onSelect(btn.id);
+    // Toggle para las pantallas principales
+    if (
+        (btn.id === "nav" || btn.id === "sail" || btn.id === "race") &&
+        activePage === btn.id
+    ) {
+        onSelect("chart");
+        return;
+    }
 
-        switch (btn.id) {
+    onSelect(btn.id);
 
-          case "chart":
+    switch (btn.id) {
+
+        case "chart":
             setIsLayersOpen(!isLayersOpen);
             break;
 
-          case "sail": {
+        case "sail": {
 
             const nextState = !isSailSteerWidgetOpen;
 
@@ -199,11 +208,11 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
             setIsLaylinesActive(nextState);
 
             break;
-          }
-
         }
 
-      }}
+    }
+
+}}
     />
 
   </React.Fragment>

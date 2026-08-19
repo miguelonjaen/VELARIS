@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { cn } from '../lib/utils';
+import { cn } from '../../../lib/utils';
 
 export const LaylinesPage = ({ twa, twd, hdg }: any) => {
   // Target Angles (Simplified logic for replication)

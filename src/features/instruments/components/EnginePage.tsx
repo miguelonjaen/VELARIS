@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
-import { cn } from '../lib/utils';
-import { supabase } from '../supabaseClient';
+import { cn } from '../../../lib/utils';
+import { supabase } from '../../../supabaseClient';
 
 interface EnginePageProps {
   rpm: number;

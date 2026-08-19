@@ -13,10 +13,10 @@ import {
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Gauge, Navigation as NavIcon } from 'lucide-react';
-import { cn } from '@lib/utils';
+// import { cn } from '@lib/utils';
 import OwnShipLayer from './OwnShipLayer';
 import { calculateBearing } from '../../../navigation/calculateBearing';
-
+import SailHUDLayer from "./SailHUD/SailHUDLayer";
 if (import.meta.env.DEV) {
   console.log('TACTICAL MAP ACTIVO');
 }
@@ -37,8 +37,13 @@ interface TacticalMapProps {
   stbdLaylinePath?: [number, number][];
   collisionFilter?: boolean;
   children?: React.ReactNode;
+  compact?: boolean;
   listaCartas: any[];
   cartasActivas: Record<string, boolean>;
+  isSailSteerWidgetOpen: boolean;
+  twd: number;
+  waypointBearing: number;
+  heading: number; 
     
 }
 
@@ -76,22 +81,32 @@ const InternalEvents = ({ onMapClick, onMapRightClick, onDragStart }: any) => {
 };
 
 export const TacticalMap: React.FC<TacticalMapProps> = ({
-    center, zoom, shipPosition, shipName, navPlan, targetDestination, currentPath, onMapClick, onMapRightClick, onDragStart,
-  isLaylinesActive, portLaylinePath, stbdLaylinePath, collisionFilter, listaCartas,
-  cartasActivas,children
+    center,
+    zoom,
+    shipPosition,
+    shipName,
+    navPlan,
+    targetDestination,
+    currentPath,
+    onMapClick,
+    onMapRightClick,
+    onDragStart,
+    isLaylinesActive,
+    portLaylinePath,
+    isSailSteerWidgetOpen,
+    stbdLaylinePath,
+    collisionFilter,
+    listaCartas,
+    cartasActivas,
+    twd,
+    waypointBearing,
+    heading,
+    children,
+    compact = false
 }) => {
   const [mapZoom, setMapZoom] = useState(zoom);
-  let shipHeading = 0;
-
-if (shipPosition && currentPath.length > 1) {
-  shipHeading = calculateBearing(
-    shipPosition,
-    {
-      lat: currentPath[1][0],
-      lng: currentPath[1][1]
-    }
-  );
-}
+  // console.log("HUD Heading:", heading);
+  const shipHeading = heading;
 const shipSize = Math.max(
   12,
   Math.min(
@@ -105,18 +120,40 @@ const shipSize = Math.max(
   style={{
     width: '100%',
     height: '100%',
-    minHeight: '600px'
+    minHeight: compact ? '100%' : '600px'
   }}
 >
-      <MapContainer center={center} zoom={zoom} minZoom={4} maxZoom={16} className="h-full w-full" zoomControl={false}>
-        <ZoomControl position="topright" />
+      <MapContainer
+    center={center}
+    zoom={zoom}
+    minZoom={compact ? zoom : 4}
+    maxZoom={compact ? zoom : 16}
+    className="h-full w-full"
+    zoomControl={!compact}
+    dragging={!compact}
+    scrollWheelZoom={!compact}
+    doubleClickZoom={!compact}
+    touchZoom={!compact}
+    boxZoom={!compact}
+    keyboard={!compact}
+    attributionControl={!compact}
+>
+        {!compact && (
+    <ZoomControl position="topright" />
+)}
         <MapUpdater center={center} />
         <ZoomWatcher
   onZoomChange={setMapZoom}
 />     
         
         
-        <InternalEvents onMapClick={onMapClick} onMapRightClick={onMapRightClick} onDragStart={onDragStart} />
+        {!compact && (
+    <InternalEvents
+        onMapClick={onMapClick}
+        onMapRightClick={onMapRightClick}
+        onDragStart={onDragStart}
+    />
+)}
         <TileLayer
   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
   attribution="© OpenStreetMap contributors"
@@ -137,7 +174,20 @@ const shipSize = Math.max(
   shipName={shipName}
   heading={shipHeading}
   iconSize={shipSize}
+  hudMode={isSailSteerWidgetOpen}
 />
+
+ 
+{isSailSteerWidgetOpen && (
+  <SailHUDLayer
+  shipPosition={shipPosition}
+  heading={shipHeading}
+  twd={twd}
+  waypointBearing={waypointBearing}
+/>
+)}
+
+  
         
 {currentPath.length > 1 && (
   <Polyline
