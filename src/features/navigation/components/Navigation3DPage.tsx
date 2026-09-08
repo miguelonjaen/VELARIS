@@ -31,8 +31,8 @@ export const Navigation3DPage: React.FC<Navigation3DPageProps> = ({
             barco_id: shipId,
             titulo: 'DESVIACIÓN DE RUTA',
             descripcion: `Error de seguimiento (XTE) detectado: ${xte.toFixed(2)} NM`,
-            tipo_evento: 'NAVEGACION',
             categoria: 'Navegación',
+            fecha: new Date().toISOString().slice(0, 10),
             created_at: new Date().toISOString(),
           }]);
         } catch (err) {

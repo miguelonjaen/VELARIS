@@ -327,6 +327,7 @@ const Logbook: React.FC<LogbookProps> = ({
       ubicacion_texto: 'Puerto de Motril',
       horas_motor: Number(newLogEntry.horas_motor || 0),
       created_at: now.toISOString(),
+      fecha: now.toISOString().slice(0, 10),
       viento_nudos: newLogEntry.viento_nudos || null,
       velocidad_gps: newLogEntry.velocidad_gps || null,
       rumbo: newLogEntry.rumbo ? Number(newLogEntry.rumbo) : null,
@@ -605,7 +606,7 @@ const Logbook: React.FC<LogbookProps> = ({
                     {groupedEntries[dateStr].map((entry, index) => {
                       const isAuto = entry.is_auto || entry.titulo === 'Evento Automático' || entry.titulo === 'Despacho de Travesía' || entry.titulo === 'Cierre de Travesía' || entry.titulo === 'Cambio de Guardia' || entry.categoria === 'Técnico';
                       const isMob = (entry.categoria === 'SEGURIDAD CRÍTICA' || entry.categoria === 'Seguridad' || entry.titulo === 'EMERGENCIA MOB') && (entry.texto?.includes('MOB') || entry.descripcion?.includes('MOB'));
-                      const entryDate = new Date(entry.fecha || entry.created_at || new Date());
+                      const entryDate = new Date(entry.created_at || entry.fecha || new Date());
                       
                       return (
                         <motion.div 

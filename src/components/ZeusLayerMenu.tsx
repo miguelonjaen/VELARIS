@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Radar, Wind, Crosshair, Map, Layers } from 'lucide-react';
+import { X, Radar, Wind, Crosshair, Map, Layers, Navigation, Waves } from 'lucide-react';
 import { cn } from '@lib/utils';
 
 interface ZeusLayerMenuProps {
@@ -9,6 +9,8 @@ interface ZeusLayerMenuProps {
   layersState: {
     showAIS: boolean;
     showWind: boolean;
+    showWaves: boolean;
+    showCurrent: boolean;
     collisionFilter: boolean;
   };
   setLayersState: React.Dispatch<React.SetStateAction<any>>;
@@ -72,6 +74,8 @@ export const ZeusLayerMenu: React.FC<ZeusLayerMenuProps> = ({
                   {[
                     { id: 'showAIS', label: 'Objetivos AIS', icon: Radar, active: layersState.showAIS, color: 'text-amber-400' },
                     { id: 'showWind', label: 'Malla de Viento', icon: Wind, active: layersState.showWind, color: 'text-blue-400' },
+                    { id: 'showWaves', label: 'Oleaje', icon: Waves, active: layersState.showWaves, color: 'text-sky-300' },
+                    { id: 'showCurrent', label: 'Corriente', icon: Navigation, active: layersState.showCurrent, color: 'text-teal-300' },
                     { id: 'collisionFilter', label: 'Filtro CPA/TCPA', icon: Crosshair, active: layersState.collisionFilter, color: 'text-red-400' },
                   ].map((layer) => (
                     <button

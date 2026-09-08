@@ -88,6 +88,8 @@ import { useTacticalAdvisor } from './hooks/useTacticalAdvisor';
 import { CommandSidebar } from './components/CommandSidebar';
 import { calculateDistanceNM, cn } from '@lib/utils';
 import { enrichAisTarget, VesselVector } from './lib/ais';
+import { enrichAisTargetsWithRisk } from '@/core/navigation/AisCollisionRisk';
+import { TacticalCollisionAlert } from '@/features/traffic/components/TacticalCollisionAlert';
 import {
   createInitialSensorQualityMap,
   getOverallSensorConfidence,
@@ -97,7 +99,9 @@ import {
 } from './lib/sensorQuality';
 import { calculateLaylineDeviation, calculateAnchorDrift, calculateETA } from '@lib/laylineCalculator';
 import { GPXRoute, GPXWaypoint } from './lib/gpxParser';
-import { UserProfile, ShipData, LogEntry, VesselStatus, WeatherResponse, ProcessedWeather, InventoryItem, VELARISAlarm, SecurityThresholds, AlarmSeverity } from '@/shared/types';
+import { UserProfile, ShipData, LogEntry, VesselStatus, InventoryItem, VELARISAlarm, SecurityThresholds, AlarmSeverity } from '@/shared/types';
+import { calculateTwa } from './lib/useWeather';
+import { useWeatherCore } from './lib/useWeatherCore';
 // ... (rest of imports remains same, just fixing firebase ones)
 import AuthScreen from './components/AuthScreen';
 import TestSubidaFoto from './components/TestSubidaFoto';
@@ -136,6 +140,11 @@ import { AboutVelarisModal } from './shared/components/AboutVelarisModal';
 import NavPage from "./features/navigation/components/nav/NavPage";
 import { RouteBuilder } from "./navigation/engine/RouteBuilder";
 import { RouteManager } from "./navigation/engine/RouteManager";
+import { getSimulationPath } from "./navigation/engine/RouteSimulationAdapter";
+import { ManeuverEngineAdapter } from "./navigation/engine/ManeuverEngineAdapter";
+import { ManeuverEvent } from "./navigation/engine/ManeuverEngine";
+import { ManeuverEventStore } from "./navigation/engine/ManeuverEventStore";
+import { persistManeuverEvents } from "./navigation/engine/ManeuverLogPersistence";
 import { Waypoint } from "./tactical/contacts/Waypoint";
 import { MissionService } from "@/features/navigation/mission";
 import MissionControlPanel from "@/features/navigation/components/MissionControl/MissionControlPanel";
@@ -546,6 +555,8 @@ const routeManager = useRef(new RouteManager()).current;
   const [layersState, setLayersState] = useState({
     showAIS: true,
     showWind: false,
+    showWaves: true,
+    showCurrent: true,
     collisionFilter: false
   });
   const [historicalPath, setHistoricalPath] = useState<any[]>([]);
@@ -555,6 +566,11 @@ const routeManager = useRef(new RouteManager()).current;
   const t = translations[lang];
   const [messages, setMessages] = useState<any[]>([]);
   const [coreTelemetryRevision, setCoreTelemetryRevision] = useState(0);
+  const maneuverEngineAdapter = useRef(new ManeuverEngineAdapter()).current;
+  const maneuverEventStoreRef = useRef(new ManeuverEventStore());
+  const persistedManeuverEventKeysRef = useRef(new Set<string>());
+  const maneuverPersistenceInFlightRef = useRef(false);
+  const [lastManeuverEvent, setLastManeuverEvent] = useState<ManeuverEvent | null>(null);
   const refreshCoreTelemetry = useCallback(() => {
     setCoreTelemetryRevision(prev => prev + 1);
   }, []);
@@ -564,14 +580,37 @@ const routeManager = useRef(new RouteManager()).current;
     const unsubscribeMotion = app.events.subscribe("core.motion.updated", refreshCoreTelemetry);
     const unsubscribeDepth = app.events.subscribe("core.depth.updated", refreshCoreTelemetry);
     const unsubscribeWind = app.events.subscribe("core.wind.updated", refreshCoreTelemetry);
+    const unsubscribeManeuverMotion = app.events.subscribe("core.motion.updated", event => {
+      const position = app.state.shipPosition;
+      const wind = app.state.wind;
+      const timestamp = Date.parse(event.timestamp);
+
+      if (!position || !Number.isFinite(timestamp)) return;
+
+      const maneuverEvent = maneuverEngineAdapter.process({
+        timestamp,
+        position,
+        sog: event.payload.sog,
+        cog: event.payload.cog,
+        windDirection: wind.angle,
+        windSpeed: wind.speed
+      });
+
+      if (maneuverEvent) {
+        maneuverEventStoreRef.current.add(maneuverEvent);
+        setLastManeuverEvent(maneuverEvent);
+      }
+    });
 
     return () => {
       unsubscribePosition();
       unsubscribeMotion();
       unsubscribeDepth();
       unsubscribeWind();
+      unsubscribeManeuverMotion();
+      maneuverEngineAdapter.reset();
     };
-  }, [refreshCoreTelemetry]);
+  }, [maneuverEngineAdapter, refreshCoreTelemetry]);
 
   const shipPosition = app.state.shipPosition ?? DEFAULT_SHIP_POSITION;
   const setShipPosition = useCallback((value: React.SetStateAction<{ lat: number; lng: number } | null>) => {
@@ -607,23 +646,11 @@ const routeManager = useRef(new RouteManager()).current;
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isTravesiaActive, setIsTravesiaActive] = useState(false);
-  const [weatherState, setWeatherState] = useState<ProcessedWeather>({ temp: 22, wind: 12, windDir: 0, condition: 'Despejado', seaState: 'Calma', humidity: 60, pressure: 1013, visibility: 10000, waveHeight: 0.5, tideLevel: 0.5 });
-  const weather = useMemo<ProcessedWeather>(() => ({
-    ...weatherState,
-    wind: app.state.wind.speed > 0 ? app.state.wind.speed : weatherState.wind,
-    windDir: app.state.wind.angle > 0 ? app.state.wind.angle : weatherState.windDir
-  }), [weatherState, coreTelemetryRevision]);
-  const setWeather: React.Dispatch<React.SetStateAction<ProcessedWeather>> = useCallback((value) => {
-    setWeatherState(prev => {
-      const nextWeather = typeof value === 'function'
-        ? value(prev)
-        : value;
-
-      app.state.updateWind(nextWeather.wind, nextWeather.windDir, "system");
-      return nextWeather;
-    });
-    refreshCoreTelemetry();
-  }, [refreshCoreTelemetry]);
+  const weatherPosition = selectedShip && Number.isFinite(selectedShip.lat) && Number.isFinite(selectedShip.lng)
+    ? { lat: selectedShip.lat, lng: selectedShip.lng }
+    : shipPosition;
+  const { weatherCore, isLoading: loadingWeather } = useWeatherCore(weatherPosition?.lat ?? null, weatherPosition?.lng ?? null);
+  const weather = weatherCore.atmospheric;
   const depth = app.state.depth > 0 ? app.state.depth : DEFAULT_DEPTH;
   const setDepth = useCallback((value: React.SetStateAction<number>) => {
     const nextDepth = typeof value === 'function'
@@ -668,6 +695,13 @@ const routeManager = useRef(new RouteManager()).current;
   const [currentAnchorDistance, setCurrentAnchorDistance] = useState(0);
   const [anchorTrend, setAnchorTrend] = useState<'stable' | 'drifting' | 'swinging'>('stable');
   const sensorConfidence = useMemo(() => getOverallSensorConfidence(sensorQuality), [sensorQuality]);
+  const ownAISData = useMemo(() => shipPosition ? ({
+    lat: shipPosition.lat,
+    lng: shipPosition.lng,
+    sog: app.state.sog,
+    cog: app.state.cog
+  }) : null, [shipPosition, coreTelemetryRevision]);
+  const simulatedAisTargets = useAIS(ownAISData);
   const ownShipVector = useMemo<VesselVector | null>(() => {
     if (!shipPosition) return null;
     return {
@@ -678,8 +712,15 @@ const routeManager = useRef(new RouteManager()).current;
 };
   }, [shipPosition, coreTelemetryRevision]);
   const tacticalAisTargets = useMemo(
-    () => aisTargets.map(target => enrichAisTarget(ownShipVector, target)),
-    [aisTargets, ownShipVector]
+    () => {
+      const targetsByMmsi = new Map<string, any>();
+      [...aisTargets, ...simulatedAisTargets].forEach(target => {
+        const key = String(target.mmsi ?? target.id ?? `${target.lat}:${target.lng}`);
+        targetsByMmsi.set(key, target);
+      });
+      return enrichAisTargetsWithRisk(ownShipVector, Array.from(targetsByMmsi.values()));
+    },
+    [aisTargets, simulatedAisTargets, ownShipVector]
   );
   useEffect(() => {
   }, [aisTargets]);
@@ -700,6 +741,9 @@ const routeManager = useRef(new RouteManager()).current;
     supabase,
     fleet,
     selectedShipId,
+    ownShipPosition: shipPosition,
+    ownShipSog: app.state.sog,
+    ownShipCog: app.state.cog,
     depth,
     engineData,
     aisTargets: tacticalAisTargets,
@@ -712,16 +756,6 @@ const routeManager = useRef(new RouteManager()).current;
       currentAnchorDistance,
     }
   });
-
-  // --- AIS SIMULADO CORE ---
-  const ownAISData = useMemo(() => shipPosition ? ({
-  lat: shipPosition.lat,
-  lng: shipPosition.lng,
-  sog: app.state.sog,
-  cog: app.state.cog
-}) : null, [shipPosition, coreTelemetryRevision]);
-
-  const simulatedAisTargets = useAIS(ownAISData);
 
   useEffect(() => {
 
@@ -739,7 +773,7 @@ useEffect(() => {
   const tacticalData = useTacticalRouting({
     shipPos: shipPosition,
     targetPos: targetDestination,
-    sog: simulatedSog,
+    sog: app.state.sog,
     cog: app.state.cog,
     tws: weather?.wind || 0,
     twd: weather?.windDir || 0
@@ -792,7 +826,7 @@ useEffect(() => {
   }, [notifyAdmiral, updateCoreNavigationPlan]);
 
   const PORT_LIST = [
-    { name: 'Motril (Puerto Base)', coords: { lat: 36.7215, lng: -3.5235 } },
+    { name: 'Motril ', coords: { lat: 36.7215, lng: -3.5235 } },
     { name: 'Adra', coords: { lat: 36.7464, lng: -3.0189 } },
     {name: 'Aguadulce', coords: { lat: 36.8142, lng: -2.5726 } },
     { name: 'Almería', coords: { lat: 36.8340, lng: -2.4637 } },
@@ -834,9 +868,8 @@ useEffect(() => {
 
     if (!route) return;
 
-    const path = route.waypoints.map(
-        w => [w.lat, w.lng] as [number, number]
-    );
+    const simulationRoute = getSimulationPath(route);
+    const path = simulationRoute.valid ? simulationRoute.path : [];
 
     setRutaActiva(path);
     setPlannedPath(path);
@@ -854,9 +887,12 @@ useEffect(() => {
         routeBuilder.getRoute()
     );
 
-    setRutaActiva([]);
-    setPlannedPath([]);
-    setCurrentPath([]);
+    const simulationRoute = getSimulationPath(routeBuilder.getRoute());
+    const path = simulationRoute.valid ? simulationRoute.path : [];
+
+    setRutaActiva(path);
+    setPlannedPath(path);
+    setCurrentPath(path);
 
     console.log("ROUTE CLEARED");
 
@@ -916,6 +952,11 @@ useEffect(() => {
     const activeShip = fleet.find(s => String(s.id) === String(selectedShipId || selectedShip?.id)) || selectedShip || fleet[0];
     // 2. Control de nombre por si viene vacío
     const shipName = activeShip?.nombre || 'Nucleus Zero';
+
+    if (!weather) {
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', text: 'Meteorología real no disponible para el buque activo. Actualice posición o credenciales OpenWeather.', timestamp: new Date() }]);
+      return;
+    }
 
     const systemPrompt = `
       ASISTENTE DE COMANDO PRO-NAUTIC (PROTOCOLO NUCLEUS):
@@ -1141,12 +1182,6 @@ if ((data as any).nav) {
 break;
 
         case 'WIND':
-          setWeather(prev => ({
-            ...prev,
-            wind: app.state.wind.speed,
-            windDir: app.state.wind.angle
-          }));
-
           updateRealSensors(['wind'], setSensorQuality, setDataSource);
           break;
 
@@ -1321,7 +1356,6 @@ break;
   const [hasNewAdvice, setHasNewAdvice] = useState(false);
   const lastLoggedAdvice = useRef<string>('');
   const [destination, setDestination] = useState<any>(null);
-  const [loadingWeather, setLoadingWeather] = useState(false);
   const [isSafetyChecklistComplete, setIsSafetyChecklistComplete] = useState(false);
   const [crewOnBoard, setCrewOnBoard] = useState<any[]>([]);
   const [showWatchSelection, setShowWatchSelection] = useState(false);
@@ -1349,17 +1383,62 @@ break;
   // MOTOR DE NAVEGACIÓN SIMULADA
 
   useEffect(() => {
-    
-    if (!isSimulationMode) return;
+    console.log('[SIM EFFECT]', {
+      isSimulationMode,
+      isTravesiaActive,
+      shipPosition,
+      rutaActivaLength: rutaActiva.length,
+      simulationSpeed,
+      appStateSog: app.state.sog,
+      appStateShipPosition: app.state.shipPosition,
+      targetCoords: navPlan.targetCoords
+    });
 
-    if (!isTravesiaActive) return;
+    if (!isSimulationMode) {
+      console.log('[SIM GATE BLOCKED]', { reason: 'isSimulationMode' });
+      return;
+    }
 
-    if (!shipPosition) return;
+    if (!isTravesiaActive) {
+      console.log('[SIM GATE BLOCKED]', { reason: 'isTravesiaActive' });
+      return;
+    }
 
-    if (rutaActiva.length < 2) return;
+    if (!shipPosition) {
+      console.log('[SIM GATE BLOCKED]', { reason: 'shipPosition' });
+      return;
+    }
 
+    if (rutaActiva.length < 2) {
+      console.log('[SIM GATE BLOCKED]', { reason: 'rutaActiva' });
+      return;
+    }
+
+    let previousSimulationPosition: { lat: number; lng: number } | null = null;
+    let simulationTickCount = 0;
+
+    console.log('[SIM INTERVAL CREATED]');
     const interval = setInterval(() => {
       if (!isTravesiaActive) return;
+
+      simulationTickCount += 1;
+      const simulationPosition = app.state.shipPosition ?? shipPosition;
+      console.log('[SIM TICK]', {
+        routeLength: rutaActiva.length,
+        position: simulationPosition,
+        sog: app.state.sog,
+        simulationSpeed
+      });
+      console.groupCollapsed(`[SIM DIAGNOSTIC] tick ${simulationTickCount}`);
+      console.log('INPUT', {
+        routeLength: rutaActiva.length,
+        routeFirst: rutaActiva[0],
+        routeLast: rutaActiva[rutaActiva.length - 1],
+        position: simulationPosition,
+        sog: app.state.sog,
+        capturedSog: simulatedSog,
+        simulationSpeed
+      });
 
       console.log(
   "TRAVESIA ACTIVA:",
@@ -1368,11 +1447,32 @@ break;
   rutaActiva.length
 );
 const gpsMessage = app.simulation.tick({
-        position: shipPosition,
+        position: simulationPosition,
         route: rutaActiva,
-        sog: simulatedSog,
+        sog: app.state.sog,
         speedMultiplier: simulationSpeed
       });
+
+      console.log('[SIM OUTPUT]', gpsMessage ? {
+        lat: gpsMessage.lat,
+        lng: gpsMessage.lng,
+        sog: gpsMessage.sog,
+        cog: gpsMessage.cog,
+        nav: gpsMessage.nav,
+        positionChanged: previousSimulationPosition === null
+          ? null
+          : gpsMessage.lat !== previousSimulationPosition.lat
+            || gpsMessage.lng !== previousSimulationPosition.lng
+      } : null);
+
+      if (gpsMessage) {
+        previousSimulationPosition = {
+          lat: gpsMessage.lat,
+          lng: gpsMessage.lng
+        };
+      }
+
+      console.groupEnd();
 
       if (app.simulation.hasReachedDestination()) {
         console.log('🏁 DESTINO ALCANZADO');
@@ -1394,7 +1494,6 @@ const gpsMessage = app.simulation.tick({
 
   }, [
     isSimulationMode,
-    shipPosition,
     rutaActiva,
     isTravesiaActive,
     simulationSpeed
@@ -1514,22 +1613,23 @@ const gpsMessage = app.simulation.tick({
     }
   }, [depth]);
 
-  const lastWindRef = useRef(weather.wind);
+  const lastWindRef = useRef<number | null>(weather?.tws ?? null);
 
   // Monitor sensors for automatic notifications
   useEffect(() => {
-    const windJump = Math.abs(weather.wind - lastWindRef.current);
-    if (windJump > 5 || weather.wind > 25) {
+    if (!weather) return;
+    const windJump = lastWindRef.current === null ? 0 : Math.abs(weather.tws - lastWindRef.current);
+    if (windJump > 5 || weather.tws > 25) {
       notifyAdmiral(
-        weather.wind > 25
+        weather.tws > 25
           ? `CONDICIONES ADVERSAS: Viento superior a 25 kts.`
           : `CAMBIO BRUSCO EN VIENTO: Variación detectada (${windJump.toFixed(1)} kts).`,
-        weather.wind > 25 ? 'critical' : 'warning',
+        weather.tws > 25 ? 'critical' : 'warning',
         true
       );
     }
-    lastWindRef.current = weather.wind;
-  }, [weather.wind]);
+    lastWindRef.current = weather.tws;
+  }, [weather]);
 
   useEffect(() => {
     // Battery check
@@ -1551,7 +1651,7 @@ const gpsMessage = app.simulation.tick({
   }, [isTravesiaActive, navData.xte]);
 
   useEffect(() => {
-    const criticalTarget = tacticalAisTargets.find(t => (t.cpa || 10) < 0.3);
+    const criticalTarget = tacticalAisTargets.find((t: any) => (t.cpa || 10) < 0.3);
     if (criticalTarget) {
       notifyAdmiral(`ALERTA AIS: Riesgo de colisión detectado con buque ${criticalTarget.name || 'desconocido'}.`, 'critical', true);
     }
@@ -1566,7 +1666,20 @@ const gpsMessage = app.simulation.tick({
   const [activeRouteId, setActiveRouteId] = useState<string | null>(null);
   const [plannedPath, setPlannedPath] = useState<[number, number][]>([]);
   const [tacticalAdvice, setTacticalAdvice] = useState<string | null>(null);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([36.7215, -3.5235]);
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
+  const lastAutoCenteredShipIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const coreShipPosition = app.state.shipPosition;
+    const hasValidPosition = coreShipPosition !== null
+      && Number.isFinite(shipPosition.lat)
+      && Number.isFinite(shipPosition.lng);
+
+    if (!selectedShipId || !hasValidPosition || lastAutoCenteredShipIdRef.current === selectedShipId) return;
+
+    setMapCenter([shipPosition.lat, shipPosition.lng]);
+    lastAutoCenteredShipIdRef.current = selectedShipId;
+  }, [selectedShipId]);
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isLogbookOpen, setIsLogbookOpen] = useState(false);
@@ -1664,7 +1777,7 @@ const gpsMessage = app.simulation.tick({
       const battery = 12.8;
       const fuelValue = engineData.fuel || 100;
       const waterValue = 90;
-      const windValue = weather.wind || 12;
+      const windValue = weather?.tws;
 
       // Check stock levels (optional during force)
       const { data: inventoryData } = await supabase
@@ -1695,7 +1808,7 @@ const gpsMessage = app.simulation.tick({
       // 3. Show Result
       setAdvisorText({
         text: reportText,
-        priority: (weather.wind > 25 || itemsBelowMinimum.length > 0 || loadingWeather) ? 'warning' : 'info',
+        priority: ((weather?.tws !== undefined && weather.tws > 25) || itemsBelowMinimum.length > 0 || loadingWeather) ? 'warning' : 'info',
         timestamp: Date.now()
       });
 
@@ -1799,8 +1912,8 @@ const gpsMessage = app.simulation.tick({
           capitan_id: userProfile?.id || null,
           titulo: '¡HOMBRE AL AGUA!',
           descripcion: '¡HOMBRE AL AGUA! Activado desde el panel principal. Protocolo de emergencia iniciado.',
-          tipo_evento: 'ALERTA_MOB',
           categoria: 'Seguridad',
+          fecha: new Date().toISOString().slice(0, 10),
           latitud: shipPosition?.lat,
           longitud: shipPosition?.lng,
           created_at: new Date().toISOString(),
@@ -1829,8 +1942,8 @@ const gpsMessage = app.simulation.tick({
         capitan_id: userProfile?.id || null,
         titulo: 'Sistema de Iluminación',
         descripcion: `Cambio de estado de iluminación de navegación/cubierta: ${newState ? 'ENCENDIDAS' : 'APAGADAS'}.`,
-        tipo_evento: 'SISTEMAS',
         categoria: 'Mantenimiento',
+        fecha: new Date().toISOString().slice(0, 10),
         created_at: new Date().toISOString(),
         is_auto: true
       }]);
@@ -1841,8 +1954,22 @@ const gpsMessage = app.simulation.tick({
     }
   };
   useEffect(() => {
-    console.log('AISStream activo');
-  }, []);
+  if (!import.meta.env.VITE_AISSTREAM_API_KEY) {
+    console.warn('AISStream: API key no disponible');
+    return;
+  }
+
+  console.log('AISStream: iniciando servicio real');
+
+  const aisStream = new AISStreamService();
+
+  aisStream.connect();
+
+  return () => {
+    console.log('AISStream: desconectando servicio');
+    aisStream.disconnect();
+  };
+}, []);
 
   // Simulation: Depth and AIS (Keep for simulation if no real AIS)
   useEffect(() => {
@@ -1903,20 +2030,10 @@ const gpsMessage = app.simulation.tick({
   }, [isTripRunning]);
 
   const handleTripAction = async (action: string) => {
-    const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
-    const barcoId = activeShip?.id;
-
     if (action === 'start') setIsTripRunning(true);
     else if (action === 'stop') setIsTripRunning(false);
     else if (action === 'reset') { setTrip1(0); setTrip2(0); }
 
-    if (barcoId) {
-      const payload = {
-        viaje_1_nm: trip1,
-        viaje_2_nm: trip2
-      };
-      await supabase.from('barcos').update(payload).eq('id', barcoId);
-    }
   };
 
   const [hudPageIndex, setHudPageIndex] = useState(0);
@@ -2083,8 +2200,8 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
       capitan_id: userProfile?.id || null,
       titulo: 'REGATA',
       descripcion: 'Salida de regata: ¡Tiempo cumplido!',
-      tipo_evento: 'REGATA',
       categoria: 'Navegación',
+      fecha: new Date().toISOString().slice(0, 10),
       created_at: new Date().toISOString(),
     }]);
   };
@@ -2165,6 +2282,47 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
     });
   }, [shipPosition, isTravesiaActive]);
 
+  const persistManeuverLogEntry = async (entry: LogEntry) => {
+    const {
+      id: _id,
+      user_id,
+      lat,
+      lng,
+      fecha,
+      maneuverTimestamp,
+      ...entryData
+    } = entry;
+
+    const fallbackFecha = new Date().toISOString().slice(0, 10);
+    const payloadFecha = typeof fecha === 'string'
+      && /^\d{4}-\d{2}-\d{2}$/.test(fecha)
+      && !Number.isNaN(Date.parse(`${fecha}T00:00:00Z`))
+      ? fecha
+      : fallbackFecha;
+    const maneuverCreatedAt = typeof maneuverTimestamp === 'number'
+      && Number.isFinite(maneuverTimestamp)
+      ? new Date(maneuverTimestamp).toISOString()
+      : new Date().toISOString();
+    const payload = {
+      ...entryData,
+      fecha: payloadFecha,
+      capitan_id: user_id || userProfile?.id || null,
+      created_at: maneuverCreatedAt,
+      latitud: lat,
+      longitud: lng,
+      ubicacion_texto: 'Navegación en curso'
+    };
+
+    console.log('[MANEUVER PERSIST PAYLOAD]', payload);
+    const result = await logRepository.insertEntry(payload);
+
+    if (!result.error && result.data?.length) {
+      setLogEntries(prev => [result.data[0], ...prev]);
+    }
+
+    return result;
+  };
+
   // Handle ending navigation
   const handleEndTravesia = async () => {
     let effectiveShipId = selectedShipId;
@@ -2179,8 +2337,35 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
       await saveTechnicalLog(
         'Arribada',
         `Travesía finalizada correctamente. Distancia total: ${tripDistance.toFixed(1)} mn.`,
-        'Navegación'
+        'Navegación',
+        undefined,
+        undefined,
+        true,
+        undefined,
+        'Arribada'
       );
+
+      if (!maneuverPersistenceInFlightRef.current) {
+        maneuverPersistenceInFlightRef.current = true;
+        try {
+          await persistManeuverEvents(
+            maneuverEventStoreRef.current.getAll(),
+            {
+              barcoId: barcoIdReal ?? undefined,
+              userId: userProfile?.id,
+              fecha: new Date().toISOString().slice(0, 10),
+              tipoNavegacion: navigationMode === 'Libre' || navigationMode === 'Planificada'
+                ? navigationMode
+                : undefined,
+              destinoPlanificado: navigationDestination || undefined
+            },
+            persistManeuverLogEntry,
+            persistedManeuverEventKeysRef.current
+          );
+        } finally {
+          maneuverPersistenceInFlightRef.current = false;
+        }
+      }
 
       // 2. Find and close the open navigation log
       if (!barcoIdReal) {
@@ -2191,12 +2376,7 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
       console.log('App: Quering active log with is.null in bitacora for ship:', barcoIdReal);
       const { data: openLog } = await logRepository.getActiveLog(barcoIdReal);
 
-      if (openLog) {
-        await logRepository.updateLog(openLog.id, { fecha_fin: new Date().toISOString() });
-      }
-
       // 3. Sync states to Supabase
-      await vesselRepository.updateVessel(barcoIdReal, { en_navegacion: false });
       await vesselRepository.updateVesselStatus(barcoIdReal, { is_navigating: false });
 
       // REACTIVIDAD: Limpiar UI inmediatamente
@@ -2279,6 +2459,7 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
     }
   }, [userProfile]);
 
+  /* Retired duplicate OpenWeather acquisition. Weather is provided exclusively by useWeather above.
   const getWeatherData = async (lat: number, lng: number) => {
     setLoadingWeather(true);
     try {
@@ -2288,7 +2469,7 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
         throw new Error("API_KEY_INVALID");
       }
 
-      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${API_KEY}&units=metric&lang=es`);
+      throw new Error('Duplicate OpenWeather path retired; useWeather is the sole weather acquisition path.');
 
       if (!response.ok) throw new Error(`HTTP_ERROR_${response.status}`);
 
@@ -2348,6 +2529,7 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
     }
   }, [selectedShipId, fleet]);
 
+  */
   const getTacticalAdvice = useMemo(() => {
     if (tacticalAdvisor && tacticalAdvisor.advisory) {
       let icon = <Zap className="w-4 h-4 text-cyan-400 animate-pulse" />;
@@ -2365,6 +2547,7 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
 
     if (!selectedShip) return { message: advice, icon };
 
+    if (!weather) return { message: 'Meteorología real no disponible para el buque activo.', icon };
     const { wind, windDir } = weather;
     const isVelero = selectedShip.tipo_barco === 'Velero';
     const isMotora = selectedShip.tipo_barco === 'Motora';
@@ -2442,9 +2625,13 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
         ultimo_mantenimiento_motor: s.ultimo_mantenimiento_motor,
         ultima_revision_balsa: s.ultima_revision_balsa,
         ultima_revision_extintores: s.ultima_revision_extintores,
-        // FORCED MOTRIL POSITION - NO AUTO-DETECTION
-        lat: 36.7215,
-        lng: -3.5235,
+
+puerto_base: s.puerto_base,
+puerto_base_lat: s.puerto_base_lat,
+puerto_base_lng: s.puerto_base_lng,
+
+lat: s.lat,
+lng: s.lng,
         type: s.tipo || 'Motor',
         cog: s.cog || 0,
         sog: s.sog || 0,
@@ -2476,13 +2663,31 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
         const activeByColumn = formattedShips.find(s => s.is_active);
         const activeByProfile = formattedShips.find(s => s.id === userProfile?.barco_activo_id);
 
-        if (activeByColumn) {
-          setSelectedShipId(activeByColumn.id);
-        } else if (activeByProfile) {
-          setSelectedShipId(activeByProfile.id);
-        } else if (!selectedShipId) {
-          setSelectedShipId(formattedShips[0].id);
-        }
+        const activeShip =
+  activeByColumn ||
+  activeByProfile ||
+  (!selectedShipId ? formattedShips[0] : null);
+
+if (activeShip) {
+  setSelectedShipId(activeShip.id);
+
+  if (activeShip.lat != null && activeShip.lng != null) {
+    const hydratedSog =
+      isSimulationMode && isTravesiaActive
+        ? app.state.sog
+        : activeShip.sog ?? 0;
+
+    app.state.updatePosition(
+      activeShip.lat,
+      activeShip.lng,
+      hydratedSog,
+      activeShip.cog ?? 0,
+      "system"
+    );
+
+    refreshCoreTelemetry();
+  }
+}
       }
     }
   };
@@ -2568,6 +2773,7 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
     return saveTechnicalLog(titulo, descripcion, categoria, navigationMode || undefined, navigationDestination, true);
   };
   const recentLogEntries = useRef<Record<string, number>>({});
+  const voyageLifecycleLogs = useRef<Set<'Salida' | 'Arribada'>>(new Set());
 
   async function saveTechnicalLog(
     titulo: string,
@@ -2576,25 +2782,36 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
     tipo_navegacion?: 'Libre' | 'Planificada',
     destino_planificado?: string,
     isAuto: boolean = true,
-    rutaId?: string
+    rutaId?: string,
+    lifecycleEvent?: 'Salida' | 'Arribada'
   ) {
     const logKey = `${categoria}|${titulo}`;
-const now = Date.now();
+    const now = Date.now();
 
-if (
-  recentLogEntries.current[logKey] &&
-  now - recentLogEntries.current[logKey] < 600000 // 10 min
-) {
-  console.log('⏭️ Log duplicado ignorado:', titulo);
-  return;
-}
+    if (lifecycleEvent) {
+      if (voyageLifecycleLogs.current.has(lifecycleEvent)) {
+        console.log('[VOYAGE LOG] DUPLICADO IGNORADO', lifecycleEvent);
+        return;
+      }
 
-recentLogEntries.current[logKey] = now;
+      voyageLifecycleLogs.current.add(lifecycleEvent);
+      console.log(`[VOYAGE LOG] ${lifecycleEvent.toUpperCase()}`);
+    } else if (
+      recentLogEntries.current[logKey] &&
+      now - recentLogEntries.current[logKey] < 600000 // 10 min
+    ) {
+      console.log('⏭️ Log duplicado ignorado:', titulo);
+      return;
+    } else {
+      recentLogEntries.current[logKey] = now;
+    }
+
     try {
       const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
       const barcoIdReal = activeShip?.id || selectedShipId || null;
 
       const capitanId = userProfile?.id || null;
+      const eventTimestamp = new Date().toISOString();
 
       const newEntry: any = {
         barco_id: barcoIdReal,
@@ -2602,10 +2819,10 @@ recentLogEntries.current[logKey] = now;
         titulo,
         descripcion,
         categoria,
-        tipo_evento: categoria,
         ubicacion_texto: 'Navegación en curso',
+        fecha: eventTimestamp.slice(0, 10),
         horas_motor: vesselStatus?.engine_hours || 0,
-        created_at: new Date().toISOString(),
+        created_at: eventTimestamp,
         tipo_navegacion,
         destino_planificado,
         latitud: shipPosition?.lat,
@@ -2616,9 +2833,21 @@ recentLogEntries.current[logKey] = now;
         viento: `${weather?.wind || 0} kts ${weather?.windDir || 0}°`,
         estado_del_mar: weather?.seaState || 'Calma',
         is_auto: isAuto,
-        propulsion: propulsionMode,
-        ruta_id: rutaId
+        propulsion_objetivo: propulsionMode
       };
+
+      if (lifecycleEvent) {
+        console.log(`[VOYAGE TIMESTAMP] ${lifecycleEvent.toUpperCase()}`, {
+          created_at: eventTimestamp
+        });
+      } else if (
+        titulo.toLowerCase().includes('alerta') ||
+        descripcion.toUpperCase().includes('DESVIACIÓN SEVERA')
+      ) {
+        console.log('[TACTICAL TIMESTAMP] ALERTA', {
+          created_at: eventTimestamp
+        });
+      }
 
       // REACTIVIDAD INSTANTÁNEA: Update local state immediately (Optimistic)
       setLogEntries(prev => [{ ...newEntry, id: 'temp-' + Date.now() }, ...prev]);
@@ -2649,6 +2878,7 @@ recentLogEntries.current[logKey] = now;
   useEffect(() => {
     const activeShip = fleet.find(s => String(s.id) === String(selectedShipId || selectedShip?.id)) || selectedShip || fleet[0];
     if (!activeShip || !isLoggedIn || !destination || !isTravesiaActive) return;
+    if (!weather) return;
 
     const interval = setInterval(async () => {
       try {
@@ -2719,7 +2949,7 @@ recentLogEntries.current[logKey] = now;
       const currentFuel = engineData?.fuel ?? 85;
 
       // 0. AIS Collision Risk
-      const criticalTarget = tacticalAisTargets.find(t => (t.cpa || 1) < 0.15);
+      const criticalTarget = tacticalAisTargets.find((t: any) => (t.cpa || 1) < 0.15);
       if (criticalTarget) {
         newAdvice = {
           text: `[SYS]: ALERTA DE COLISIÓN CPA: ${criticalTarget.cpa.toFixed(2)}NM. Buque: ${criticalTarget.nombre}. Altere rumbo inmediatamente.`,
@@ -2734,7 +2964,7 @@ recentLogEntries.current[logKey] = now;
         };
       }
       // 2. High Wind
-      else if (weather.wind > 25) {
+      else if (weather?.tws !== undefined && weather.tws > 25) {
         newAdvice = {
           text: `[SYS]: ALERTA METEOROLÓGICA. Viento superior a 25kt. Reduzca superficie velica inmediatamente (Rizos).`,
           priority: 'critical'
@@ -2787,7 +3017,7 @@ recentLogEntries.current[logKey] = now;
 
     const interval = setInterval(checkTactical, 10000);
     return () => clearInterval(interval);
-  }, [isTravesiaActive, depth, weather.wind, navData.xte, engineData.fuel, isEngineOn, advisorText, tacticalAisTargets]);
+  }, [isTravesiaActive, depth, weather?.tws, navData.xte, engineData.fuel, isEngineOn, advisorText, tacticalAisTargets]);
 
   const handleAcceptTactical = async () => {
     if (!tacticalAdvice) return;
@@ -2796,6 +3026,10 @@ recentLogEntries.current[logKey] = now;
   };
 
   const generateAIRoute = async (dest: string) => {
+    if (!weather) {
+      setAdvisorMessage('Meteorología real no disponible; no se generará una ruta táctica dependiente del viento.');
+      return;
+    }
     setAdvisorMessage('Calculando ruta meteorológica óptima con IA...');
     try {
       const prompt = `
@@ -2893,10 +3127,10 @@ return;
             titulo: `Planificación: Ruta a ${dest}`,
             descripcion: `Viento: ${weather.wind} kn | Propulsión: ${result.propulsion}. ${result.briefing}`,
             categoria: 'Planificación',
+            fecha: new Date().toISOString().slice(0, 10),
             waypoints: JSON.stringify(validRoute),
-            ruta_id: rutaData?.id,
             is_auto: true,
-            propulsion: result.propulsion
+            propulsion_objetivo: result.propulsion
           }]);
         }
       }
@@ -3048,6 +3282,7 @@ return;
     console.trace(
   "🚀 proceedWithStartTravesia() ejecutado", { modo, levels, startingOfficerId });
 
+    voyageLifecycleLogs.current.clear();
 
     const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
     const barcoIdReal = activeShip?.id || null;
@@ -3056,15 +3291,59 @@ return;
     setStartTime(new Date());
     setTripDistance(0);
     setCurrentPath([]);
-    if (
-      Object.values(dataSource).every(v => v === 'simulated') &&
-      shipPosition &&
-      navPlan.targetCoords
-    ) {
+    maneuverEventStoreRef.current.clear();
+    persistedManeuverEventKeysRef.current.clear();
+    maneuverEngineAdapter.reset();
+    await saveTechnicalLog(
+      'Salida',
+      `Travesía iniciada en modo ${modo === 'IA' ? 'planificado' : 'libre'}.`,
+      'Navegación',
+      modo === 'IA' ? 'Planificada' : 'Libre',
+      navigationDestination || undefined,
+      true,
+      undefined,
+      'Salida'
+    );
+    if (modo === 'Libre') {
+      setSimulatedSog(isEngineOn ? 15 : 6);
+    }
+    const allSimulated = Object.values(dataSource).every(v => v === 'simulated');
+    const hasShipPosition = Boolean(shipPosition);
+    const hasTargetCoords = Boolean(navPlan.targetCoords);
+    const simulationInitCondition = allSimulated && hasShipPosition && hasTargetCoords;
+    console.log('[SIM INIT CONDITION]', {
+      allSimulated,
+      hasShipPosition,
+      hasTargetCoords,
+      conditionResult: simulationInitCondition
+    });
+
+    if (simulationInitCondition) {
 
       app.simulation.resetNavigation(1);
 
-if (plannedPath.length > 1) {
+const managedRoute = modo === 'Libre'
+  ? routeManager.getRoute()
+  : null;
+const managedSimulationRoute = managedRoute
+  ? getSimulationPath(managedRoute)
+  : null;
+const managedPath = managedSimulationRoute?.valid &&
+  managedSimulationRoute.path.length > 1
+  ? managedSimulationRoute.path
+  : null;
+
+if (managedPath) {
+
+  console.log(
+    '🧭 Derrota manual cargada desde RouteManager:',
+    managedPath.length,
+    'waypoints'
+  );
+
+  setRutaActiva(managedPath);
+
+} else if (plannedPath.length > 1) {
 
   console.log(
     '🧭 Derrota cargada:',
@@ -3088,9 +3367,21 @@ if (plannedPath.length > 1) {
   setRutaActiva(localRoute);
 }
 
+  console.log('[SIM START]', {
+    modo,
+    isSimulationMode,
+    isTravesiaActive: true,
+    shipPosition,
+    appStateShipPosition: app.state.shipPosition,
+    appStateSog: app.state.sog,
+    rutaActivaLength: rutaActiva.length,
+    routeFirst: rutaActiva[0],
+    routeLast: rutaActiva[rutaActiva.length - 1],
+    targetCoords: navPlan.targetCoords
+  });
 
 
-      const modeText = modo === 'IA' ? 'Planificada' : 'Libre';
+    const modeText = modo === 'IA' ? 'Planificada' : 'Libre';
       setNavigationMode(modeText as any);
       setTipoTravesia(modo === 'IA' ? 'asistida' : 'libre');
 
@@ -3135,8 +3426,17 @@ if (plannedPath.length > 1) {
       setIsExplainingAiRoute(false);
       setActiveTab('control');
 
-      const motrilPos = { lat: 36.7215, lng: -3.5235 };
-      setShipPosition(motrilPos);
+      const activeShip =
+  fleet.find(
+    ship => String(ship.id) === String(selectedShipId)
+  ) || fleet[0];
+
+if (activeShip?.lat != null && activeShip?.lng != null) {
+  setShipPosition({
+    lat: activeShip.lat,
+    lng: activeShip.lng
+  });
+}
 
       try {
         // Solo generar entrada automática si es PLANIFICADA (IA)
@@ -3155,15 +3455,15 @@ if (plannedPath.length > 1) {
           setAdvisorMessage('Sistemas tácticos activados. Modo Navegación Libre.');
         }
 
-        await supabase
-          .from('barcos')
-          .update({
-            lat: motrilPos.lat,
-            lng: motrilPos.lng,
-            en_navegacion: true,
-            ultima_actividad: new Date().toISOString()
-          })
-          .eq('id', barcoIdReal);
+        const currentShipPosition = app.state.shipPosition;
+
+await supabase
+.from('barcos')
+.update({
+  lat: currentShipPosition?.lat ?? selectedShip?.lat ?? null,
+  lng: currentShipPosition?.lng ?? selectedShip?.lng ?? null
+})
+  .eq('id', barcoIdReal);
       } catch (err: unknown) {
         console.error('Error in handleStartTravesia:', err);
         alert('Error al guardar en base de datos navigation status');
@@ -3339,6 +3639,7 @@ if (plannedPath.length > 1) {
 
     // --- MONITOR TÁCTICO DE FONDEO ---
     useEffect(() => {
+      if (!weather) return;
       if (!isAnchorWatchActive || !anchorPosition || !shipPosition) return;
 
       const monitorInterval = setInterval(async () => {
@@ -3384,7 +3685,7 @@ if (plannedPath.length > 1) {
       }, 5000);
 
       return () => clearInterval(monitorInterval);
-    }, [isAnchorWatchActive, anchorPosition, shipPosition, anchorSettings, weather.wind, anchorTrend, selectedShip?.nombre]);
+    }, [isAnchorWatchActive, anchorPosition, shipPosition, anchorSettings, weather?.tws, anchorTrend, selectedShip?.nombre]);
 
     useEffect(() => {
   supabase.auth.getSession().then(({ data: { session } }) => {
@@ -3512,7 +3813,7 @@ if (bitacoraError) {
 
 if (
   activeLog &&
-  activeLog.registro_tipo === 'TRAVESIA'
+  activeLog.tipo_navegacion
 ) {
 
   console.log('🧭 Travesía recuperada', activeLog);
@@ -3636,10 +3937,28 @@ if (
     const [shipPhoto, setShipPhoto] = useState<File | null>(null);
     const [editShipPhoto, setEditShipPhoto] = useState<File | null>(null);
     const [newShip, setNewShip] = useState({
-      nombre: '', marca: '', modelo: '', matricula: '', eslora: '', manga: '', calado: '', tipo_barco: 'Velero',
-      mmsi: '', ais: '', ultimo_mantenimiento_motor: null as string | null, ultima_revision_balsa: null as string | null,
-      lat: 36.7215, lng: -3.5235
-    });
+  nombre: '',
+  marca: '',
+  modelo: '',
+  matricula: '',
+  eslora: '',
+  manga: '',
+  calado: '',
+  tipo_barco: 'Velero',
+
+  mmsi: '',
+  ais: '',
+
+  ultimo_mantenimiento_motor: null as string | null,
+  ultima_revision_balsa: null as string | null,
+
+  puerto_base: '',
+  puerto_base_lat: null as number | null,
+  puerto_base_lng: null as number | null,
+
+  lat: 36.7215,
+  lng: -3.5235
+});
 
     const handleAddShip = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -3718,8 +4037,8 @@ console.log("2d. Role =", userProfile?.role);
            user_id: session.user.id,
           capitan_id: session.user.id,
           // FORCED MOTRIL POSITION
-          lat: 36.7215,
-          lng: -3.5235
+          lat: Number(newShip.lat),
+lng: Number(newShip.lng)
         };
 
         console.log("5. shipToInsert =", shipToInsert);
@@ -3741,10 +4060,24 @@ console.log("2d. Role =", userProfile?.role);
 
         setShowShipForm(false);
         setNewShip({
-          nombre: '', marca: '', modelo: '', matricula: '', eslora: '', manga: '', calado: '', tipo_barco: 'Velero',
-          mmsi: '', ais: '', ultimo_mantenimiento_motor: null, ultima_revision_balsa: null,
-          lat: 36.7215, lng: -3.5235
-        });
+  nombre: '',
+  marca: '',
+  modelo: '',
+  matricula: '',
+  eslora: '',
+  manga: '',
+  calado: '',
+  tipo_barco: 'Velero',
+  mmsi: '',
+  ais: '',
+  ultimo_mantenimiento_motor: null,
+  ultima_revision_balsa: null,
+  puerto_base: '',
+  puerto_base_lat: null,
+  puerto_base_lng: null,
+  lat: 36.7215,
+  lng: -3.5235
+});
         setShipPhoto(null);
 
         // Refresh fleet using centralized function
@@ -3883,32 +4216,57 @@ console.log("2d. Role =", userProfile?.role);
 
         // USANDO ESTADOS REACT DIRECTAMENTE (Eliminando FormData)
         const updates = {
-          mmsi: selectedBarco.mmsi,
-          ais: selectedBarco.ais,
-          ultimo_mantenimiento_motor: selectedBarco.ultimo_mantenimiento_motor ?? undefined,
-          ultima_revision_balsa: selectedBarco.ultima_revision_balsa ?? undefined,
-          ultima_revision_extintores: selectedBarco.ultima_revision_extintores ?? undefined,
-          eslora: selectedBarco.eslora,
-          documentacion_url: selectedBarco.documentacion_url,
-          manual_pdf: selectedBarco.manual_pdf,
-          fuel_level: selectedBarco.fuel_level,
-          water_level: selectedBarco.water_level,
-          docs_certificado_navegabilidad: selectedBarco.docs_certificado_navegabilidad,
-          docs_permiso_navegacion: selectedBarco.docs_permiso_navegacion,
-          docs_seguro_vigente: selectedBarco.docs_seguro_vigente,
-          docs_itb_vigente: selectedBarco.docs_itb_vigente,
-          docs_dni_tripulacion: selectedBarco.docs_dni_tripulacion,
-          docs_titulacion_patron: selectedBarco.docs_titulacion_patron,
-          docs_leb_mmsi: selectedBarco.docs_leb_mmsi,
-          url_certificado_navegabilidad: selectedBarco.url_certificado_navegabilidad,
-          url_permiso_navegacion: selectedBarco.url_permiso_navegacion,
-          url_seguro: selectedBarco.url_seguro,
-          url_itb: selectedBarco.url_itb,
-          url_dni_tripulacion: selectedBarco.url_dni_tripulacion,
-          url_titulacion_patron: selectedBarco.url_titulacion_patron,
-          url_leb_mmsi: selectedBarco.url_leb_mmsi,
-          foto_url: finalPhotoUrl
-        };
+  mmsi: selectedBarco.mmsi,
+  ais: selectedBarco.ais,
+  ultimo_mantenimiento_motor:
+    selectedBarco.ultimo_mantenimiento_motor ?? undefined,
+  ultima_revision_balsa:
+    selectedBarco.ultima_revision_balsa ?? undefined,
+  ultima_revision_extintores:
+    selectedBarco.ultima_revision_extintores ?? undefined,
+
+  eslora: selectedBarco.eslora,
+
+  lat: selectedBarco.lat,
+  lng: selectedBarco.lng,
+
+  documentacion_url: selectedBarco.documentacion_url,
+  manual_pdf: selectedBarco.manual_pdf,
+  fuel_level: selectedBarco.fuel_level,
+  water_level: selectedBarco.water_level,
+
+  docs_certificado_navegabilidad:
+    selectedBarco.docs_certificado_navegabilidad,
+  docs_permiso_navegacion:
+    selectedBarco.docs_permiso_navegacion,
+  docs_seguro_vigente:
+    selectedBarco.docs_seguro_vigente,
+  docs_itb_vigente:
+    selectedBarco.docs_itb_vigente,
+  docs_dni_tripulacion:
+    selectedBarco.docs_dni_tripulacion,
+  docs_titulacion_patron:
+    selectedBarco.docs_titulacion_patron,
+  docs_leb_mmsi:
+    selectedBarco.docs_leb_mmsi,
+
+  url_certificado_navegabilidad:
+    selectedBarco.url_certificado_navegabilidad,
+  url_permiso_navegacion:
+    selectedBarco.url_permiso_navegacion,
+  url_seguro:
+    selectedBarco.url_seguro,
+  url_itb:
+    selectedBarco.url_itb,
+  url_dni_tripulacion:
+    selectedBarco.url_dni_tripulacion,
+  url_titulacion_patron:
+    selectedBarco.url_titulacion_patron,
+  url_leb_mmsi:
+    selectedBarco.url_leb_mmsi,
+
+  foto_url: finalPhotoUrl
+};
 
         const { error } = await vesselRepository.updateVessel(effectiveShipId, updates);
 
@@ -4257,11 +4615,17 @@ console.log("2d. Role =", userProfile?.role);
                             : (selectedShip?.nombre || 'Buque Activo')
                         }
                         navPlan={navPlan}
+                        showWind={layersState.showWind}
+                        showWaves={layersState.showWaves}
+                        showCurrent={layersState.showCurrent}
+                        windSpeed={weather?.wind || 0}
+                        windDirection={weather?.windDir || 0}
+                        marineWeather={weatherCore.marine}
                         targetDestination={targetDestination}
                         currentPath={currentPath}
                         onMapClick={(lat, lng) => {
 
-    if (showShipForm) {
+    if (showShipForm) {   
 
         setNewShip?.((prev: any) => ({
             ...prev,
@@ -4293,7 +4657,8 @@ console.log("2d. Role =", userProfile?.role);
 
         if (route) {
 
-    const path = route.waypoints.map(w => [w.lat, w.lng] as [number, number]);
+    const simulationRoute = getSimulationPath(route);
+    const path = simulationRoute.valid ? simulationRoute.path : [];
 
     setRutaActiva(path);
     setPlannedPath(path);
@@ -4349,6 +4714,8 @@ console.table(
                         {/* Meteorología */}
                         <WeatherLayer
                           weather={weather}
+                          marineWeather={weatherCore.marine}
+                          isLoading={loadingWeather}
                           plannedPath={plannedPath}
                         />
 
@@ -4421,7 +4788,7 @@ console.table(
                       </TacticalMap>
                       )}
                       
-  {dockPage === "nav" && (
+  {dockPage === "nav" && mapCenter !== null && (
     <NavPage
         heading={app.state.cog}
         center={mapCenter}
@@ -4446,7 +4813,7 @@ console.table(
                         cog={app.state.cog}
                         tws={weather?.wind || 0}
                         twd={weather?.windDir || 0}
-                        twa={((weather?.windDir || 0) - app.state.cog + 360) % 360}
+                        twa={calculateTwa(weather?.twd ?? 0, app.state.cog)}
                         depth={depth}
                         dtw={navPlan.distanceNM || 0}
                         btw={navPlan.btw}
@@ -4526,7 +4893,7 @@ console.table(
                         hdg={app.state.cog}
                         twd={weather?.windDir || 0}
                         tws={weather?.wind || 0}
-                        twa={((weather?.windDir || 0) - app.state.cog + 360) % 360}
+                        twa={calculateTwa(weather?.twd ?? 0, app.state.cog)}
                         awa={((weather?.windDir || 0) - app.state.cog - 20 + 360) % 360}
                         aws={(weather?.wind || 0) * 1.2}
                         vmg={navPlan.vmg}

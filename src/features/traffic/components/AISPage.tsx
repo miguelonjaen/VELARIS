@@ -34,8 +34,8 @@ export const AISPage = ({ shipId }: { shipId: string }) => {
             barco_id: shipId,
             titulo: 'ALERTA AIS',
             descripcion: `Riesgo de colisión con buque ${criticalVessel.name} - CPA Crítico: ${criticalVessel.cpa}NM`,
-            tipo_evento: 'ALERTA_AIS',
             categoria: 'Seguridad',
+            fecha: new Date().toISOString().slice(0, 10),
             created_at: new Date().toISOString(),
           }]);
         } catch (err) {

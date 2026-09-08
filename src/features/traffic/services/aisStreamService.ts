@@ -4,6 +4,11 @@ import { AISTarget } from '../../../types/ais';
 export class AISStreamService {
   private socket: WebSocket | null = null;
 
+  disconnect(): void {
+    this.socket?.close();
+    this.socket = null;
+  }
+
   // MODOS DISPONIBLES:
   // 'LOCAL'
   // 'MEDITERRANEAN'
@@ -43,8 +48,8 @@ export class AISStreamService {
         case 'DYNAMIC':
   return [
     [
-      [35.5, -5.0],
-      [37.5, -2.0]
+      [35.0, -6.0],
+      [38.0, 1.0]
     ]
   ];
 
@@ -58,57 +63,82 @@ export class AISStreamService {
     }
   }
 
+  
+
   connect() {
-    const apiKey = import.meta.env.VITE_AISSTREAM_API_KEY;
+  const apiKey = import.meta.env.VITE_AISSTREAM_API_KEY;
 
-    console.log('API KEY:', apiKey);
-    console.trace('Conectando AISStream...');
-    console.log('Modo AIS:', this.AIS_MODE);
+  console.log('================ AIS DEBUG ================');
+  console.log('AISStream.connect() EJECUTADO');
+  console.log('API KEY PRESENTE:', !!apiKey);
+  console.log('API KEY LENGTH:', apiKey?.length ?? 0);
+  console.log('AIS MODE:', this.AIS_MODE);
+  console.log('BOUNDING BOX:', this.getBoundingBoxes());
+  console.log('============================================');
 
-    this.socket = new WebSocket('wss://stream.aisstream.io/v0/stream');
-
-    this.socket.onopen = () => {
-      console.log('AISStream conectado');
-      console.log('Enviando suscripción AIS...');
-
-      this.socket?.send(
-        JSON.stringify({
-          APIKey: apiKey,
-          BoundingBoxes: this.getBoundingBoxes()
-        })
-      );
-    };
-
-    this.socket.onmessage = async (event) => {
-      try {
-        const text =
-          event.data instanceof Blob
-            ? await event.data.text()
-            : event.data;
-
-        const data = JSON.parse(text);
-
-        console.log('AIS:', data);
-
-      } catch (error) {
-        console.error('AIS PARSE ERROR:', error);
-        console.log('RAW DATA:', event.data);
-      }
-    };
-
-    this.socket.onerror = (err) => {
-      console.error('AIS ERROR', err);
-    };
-
-    this.socket.onclose = (event) => {
-      console.log('AIS desconectado');
-      console.log('Código:', event.code);
-      console.log('Motivo:', event.reason);
-      console.log('Clean:', event.wasClean);
-    };
+  if (!apiKey) {
+    console.error('❌ AISSTREAM: VITE_AISSTREAM_API_KEY NO EXISTE');
+    return;
   }
 
-  disconnect() {
-    this.socket?.close();
+  this.socket = new WebSocket(
+    'wss://stream.aisstream.io/v0/stream'
+  );
+
+  this.socket.onopen = () => {
+    console.log('🟢 AISSTREAM WEBSOCKET CONECTADO');
+
+    const subscription = {
+      APIKey: apiKey,
+      BoundingBoxes: this.getBoundingBoxes()
+    };
+
+    console.log(
+      'AISSTREAM SUSCRIPCIÓN:',
+      JSON.stringify({
+        ...subscription,
+        APIKey: '***'
+      })
+    );
+
+    this.socket?.send(JSON.stringify(subscription));
+
+    console.log('🟢 AISSTREAM SUSCRIPCIÓN ENVIADA');
+  };
+
+  this.socket.onmessage = async (event) => {
+  console.log('📡 AISSTREAM EVENTO RECIBIDO');
+  console.log('EVENT TYPE:', typeof event.data);
+
+  try {
+    const text =
+      event.data instanceof Blob
+        ? await event.data.text()
+        : String(event.data);
+
+    console.log('📡 AISSTREAM RAW:', text);
+
+    const data = JSON.parse(text);
+
+    console.log('🚢 AISSTREAM MENSAJE:', data);
+  } catch (error) {
+    console.error('❌ AIS PARSE ERROR:', error);
   }
+};
+
+  this.socket.onerror = (event) => {
+    console.error('🔴 AISSTREAM WEBSOCKET ERROR:', event);
+  };
+
+  this.socket.onclose = (event) => {
+  console.warn('🟡 AISSTREAM DESCONECTADO');
+  console.log('Código:', event.code);
+  console.log('Motivo:', event.reason);
+  console.log('Clean:', event.wasClean);
+};
+
+this.socket.onerror = (event) => {
+  console.error('🔴 AISSTREAM WEBSOCKET ERROR:', event);
+};
+}
 }

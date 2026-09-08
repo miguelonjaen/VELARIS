@@ -25,8 +25,8 @@ export const EnginePage: React.FC<EnginePageProps> = ({ rpm, temp, voltage, fuel
             barco_id: shipId,
             titulo: 'ALERTA DE MOTOR',
             descripcion: `Nivel crítico de ${issue} detectado: ${isTempCritical ? temp + '°C' : fuel + '%'}`,
-            tipo_evento: 'ALERTA_MOTOR',
             categoria: 'Mantenimiento',
+            fecha: new Date().toISOString().slice(0, 10),
             created_at: new Date().toISOString(),
           }]);
         } catch (err) {

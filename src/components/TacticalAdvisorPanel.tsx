@@ -46,21 +46,21 @@ export const TacticalAdvisorPanel: React.FC<TacticalAdvisorPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ y: -100, opacity: 0, x: '-50%' }}
-          animate={{ y: 0, opacity: 1, x: '-50%' }}
-          exit={{ y: -100, opacity: 0, x: '-50%' }}
-          className={cn(
-            "fixed top-6 left-1/2 -translate-x-1/2 w-full max-w-xl z-[9999]",
-            "px-4 pointer-events-none"
-          )}
-        >
+  initial={{ y: -100, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  exit={{ y: -100, opacity: 0 }}
+  className={cn(
+    "fixed top-24 right-6 w-[min(36rem,calc(100vw-3rem))] z-[9999]",
+    "pointer-events-none"
+  )}
+>
           <div className={cn(
-            "pointer-events-auto",
-            "bg-black/90 backdrop-blur-2xl rounded-[24px] border-2 p-6",
-            "flex flex-col gap-4",
-            getBorderColor(),
-            priority === 'critical' && 'animate-pulse'
-          )}>
+  "pointer-events-auto",
+  "bg-black/90 backdrop-blur-2xl rounded-[24px] border-2 p-6",
+  "flex max-h-[calc(100vh-9rem)] flex-col gap-4 overflow-hidden",
+  getBorderColor(),
+  priority === 'critical' && 'animate-pulse'
+)}>
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <div className="flex items-center gap-2">
@@ -80,7 +80,7 @@ export const TacticalAdvisorPanel: React.FC<TacticalAdvisorPanelProps> = ({
             </div>
 
             {/* Content body */}
-            <div className="flex gap-5 items-start relative overflow-hidden">
+            <div className="flex min-h-0 flex-1 gap-5 items-start relative overflow-y-auto">
               {isProcessing && (
                 <div className="absolute inset-0 z-0 opacity-20 pointer-events-none flex items-center justify-center">
                   <div className="radar-pulse-container">

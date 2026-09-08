@@ -19,14 +19,33 @@ export function createNoGoZoneSVG(
   // TODO: vendrá del PolarEngine
   const noGoAngle = 50;
 
+  const normalizeBearing = (bearing: number): number =>
+    ((bearing % 360) + 360) % 360;
+
+  // The no-go sector is centered on the apparent direction of the wind source.
   const relativeWind =
-    (twd - heading + 360) % 360;
+    normalizeBearing(normalizeBearing(twd) - normalizeBearing(heading));
+
+  // The SVG canvas is north-up; convert the boat-relative wind angle back
+  // to the absolute bearing expected by the renderer.
+  const finalRenderAngle =
+    normalizeBearing(relativeWind + normalizeBearing(heading));
 
   const startAngle =
-    relativeWind - noGoAngle;
+    finalRenderAngle - noGoAngle;
 
   const endAngle =
-    relativeWind + noGoAngle;
+    finalRenderAngle + noGoAngle;
+
+  console.log('[NO-GO ANGLE DEBUG]', {
+    twdFrom: normalizeBearing(twd),
+    heading: normalizeBearing(heading),
+    relativeWind,
+    windTo: normalizeBearing(twd + 180),
+    finalRenderAngle,
+    noGoStart: startAngle,
+    noGoEnd: endAngle
+  });
 
   const start =
     startAngle * Math.PI / 180;

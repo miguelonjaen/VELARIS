@@ -2,12 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { UserProfile, ShipData, VELARISAlarm, AlarmSeverity, SecurityThresholds } from '@/shared/types';
 import { SensorQualityMap } from './lib/sensorQuality';
+import { calculateDistanceNM } from './lib/aisMath';
 
 interface SmartShieldProps {
   userProfile: UserProfile | null;
   supabase: SupabaseClient;
   fleet: ShipData[];
   selectedShipId: string | null;
+  ownShipPosition: { lat: number; lng: number } | null;
+  ownShipSog: number;
+  ownShipCog: number;
   depth: number;
   engineData: { rpm: number; temp: number; voltage: number; fuel: number; water: number };
   aisTargets: any[];
@@ -26,6 +30,9 @@ export const useSmartShield = ({
   supabase,
   fleet,
   selectedShipId,
+  ownShipPosition,
+  ownShipSog,
+  ownShipCog,
   depth,
   engineData,
   aisTargets,
@@ -54,15 +61,15 @@ export const useSmartShield = ({
       const { data, error } = await supabase
         .from('bitacora')
         .select('*')
-        .eq('es_alarma', true)
+        .eq('categoria', 'Seguridad')
         .order('created_at', { ascending: false })
         .limit(50);
       if (!error && data) {
         setAlarmHistory(data.map(log => ({
           id: log.id,
           message: log.descripcion,
-          type: log.tipo_evento?.replace('ALERTA_', '').toLowerCase() || 'unknown',
-          severity: log.nivel_critico || 'warning',
+          type: log.titulo?.replace('ALARMA ', '').toLowerCase() || 'unknown',
+          severity: 'warning',
           timestamp: new Date(log.created_at).getTime(),
           value: parseFloat(log.descripcion.split('Valor: ')[1]) || 0
         })));
@@ -92,11 +99,8 @@ export const useSmartShield = ({
           capitan_id: userProfile.id,
           titulo: `ALARMA ${type.toUpperCase()}`,
           descripcion: `${message} | Valor: ${value}`,
-          tipo_evento: `ALERTA_${type.toUpperCase()}`,
           categoria: 'Seguridad',
-          nivel_critico: severity,
-          es_alarma: true,
-          modulo_origen: 'SmartShield-Watchdog',
+          fecha: new Date().toISOString().slice(0, 10),
           is_auto: true
         }]);
       } catch (err) { console.error("Error persistiendo alarma:", err); }
@@ -124,12 +128,84 @@ export const useSmartShield = ({
         addAlarm('fuel', engineData.fuel < 5 ? 'critical' : 'warning', 'COMBUSTIBLE BAJO: ' + engineData.fuel.toFixed(0) + '%', engineData.fuel);
       } else { removeAlarmByType('fuel'); }
 
-      const proximityTarget = aisTargets.reduce((prev, curr) => ((curr.cpa || Infinity) < (prev?.cpa || Infinity) ? curr : prev), null);
-      if (proximityTarget && proximityTarget.cpa < thresholds.minCPA) {
-        const tcpaText = Number.isFinite(proximityTarget.tcpa) ? ' TCPA ' + proximityTarget.tcpa.toFixed(1) + ' min' : '';
+      console.log('[AIS SHIELD INPUT]', aisTargets.map(target => ({
+        id: target.mmsi ?? target.id ?? 'AIS',
+        targetPosition: { lat: target.lat, lng: target.lng },
+        ownPosition: ownShipPosition,
+        targetSog: target.sog,
+        targetCog: target.cog
+      })));
+
+      const normalizedTargets = aisTargets.map(target => {
+        const distanceNm = ownShipPosition
+          && Number.isFinite(target.lat)
+          && Number.isFinite(target.lng)
+          ? calculateDistanceNM(
+            ownShipPosition.lat,
+            ownShipPosition.lng,
+            target.lat,
+            target.lng
+          )
+          : null;
+        const cpaNm = target.cpaNm ?? target.cpa ?? null;
+        const tcpaMinutes = target.tcpaMinutes ?? target.tcpa ?? null;
+
+        console.log('[AIS SHIELD CALC]', {
+          id: target.mmsi ?? target.id ?? 'AIS',
+          distanceNm,
+          bearing: target.relativeBearing ?? null,
+          relativeBearing: target.relativeBearing ?? null,
+          cpaNm,
+          tcpaMinutes,
+          ownSog: ownShipSog,
+          targetSog: target.sog,
+          ownCog: ownShipCog,
+          targetCog: target.cog,
+          riskLevel: target.riskLevel ?? 'SAFE',
+          threshold: thresholds.minCPA
+        });
+
+        return { target, cpaNm, tcpaMinutes, distanceNm };
+      });
+
+      const proximity = normalizedTargets
+        .filter(item => Number.isFinite(item.cpaNm))
+        .sort((a, b) => (a.cpaNm as number) - (b.cpaNm as number))[0];
+      const proximityTarget = proximity?.target;
+      const proximityCpa = proximity?.cpaNm ?? null;
+      const proximityTcpa = proximity?.tcpaMinutes ?? null;
+      const riskLevel = proximityTarget?.riskLevel;
+      const hasRiskLevel = riskLevel === 'CAUTION'
+        || riskLevel === 'WARNING'
+        || riskLevel === 'CRITICAL';
+      const thresholdExceeded = Number.isFinite(proximityCpa)
+        && (proximityCpa as number) < thresholds.minCPA;
+
+      if (proximityTarget && (hasRiskLevel || thresholdExceeded)) {
+        const tcpaText = Number.isFinite(proximityTcpa) ? ' TCPA ' + proximityTcpa.toFixed(1) + ' min' : '';
         const targetName = proximityTarget.nombre || proximityTarget.name || proximityTarget.mmsi || 'AIS';
-        addAlarm('ais_collision', 'critical', 'PELIGRO COLISION: ' + targetName + '.' + tcpaText, proximityTarget.cpa);
-      } else { removeAlarmByType('ais_collision'); }
+        console.log('[AIS SHIELD ALERT]', {
+          id: proximityTarget.mmsi ?? proximityTarget.id ?? 'AIS',
+          alertLevel: riskLevel === 'CRITICAL' || thresholdExceeded ? 'critical' : 'warning',
+          reason: hasRiskLevel
+            ? `riskLevel=${riskLevel}`
+            : `CPA ${proximityCpa} < ${thresholds.minCPA}`,
+          addedToAlarmStatus: true
+        });
+        addAlarm(
+          'ais_collision',
+          'critical',
+          'PELIGRO COLISION: ' + targetName + '.' + tcpaText,
+          proximityCpa ?? 0
+        );
+      } else {
+        console.log('[AIS SHIELD NO ALERT]', {
+          reason: proximityTarget
+            ? `CPA ${String(proximityCpa)} no supera ${thresholds.minCPA} y riskLevel=${String(riskLevel ?? 'SAFE')}`
+            : 'No hay targets con CPA válido'
+        });
+        removeAlarmByType('ais_collision');
+      }
 
       if (anchorWatch?.anchorTrend === 'drifting') {
         addAlarm('anchor_drag', 'critical', `¡ALERTA GARREO! Deriva: ${anchorWatch.currentAnchorDistance.toFixed(0)}m`, anchorWatch.currentAnchorDistance);
@@ -148,7 +224,7 @@ export const useSmartShield = ({
 
     const interval = setInterval(checkSecurity, 5000);
     return () => clearInterval(interval);
-  }, [depth, engineData, aisTargets, thresholds, isTravesiaActive, isEngineOn, sensorQuality, anchorWatch, addAlarm, removeAlarmByType]);
+  }, [depth, engineData, aisTargets, thresholds, isTravesiaActive, isEngineOn, sensorQuality, anchorWatch, ownShipPosition, ownShipSog, ownShipCog, addAlarm, removeAlarmByType]);
 
   return {
     alarms, alarmHistory, thresholds, setThresholds, 

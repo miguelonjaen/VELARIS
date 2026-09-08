@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { getTargetSpeed, calculateEfficiency } from './polarTable';
 import { calculateBearing } from './lib/utils';
+import { calculateTwa } from './lib/useWeather';
 
 interface TacticalRoutingProps {
   shipPos: { lat: number; lng: number } | null;
@@ -14,7 +15,7 @@ interface TacticalRoutingProps {
 export const useTacticalRouting = ({ shipPos, targetPos, sog, cog, tws, twd }: TacticalRoutingProps) => {
   return useMemo(() => {
     // 1. Rendimiento Polar
-    const twa = Math.abs(((cog - twd + 180 + 360) % 360) - 180);
+    const twa = calculateTwa(twd, cog);
     const targetSpeed = getTargetSpeed(tws, twa);
     const efficiency = calculateEfficiency(sog, targetSpeed);
 
@@ -25,7 +26,7 @@ export const useTacticalRouting = ({ shipPos, targetPos, sog, cog, tws, twd }: T
 
     if (shipPos && targetPos) {
       const bearingToTarget = calculateBearing(shipPos.lat, shipPos.lng, targetPos.lat, targetPos.lng);
-      const relativeTargetAngle = Math.abs(((bearingToTarget - twd + 180 + 360) % 360) - 180);
+      const relativeTargetAngle = calculateTwa(twd, bearingToTarget);
 
       // Zona muerta (No-go zone) detectada: 45 grados a proa del viento
       if (relativeTargetAngle < 45) {

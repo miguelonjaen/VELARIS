@@ -16,6 +16,14 @@ export const AlarmToasts: React.FC<AlarmToastsProps> = ({
   isMuted,
   onMuteToggle,
 }) => {
+  const activeShieldAlarm = alarms.find(alarm => alarm.type === 'ais_collision');
+
+  console.log('[SHIELD AIS UI]', {
+    active: Boolean(activeShieldAlarm),
+    severity: activeShieldAlarm?.severity ?? 'normal',
+    alarmCount: alarms.length
+  });
+
   return (
     <div className="fixed top-1 right-50 z-[10000] flex flex-col gap-3 pointer-events-none">
 
@@ -25,7 +33,11 @@ export const AlarmToasts: React.FC<AlarmToastsProps> = ({
           className={`px-3 py-1 rounded-xl backdrop-blur-md border flex items-center gap-1.5 transition-all ${
             isMuted
               ? 'bg-slate-900/80 border-slate-700 text-slate-400'
-              : 'bg-amber-500/15 border-amber-500/40 text-amber-400 shadow-lg shadow-amber-900/20'
+              : activeShieldAlarm?.severity === 'critical'
+                ? 'bg-red-500/25 border-red-500/70 text-red-300 shadow-lg shadow-red-900/40 animate-pulse'
+                : activeShieldAlarm
+                  ? 'bg-amber-500/25 border-amber-500/60 text-amber-300 shadow-lg shadow-amber-900/30'
+                  : 'bg-amber-500/15 border-amber-500/40 text-amber-400 shadow-lg shadow-amber-900/20'
           }`}
           title={isMuted ? 'Activar Alertas Sonoras' : 'Silenciar Alertas'}
           id="btn-mute-watchdog"

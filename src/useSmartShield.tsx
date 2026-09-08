@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { VELARISAlarm, SecurityThresholds, AlarmSeverity, UserProfile, ShipData } from './types';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { SensorQualityMap } from './lib/sensorQuality';
+import { calculateDistanceNM } from './lib/aisMath';
 
 interface SmartShieldProps {
   userProfile: UserProfile | null;
   supabase: SupabaseClient;
   fleet: ShipData[];
   selectedShipId: string | null;
+  ownShipPosition: { lat: number; lng: number } | null;
   depth: number;
   engineData: { rpm: number; temp: number; voltage: number; fuel: number; water: number };
   aisTargets: any[];
@@ -27,6 +29,7 @@ export const useSmartShield = ({
   supabase,
   fleet,
   selectedShipId,
+  ownShipPosition,
   depth,
   engineData,
   aisTargets,
@@ -56,7 +59,7 @@ export const useSmartShield = ({
       const { data, error } = await supabase
         .from('bitacora')
         .select('*')
-        .eq('es_alarma', true)
+        .eq('categoria', 'Seguridad')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -64,11 +67,10 @@ export const useSmartShield = ({
         setAlarmHistory(data.map(log => ({
           id: log.id || log.created_at,
           message: log.descripcion,
-          type: log.tipo_evento?.replace('ALERTA_', '').toLowerCase() || 'unknown',
-          severity: log.nivel_critico || 'warning',
+          type: log.titulo?.replace('ALARMA ', '').toLowerCase() || 'unknown',
+          severity: 'warning',
           timestamp: new Date(log.created_at).getTime(),
-          value: parseFloat(log.descripcion.split('Valor: ')[1]) || 0,
-          modulo_origen: log.modulo_origen
+          value: parseFloat(log.descripcion.split('Valor: ')[1]) || 0
         })));
       }
     };
@@ -79,17 +81,16 @@ export const useSmartShield = ({
       .channel('bitacora-alarms-shield')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'bitacora', filter: 'es_alarma=eq.true' },
+        { event: 'INSERT', schema: 'public', table: 'bitacora' },
         (payload) => {
           const newLog = payload.new;
           setAlarmHistory(prev => [{
             id: newLog.id || newLog.created_at,
             message: newLog.descripcion,
-            type: newLog.tipo_evento?.replace('ALERTA_', '').toLowerCase() || 'unknown',
-            severity: newLog.nivel_critico || 'warning',
+            type: newLog.titulo?.replace('ALARMA ', '').toLowerCase() || 'unknown',
+            severity: 'warning',
             timestamp: new Date(newLog.created_at).getTime(),
-            value: parseFloat(newLog.descripcion.split('Valor: ')[1]) || 0,
-            modulo_origen: newLog.modulo_origen
+            value: parseFloat(newLog.descripcion.split('Valor: ')[1]) || 0
           }, ...prev].slice(0, 50));
         }
       )
@@ -124,11 +125,8 @@ export const useSmartShield = ({
           capitan_id: userProfile.id,
           titulo: `ALARMA ${type.toUpperCase()}`,
           descripcion: `${message} | Valor: ${value}`,
-          tipo_evento: `ALERTA_${type.toUpperCase()}`,
           categoria: 'Seguridad',
-          nivel_critico: severity,
-          es_alarma: true,
-          modulo_origen: 'SmartShield-Watchdog',
+          fecha: new Date().toISOString().slice(0, 10),
           created_at: new Date().toISOString(),
           is_auto: true
         }]);
@@ -174,12 +172,93 @@ export const useSmartShield = ({
         removeAlarmByType('anchor_drift');
       }
 
-      const proximityTarget = aisTargets.reduce((prev, curr) => ((curr.cpa || Infinity) < (prev?.cpa || Infinity) ? curr : prev), null);
-      if (proximityTarget && proximityTarget.cpa < thresholds.minCPA) {
-        const tcpaText = Number.isFinite(proximityTarget.tcpa) ? ' TCPA ' + proximityTarget.tcpa.toFixed(1) + ' min' : '';
+      console.log('[AIS SHIELD INPUT]', {
+        ownPosition: ownShipPosition,
+        targetCount: aisTargets.length,
+        targets: aisTargets.map(target => ({
+          id: target.mmsi ?? target.id,
+          position: { lat: target.lat, lng: target.lng },
+          cpa: target.cpaNm ?? target.cpa ?? null,
+          tcpa: target.tcpaMinutes ?? target.tcpa ?? null
+        }))
+      });
+      console.log('[SHIELD AIS INPUT]', {
+        ownPosition: ownShipPosition,
+        targets: aisTargets.length
+      });
+      const proximityTarget = aisTargets.reduce((prev, curr) => {
+        const currCpa = curr.cpaNm ?? curr.cpa;
+        const prevCpa = prev ? (prev.cpaNm ?? prev.cpa) : undefined;
+        return Number.isFinite(currCpa) && (!Number.isFinite(prevCpa) || currCpa < prevCpa)
+          ? curr
+          : prev;
+      }, null);
+      const proximityCpa = proximityTarget
+        ? (proximityTarget.cpaNm ?? proximityTarget.cpa)
+        : null;
+      const proximityTcpa = proximityTarget
+        ? (proximityTarget.tcpaMinutes ?? proximityTarget.tcpa)
+        : null;
+      console.log('[AIS SHIELD CALC]', {
+        ownPosition: ownShipPosition,
+        targetPosition: proximityTarget
+          ? { lat: proximityTarget.lat, lng: proximityTarget.lng }
+          : null,
+        distance: ownShipPosition && proximityTarget
+          && Number.isFinite(proximityTarget.lat)
+          && Number.isFinite(proximityTarget.lng)
+          ? calculateDistanceNM(
+            ownShipPosition.lat,
+            ownShipPosition.lng,
+            proximityTarget.lat,
+            proximityTarget.lng
+          )
+          : null,
+        cpa: proximityCpa,
+        tcpa: proximityTcpa,
+        threshold: thresholds.minCPA
+      });
+      const riskLevel = proximityTarget?.riskLevel;
+      const hasRiskLevel = riskLevel === 'CAUTION' || riskLevel === 'WARNING' || riskLevel === 'CRITICAL';
+      const isWithinShieldThreshold = Number.isFinite(proximityCpa) && proximityCpa < thresholds.minCPA;
+      console.log('[SHIELD AIS RISK]', {
+        target: proximityTarget?.mmsi ?? proximityTarget?.id ?? null,
+        riskLevel: riskLevel ?? 'SAFE',
+        cpa: proximityCpa,
+        tcpa: proximityTcpa,
+        shieldThresholdExceeded: isWithinShieldThreshold
+      });
+      if (proximityTarget && (hasRiskLevel || isWithinShieldThreshold)) {
+        const tcpaText = Number.isFinite(proximityTcpa) ? ' TCPA ' + proximityTcpa.toFixed(1) + ' min' : '';
         const targetName = proximityTarget.nombre || proximityTarget.name || proximityTarget.mmsi || 'AIS';
-        addAlarm('ais_collision', 'critical', 'PELIGRO COLISION: ' + targetName + '.' + tcpaText, proximityTarget.cpa);
-      } else { removeAlarmByType('ais_collision'); }
+        console.log('[AIS SHIELD ALERT]', {
+          level: 'critical',
+          reason: `CPA ${proximityCpa.toFixed(2)} NM < ${thresholds.minCPA.toFixed(2)} NM`,
+          target: targetName,
+          cpa: proximityCpa,
+          tcpa: proximityTcpa
+        });
+        console.log('[SHIELD AIS STATE]', {
+          type: 'ais_collision',
+          severity: riskLevel === 'CRITICAL' || isWithinShieldThreshold ? 'critical' : 'warning',
+          visible: true
+        });
+        addAlarm('ais_collision', 'critical', 'PELIGRO COLISION: ' + targetName + '.' + tcpaText, proximityCpa ?? 0);
+      } else {
+        console.log('[AIS SHIELD ALERT]', {
+          level: 'none',
+          reason: proximityTarget
+            ? `CPA ${String(proximityCpa)} NM no supera umbral ${thresholds.minCPA.toFixed(2)} NM`
+            : 'No hay objetivo AIS válido'
+        });
+        console.log('[SHIELD AIS STATE]', {
+          type: 'ais_collision',
+          severity: 'none',
+          visible: false,
+          reason: proximityTarget ? `riskLevel=${String(riskLevel ?? 'SAFE')}` : 'no-target'
+        });
+        removeAlarmByType('ais_collision');
+      }
 
       const badSensor = sensorQuality
         ? Object.values(sensorQuality).find(sensor => sensor.source === 'real' && (sensor.status === 'stale' || sensor.status === 'offline'))
@@ -194,4 +273,3 @@ export const useSmartShield = ({
 
   return { alarms, setAlarms, alarmHistory, thresholds, setThresholds, isAlertMuted, setIsAlertMuted, removeAlarm, removeAlarmByType, addAlarm };
 };
-

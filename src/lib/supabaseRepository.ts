@@ -76,12 +76,12 @@ export const logRepository = {
       titulo,
       destino_planificado,
       tipo_navegacion,
-      registro_tipo,
-      es_alarma,
-      tipo_evento
+      created_at,
+      categoria,
+      descripcion
     `)
     .eq('barco_id', barcoId)
-    .is('fecha_fin', null)
+    .eq('categoria', 'Navegación')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();

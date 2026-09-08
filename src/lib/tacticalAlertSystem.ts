@@ -127,8 +127,7 @@ export function generateTacticalAlerts(telemetry: NavigationTelemetry): Tactical
   const optimalTWA = getOptimalTWA(telemetry.windSpeed, currentConfig);
   if (optimalTWA) {
     // Calculate current TWA
-    const twa = Math.abs(telemetry.windDir - telemetry.cog);
-    const normalizedTWA = twa > 180 ? 360 - twa : twa;
+  const normalizedTWA = Math.abs(((telemetry.windDir - telemetry.cog + 540) % 360) - 180);
 
     const twaDifference = Math.abs(normalizedTWA - optimalTWA);
     

@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import WindLayer from './WindLayer';
+import MarineLayer from './MarineLayer';
+import type { MarineWeatherData } from '../../../lib/useMarineWeather';
+import BoatLayer from "./SailHUD/layers/BoatLayer";
 import { 
   MapContainer, 
   TileLayer,
@@ -14,7 +18,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Gauge, Navigation as NavIcon } from 'lucide-react';
 // import { cn } from '@lib/utils';
-import OwnShipLayer from './OwnShipLayer';
+
 import { calculateBearing } from '../../../navigation/calculateBearing';
 import SailHUDLayer from "./SailHUD/SailHUDLayer";
 if (import.meta.env.DEV) {
@@ -22,7 +26,7 @@ if (import.meta.env.DEV) {
 }
 
 interface TacticalMapProps {
-  center: [number, number];
+  center: [number, number] | null;
   zoom: number;
   shipPosition: { lat: number; lng: number } | null;
   shipName: string;
@@ -40,10 +44,16 @@ interface TacticalMapProps {
   compact?: boolean;
   listaCartas: any[];
   cartasActivas: Record<string, boolean>;
-  isSailSteerWidgetOpen: boolean;
-  twd: number;
-  waypointBearing: number;
-  heading: number; 
+  isSailSteerWidgetOpen?: boolean;
+  twd?: number;
+  waypointBearing?: number;
+  heading?: number;
+  showWind?: boolean;
+  windSpeed?: number;
+  windDirection?: number;
+  marineWeather?: MarineWeatherData | null;
+  showWaves?: boolean;
+  showCurrent?: boolean;
     
 }
 
@@ -102,11 +112,20 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     waypointBearing,
     heading,
     children,
+    showWind,
+windSpeed,
+windDirection,
+    marineWeather,
+    showWaves = false,
+    showCurrent = false,
     compact = false
 }) => {
   const [mapZoom, setMapZoom] = useState(zoom);
+  if (center === null) {
+    return <div className="h-full w-full bg-slate-950" />;
+  }
   // console.log("HUD Heading:", heading);
-  const shipHeading = heading;
+  const shipHeading = heading ?? 0;
 const shipSize = Math.max(
   12,
   Math.min(
@@ -169,16 +188,31 @@ const shipSize = Math.max(
   ) : null
 )}
 
-       <OwnShipLayer
+       
+
+{windSpeed !== undefined && windDirection !== undefined && (
+<WindLayer
   shipPosition={shipPosition}
-  shipName={shipName}
+  windSpeed={windSpeed}
+  windDirection={windDirection}
+  visible={showWind === true}
+/>
+)}
+
+<MarineLayer
+  shipPosition={shipPosition}
+  marineWeather={marineWeather ?? null}
+  showWaves={showWaves}
+  showCurrent={showCurrent}
+/>
+
+<BoatLayer
+  shipPosition={shipPosition}
   heading={shipHeading}
-  iconSize={shipSize}
-  hudMode={isSailSteerWidgetOpen}
 />
 
  
-{isSailSteerWidgetOpen && (
+{isSailSteerWidgetOpen && twd !== undefined && waypointBearing !== undefined && (
   <SailHUDLayer
   shipPosition={shipPosition}
   heading={shipHeading}

@@ -3,6 +3,8 @@
  * Calculates optimal sailing angle to waypoint and detects deviation
  */
 
+import { calculateTwa } from './useWeather';
+
 export interface LaylineData {
   optimalBearing: number;        // True bearing to waypoint (0-359°)
   currentCOG: number;             // Current course over ground
@@ -113,8 +115,7 @@ export function calculateLaylineDeviation(
 
   // Calculate True Wind Angle (TWA) for dynamic threshold
   // TWA = absolute difference between wind direction and COG
-  const twa = Math.abs(windDir - currentCOG);
-  const normalizedTWA = twa > 180 ? 360 - twa : twa;
+  const normalizedTWA = calculateTwa(windDir, currentCOG);
   
   // Use dynamic threshold based on point of sail
   const dynamicThreshold = calculateDynamicDeviationThreshold(normalizedTWA);

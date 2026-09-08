@@ -327,13 +327,16 @@ const FleetManager: React.FC<FleetManagerProps> = ({
               {fleetTab === 'datos' ? (
                 <form onSubmit={saveFichaTecnica} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {[
-                    { n: 'mmsi', l: 'Digital Identity (MMSI)', d: selectedBarco.mmsi, icon: <Radio size={14} /> },
-                    { n: 'ais', l: 'Strategic Transponder (AIS)', d: selectedBarco.ais, icon: <Activity size={14} /> },
-                    { n: 'ultimo_mantenimiento_motor', l: 'Propulsion Service', d: selectedBarco.ultimo_mantenimiento_motor, t: 'date', icon: <Gauge size={14} /> },
-                    { n: 'ultima_revision_balsa', l: 'Life Support System', d: selectedBarco.ultima_revision_balsa, t: 'date', icon: <LifeBuoy size={14} /> },
-                    { n: 'ultima_revision_extintores', l: 'Suppression Systems', d: selectedBarco.ultima_revision_extintores, t: 'date', icon: <ShieldAlert size={14} /> },
-                    { n: 'eslora', l: 'Hull Dimensions (LOA/m)', d: selectedBarco.eslora, t: 'number', icon: <Maximize size={14} /> }
-                  ].map(f => (
+  { n: 'mmsi', l: 'Digital Identity (MMSI)', d: selectedBarco.mmsi, icon: <Radio size={14} /> },
+  { n: 'ais', l: 'Strategic Transponder (AIS)', d: selectedBarco.ais, icon: <Activity size={14} /> },
+  { n: 'ultimo_mantenimiento_motor', l: 'Propulsion Service', d: selectedBarco.ultimo_mantenimiento_motor, t: 'date', icon: <Gauge size={14} /> },
+  { n: 'ultima_revision_balsa', l: 'Life Support System', d: selectedBarco.ultima_revision_balsa, t: 'date', icon: <LifeBuoy size={14} /> },
+  { n: 'ultima_revision_extintores', l: 'Suppression Systems', d: selectedBarco.ultima_revision_extintores, t: 'date', icon: <ShieldAlert size={14} /> },
+  { n: 'eslora', l: 'Hull Dimensions (LOA/m)', d: selectedBarco.eslora, t: 'number', icon: <Maximize size={14} /> },
+  { n: 'puerto_base', l: 'Puerto Base', d: selectedBarco.puerto_base, icon: <Anchor size={14} /> },
+  { n: 'puerto_base_lat', l: 'Latitud Puerto Base', d: selectedBarco.puerto_base_lat, t: 'number', icon: <Navigation size={14} /> },
+  { n: 'puerto_base_lng', l: 'Longitud Puerto Base', d: selectedBarco.puerto_base_lng, t: 'number', icon: <Navigation size={14} /> }
+].map(f => (
                     <div key={f.n} className="space-y-3 group">
                       <div className="flex items-center gap-2 px-2">
                         <span className="text-cyan-500 group-focus-within:animate-pulse">{f.icon}</span>
@@ -679,50 +682,131 @@ const FleetManager: React.FC<FleetManagerProps> = ({
               <input type="date" value={newShip.ultima_revision_balsa || ''} onChange={e => setNewShip({...newShip, ultima_revision_balsa: e.target.value || null})} className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs outline-none focus:border-cyan-500/50" />
             </div>
             <div className="space-y-1 md:col-span-2">
-              <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-2">Foto de la Embarcación</label>
-              <div className="relative group">
-                <input 
-                  id="ship-photo-upload"
-                  type="file" 
-                  accept="image/*"
-                  onChange={e => setShipPhoto(e.target.files?.[0] || null)}
-                  className="hidden"
-                />
-                <label 
-                  htmlFor="ship-photo-upload"
-                  className="flex items-center justify-center gap-3 w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 text-xs cursor-pointer hover:border-cyan-500/50 hover:bg-slate-800 transition-all group-hover:text-cyan-500"
-                >
-                  {shipPhoto ? (
-                    <span className="truncate max-w-[200px] text-cyan-400 font-bold">{shipPhoto.name}</span>
-                  ) : (
-                    <>
-                      <Camera className="w-4 h-4" />
-                      <span>Seleccionar Foto Táctica</span>
-                    </>
-                  )}
-                </label>
-              </div>
-            </div>
-            <div className="space-y-1 md:col-span-2">
-              <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-2">Ubicación Inicial</label>
-              <div className="flex gap-2">
-                <div className="flex-1 px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-white text-[10px] font-mono flex items-center">
-                  {newShip.lat.toFixed(4)}, {newShip.lng.toFixed(4)}
-                </div>
-                <button 
-                  type="button"
-                  onClick={handleCaptureLocation}
-                  className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-cyan-500 rounded-xl border border-slate-700 transition-all active:scale-90"
-                  title="Capturar ubicación actual"
-                >
-                  <Navigation className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="col-span-full pt-4 flex items-center justify-between gap-6 border-t border-white/5 mt-4">
-              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest max-w-xs">
-                La embarcación se registrará bajo su mando único y será visible en su Centro de Control.
-              </p>
+  <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-2">
+    Foto de la Embarcación
+  </label>
+
+  <div className="relative group">
+    <input
+      id="ship-photo-upload"
+      type="file"
+      accept="image/*"
+      onChange={e => setShipPhoto(e.target.files?.[0] || null)}
+      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs outline-none focus:border-cyan-500/50"
+    />
+
+    {shipPhoto && (
+      <div className="mt-2 text-[9px] text-cyan-400 font-mono truncate">
+        {shipPhoto.name}
+      </div>
+    )}
+  </div>
+</div>
+
+<div className="space-y-1 md:col-span-2">
+  <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-2">
+    Puerto Base
+  </label>
+
+  <div className="grid grid-cols-3 gap-2">
+    <input
+      type="text"
+      placeholder="Ej: Puerto de Motril"
+      value={newShip.puerto_base || ''}
+      onChange={e =>
+        setNewShip({
+          ...newShip,
+          puerto_base: e.target.value
+        })
+      }
+      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs outline-none focus:border-cyan-500/50"
+    />
+
+    <input
+      type="number"
+      step="any"
+      placeholder="Latitud"
+      value={newShip.puerto_base_lat ?? ''}
+      onChange={e =>
+        setNewShip({
+          ...newShip,
+          puerto_base_lat:
+            e.target.value === ''
+              ? null
+              : Number(e.target.value)
+        })
+      }
+      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs outline-none focus:border-cyan-500/50"
+    />
+
+    <input
+      type="number"
+      step="any"
+      placeholder="Longitud"
+      value={newShip.puerto_base_lng ?? ''}
+      onChange={e =>
+        setNewShip({
+          ...newShip,
+          puerto_base_lng:
+            e.target.value === ''
+              ? null
+              : Number(e.target.value)
+        })
+      }
+      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs outline-none focus:border-cyan-500/50"
+    />
+  </div>
+</div>
+
+<div className="space-y-1 md:col-span-2">
+  <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-2">
+    </label>
+
+  <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+    <input
+      type="number"
+      step="any"
+      value={newShip.lat}
+      onChange={e =>
+        setNewShip({
+          ...newShip,
+          lat:
+            e.target.value === ''
+              ? 0
+              : Number(e.target.value)
+        })
+      }
+      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs font-mono outline-none focus:border-cyan-500/50"
+      placeholder="Latitud"
+    />
+
+    <input
+      type="number"
+      step="any"
+      value={newShip.lng}
+      onChange={e =>
+        setNewShip({
+          ...newShip,
+          lng:
+            e.target.value === ''
+              ? 0
+              : Number(e.target.value)
+        })
+      }
+      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs font-mono outline-none focus:border-cyan-500/50"
+      placeholder="Longitud"
+    />
+
+    <button
+      type="button"
+      onClick={handleCaptureLocation}
+      className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-cyan-500 rounded-xl border border-slate-700 transition-all active:scale-90"
+      title="Capturar ubicación actual"
+    >
+      <Navigation className="w-4 h-4" />
+    </button>
+  </div>
+</div>
               <div className="flex gap-4">
                 <button 
                   type="button"
@@ -740,7 +824,6 @@ const FleetManager: React.FC<FleetManagerProps> = ({
                   {isUploading ? 'Botando...' : 'Guardar Barco'}
                 </button>
               </div>
-            </div>
           </motion.form>
         </div>
       )}

@@ -55,9 +55,17 @@ export class SimulationService {
 
     private destinationReached = false;
 
+    private lastTickTimestamp: number | null = null;
+
+    private initialPosition: SimulationPosition | null = null;
+
+    private readonly arrivalRadiusNm = 0.05;
+
     public resetNavigation(waypointIndex = 0): void {
         this.waypointIndex = waypointIndex;
         this.destinationReached = false;
+        this.lastTickTimestamp = null;
+        this.initialPosition = null;
     }
 
     public hasReachedDestination(): boolean {
@@ -155,57 +163,157 @@ export class SimulationService {
     }
 
     public tick(input: SimulationTickInput): GPSTelemetry | null {
-        const target = input.route[this.waypointIndex];
+        const now = Date.now();
+        const elapsedSeconds = this.lastTickTimestamp === null
+            ? 0
+            : Number.isFinite(now) && Number.isFinite(this.lastTickTimestamp)
+                ? Math.max(0, (now - this.lastTickTimestamp) / 1000)
+                : 0;
 
-        if (!target) return null;
+        if (Number.isFinite(now)) {
+            this.lastTickTimestamp = now;
+        }
 
-        const targetLat = target[0];
-const targetLng = target[1];
+        if (!this.initialPosition) {
+            this.initialPosition = {
+                lat: input.position.lat,
+                lng: input.position.lng
+            };
+        }
 
-const dLat = targetLat - input.position.lat;
-const dLng = targetLng - input.position.lng;
+        const normalizeBearing = (bearing: number): number => {
+            const normalized = ((bearing % 360) + 360) % 360;
+            return Math.min(359.999, normalized);
+        };
 
-const cog =
-    (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
+        const toRadians = (degrees: number): number => degrees * Math.PI / 180;
+        const toDegrees = (radians: number): number => radians * 180 / Math.PI;
+        const earthRadiusNm = 3440.065;
 
-// Distancia en grados
-const distance = Math.sqrt(dLat * dLat + dLng * dLng);
+        const distanceNm = (
+            fromLat: number,
+            fromLng: number,
+            toLat: number,
+            toLng: number
+        ): number => {
+            const lat1 = toRadians(fromLat);
+            const lat2 = toRadians(toLat);
+            const deltaLat = toRadians(toLat - fromLat);
+            const deltaLng = toRadians(toLng - fromLng);
+            const haversine = Math.sin(deltaLat / 2) ** 2
+                + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+            return earthRadiusNm * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+        };
 
-// Aproximación a millas náuticas
-const dtw = distance * 60;
+        const bearingBetween = (
+            fromLat: number,
+            fromLng: number,
+            toLat: number,
+            toLng: number
+        ): number => {
+            const lat1 = toRadians(fromLat);
+            const lat2 = toRadians(toLat);
+            const deltaLng = toRadians(toLng - fromLng);
+            return normalizeBearing(toDegrees(Math.atan2(
+                Math.sin(deltaLng) * Math.cos(lat2),
+                Math.cos(lat1) * Math.sin(lat2)
+                    - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLng)
+            )));
+        };
 
-// Tiempo estimado
-const etaHours = input.sog > 0 ? dtw / input.sog : 0;
+        const validSog = Number.isFinite(input.sog) && input.sog > 0 ? input.sog : 0;
+        const speedMultiplier = Number.isFinite(input.speedMultiplier) && input.speedMultiplier > 0
+            ? input.speedMultiplier
+            : 1;
+        const simulatedSeconds = elapsedSeconds * speedMultiplier;
+        let nextLat = input.position.lat;
+        let nextLng = input.position.lng;
+        let target = input.route[this.waypointIndex];
 
-        this.destinationReached = false;
+        if (!target) {
+            this.destinationReached = true;
+            return null;
+        }
 
-        if (distance < 0.001) {
+        let dtw = distanceNm(nextLat, nextLng, target[0], target[1]);
+        if (dtw <= this.arrivalRadiusNm) {
             if (this.waypointIndex >= input.route.length - 1) {
                 this.destinationReached = true;
                 return null;
             }
 
             this.waypointIndex += 1;
-            return null;
+            target = input.route[this.waypointIndex];
+            if (!target) {
+                this.destinationReached = true;
+                return null;
+            }
+            dtw = distanceNm(nextLat, nextLng, target[0], target[1]);
         }
 
-        const factor = 0.01 * input.speedMultiplier;
-        const nextLat = input.position.lat + dLat * factor;
-        const nextLng = input.position.lng + dLng * factor;
+        const travelNm = validSog * simulatedSeconds / 3600;
+        if (travelNm > 0 && dtw > 0) {
+            const movementBearing = bearingBetween(nextLat, nextLng, target[0], target[1]);
+            const angularDistance = travelNm / earthRadiusNm;
+            const startLat = toRadians(nextLat);
+            const startLng = toRadians(nextLng);
+            const bearingRadians = toRadians(movementBearing);
+            const destinationLat = Math.asin(
+                Math.sin(startLat) * Math.cos(angularDistance)
+                    + Math.cos(startLat) * Math.sin(angularDistance) * Math.cos(bearingRadians)
+            );
+            const destinationLng = startLng + Math.atan2(
+                Math.sin(bearingRadians) * Math.sin(angularDistance) * Math.cos(startLat),
+                Math.cos(angularDistance) - Math.sin(startLat) * Math.sin(destinationLat)
+            );
 
-       return {
-    type: "GPS",
-    lat: nextLat,
-    lng: nextLng,
-    sog: input.sog,
-    cog,
+            if (travelNm >= dtw) {
+                nextLat = target[0];
+                nextLng = target[1];
+            } else {
+                nextLat = toDegrees(destinationLat);
+                nextLng = toDegrees(destinationLng);
+            }
+        }
 
-    nav: {
-        btw: cog,
-        dtw,
-        xte: 0,
-        eta: etaHours
-    }
-} as any;
+        const btw = bearingBetween(nextLat, nextLng, target[0], target[1]);
+        dtw = distanceNm(nextLat, nextLng, target[0], target[1]);
+        const segmentStart = this.waypointIndex === 0
+            ? this.initialPosition
+            : input.route[this.waypointIndex - 1];
+        const segmentStartLat = segmentStart?.lat ?? segmentStart?.[0] ?? nextLat;
+        const segmentStartLng = segmentStart?.lng ?? segmentStart?.[1] ?? nextLng;
+        const segmentLength = distanceNm(segmentStartLat, segmentStartLng, target[0], target[1]);
+        const xte = segmentLength === 0
+            ? 0
+            : Math.abs(
+                Math.asin(Math.min(1, Math.max(-1,
+                    Math.sin(distanceNm(segmentStartLat, segmentStartLng, nextLat, nextLng) / earthRadiusNm)
+                    * Math.sin(toRadians(
+                        bearingBetween(segmentStartLat, segmentStartLng, nextLat, nextLng)
+                        - bearingBetween(segmentStartLat, segmentStartLng, target[0], target[1])
+                    ))
+                ))) * earthRadiusNm
+            );
+        const etaHours = validSog > 0 ? dtw / validSog : 0;
+        const cog = distanceNm(input.position.lat, input.position.lng, nextLat, nextLng) > 0
+            ? bearingBetween(input.position.lat, input.position.lng, nextLat, nextLng)
+            : btw;
+
+        this.destinationReached = false;
+
+        return {
+            type: "GPS",
+            lat: nextLat,
+            lng: nextLng,
+            sog: validSog,
+            cog,
+            nav: {
+                btw,
+                dtw,
+                xte,
+                eta: etaHours
+            }
+        } as any;
     }
 }

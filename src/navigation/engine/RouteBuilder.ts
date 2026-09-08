@@ -1,9 +1,12 @@
 import { Route } from "./Route";
 import { Waypoint } from "../../tactical/contacts/Waypoint";
+import { CalculatedRoute, RouteCalculator } from "./RouteCalculator";
 
 export class RouteBuilder {
 
     private readonly route: Route;
+
+    private readonly routeCalculator = new RouteCalculator();
 
     constructor(routeName = "Nueva Ruta") {
 
@@ -42,6 +45,12 @@ clear(): void {
     getRoute(): Route {
 
         return this.route;
+
+    }
+
+    calculate(): CalculatedRoute {
+
+        return this.routeCalculator.calculateRoute(this.route);
 
     }
 

@@ -53,12 +53,16 @@ const tcpaDisplay =
 const zoom = map.getZoom();
 
   const predictionMinutes = 30;
-  const riskColor =
-    target.risk === 'danger'
-      ? '#ef4444'
-      : target.risk === 'caution'
-      ? '#f59e0b'
-      : '#22c55e';
+  
+  // Map collision risk levels to colors
+  const riskColorMap: Record<string, string> = {
+    'CRITICAL': '#ef4444',  // Red
+    'WARNING': '#f97316',   // Orange
+    'CAUTION': '#facc15',   // Yellow
+    'SAFE': '#22c55e'       // Green
+  };
+  
+  const riskColor = riskColorMap[target.riskLevel] ?? riskColorMap['SAFE'];
   const distance =
   shipPosition
     ? calculateDistanceNM(
@@ -118,7 +122,7 @@ const startLng =
         cog: target.cog,
         sog: target.sog,
 
-        risk: target.risk ?? "SAFE",
+        risk: target.riskLevel ?? "SAFE",
 
         shipType: target.shipType,
     },
@@ -138,7 +142,7 @@ const startLng =
     CPA: {target.cpa?.toFixed(2) ?? '--'} nm
     <br />
 <br />
-RISK: {target.risk ?? 'SAFE'}
+RISK: {target.riskLevel ?? 'SAFE'}
 
     <br />
     TCPA: {tcpaDisplay}

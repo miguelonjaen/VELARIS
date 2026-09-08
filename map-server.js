@@ -27,6 +27,38 @@ app.use(express.json({ limit: '256kb' }));
 
 let currentChartsPath = "";
 let mbtilesInstances = {};
+let mbtilesSchemes = {};
+
+function resolveChartFile(filename) {
+  if (!currentChartsPath || !fs.existsSync(currentChartsPath)) return null;
+
+  const requestedName = String(filename);
+  const requestedLower = requestedName.toLowerCase();
+  const files = fs.readdirSync(currentChartsPath);
+  const exactName = files.find(file => file.toLowerCase() === requestedLower)
+    || (!requestedLower.endsWith('.mbtiles')
+      ? files.find(file => file.toLowerCase() === `${requestedLower}.mbtiles`)
+      : null);
+
+  return exactName ? path.join(currentChartsPath, exactName) : null;
+}
+
+function readDeclaredScheme(mbtiles, callback) {
+  if (!mbtiles._db || typeof mbtiles._db.get !== 'function') {
+    return callback(null, 'tms');
+  }
+
+  mbtiles._db.get(
+    "SELECT value FROM metadata WHERE name = 'scheme' LIMIT 1",
+    (err, row) => {
+      if (err) return callback(err);
+      const declaredScheme = row && typeof row.value === 'string'
+        ? row.value.trim().toLowerCase()
+        : '';
+      callback(null, declaredScheme === 'xyz' ? 'xyz' : 'tms');
+    }
+  );
+}
 
 // 🛡️ 1. Configuración de Supabase (Llave Maestra)
 // Supabase es opcional para el servidor cartográfico y el chat.
@@ -48,6 +80,7 @@ app.post('/api/settings/charts-path', (req, res) => {
   // Liberar archivos MBTiles previos si existieran
   Object.keys(mbtilesInstances).forEach(key => {
     mbtilesInstances[key].close(() => delete mbtilesInstances[key]);
+    delete mbtilesSchemes[key];
   });
   
   
@@ -57,26 +90,54 @@ app.post('/api/settings/charts-path', (req, res) => {
 // --- SERVIDOR DE TESELAS DINÁMICO ---
 app.get('/tiles/:filename/:z/:x/:y.png', (req, res) => {
   const { filename, z, x, y } = req.params;
-  const mbtilesFile = path.join(currentChartsPath, filename.endsWith('.mbtiles') ? filename : `${filename}.mbtiles`);
+  const zoom = Number.parseInt(z, 10);
+  const column = Number.parseInt(x, 10);
+  const row = Number.parseInt(y, 10);
+  const mbtilesFile = resolveChartFile(filename);
 
-  if (!fs.existsSync(mbtilesFile)) return res.status(404).send('Carta no encontrada en el repositorio');
+  if (!mbtilesFile) return res.status(404).send('Carta no encontrada en el repositorio');
+  if (![zoom, column, row].every(Number.isInteger) || zoom < 0 || column < 0 || row < 0) {
+    return res.status(404).send('Tesela inexistente');
+  }
 
-  const serveTile = (mbtiles) => {
-    mbtiles.getTile(parseInt(z), parseInt(x), parseInt(y), (err, data, headers) => {
-      if (err) return res.status(404).send('Tesela inexistente');
+  const cacheKey = mbtilesFile.toLowerCase();
+  const serveTile = (mbtiles, scheme) => {
+    console.info(`[MBTiles] Tile request: z=${zoom} x=${column} y=${row}`);
+    // @mapbox/mbtiles.getTile() always flips its input Y for TMS storage.
+    // Pass the complementary value for XYZ files so the physical row is unchanged.
+    const libraryRow = scheme === 'xyz'
+      ? Math.pow(2, zoom) - 1 - row
+      : row;
+
+    mbtiles.getTile(zoom, column, libraryRow, (err, data, headers) => {
+      if (err) {
+        if (err.message === 'Tile does not exist') {
+          return res.status(404).send('Tesela inexistente');
+        }
+        return res.status(500).send(err.message);
+      }
+      console.info('[MBTiles] Tile found');
       res.set(headers);
       res.send(data);
     });
   };
 
-  if (!mbtilesInstances[filename]) {
+  if (!mbtilesInstances[cacheKey]) {
     new MBTiles(`${mbtilesFile}?mode=ro`, (err, mbtiles) => {
       if (err) return res.status(500).send(err.message);
-      mbtilesInstances[filename] = mbtiles;
-      serveTile(mbtiles);
+      readDeclaredScheme(mbtiles, (schemeErr, scheme) => {
+        if (schemeErr) {
+          return mbtiles.close(() => res.status(500).send(schemeErr.message));
+        }
+        mbtilesInstances[cacheKey] = mbtiles;
+        mbtilesSchemes[cacheKey] = scheme;
+        console.info(`[MBTiles] Chart loaded: ${path.basename(mbtilesFile)}`);
+        console.info(`[MBTiles] Scheme: ${scheme}`);
+        serveTile(mbtiles, scheme);
+      });
     });
   } else {
-    serveTile(mbtilesInstances[filename]);
+    serveTile(mbtilesInstances[cacheKey], mbtilesSchemes[cacheKey]);
   }
 });
 
@@ -102,15 +163,40 @@ app.get('/api/charts', async (req, res) => {
       const metadata = await new Promise((resolve) => {
         const mbtilesFile = path.join(currentChartsPath, file);
         new MBTiles(`${mbtilesFile}?mode=ro`, (err, mbtiles) => {
-          if (err) return resolve({ name: file });
+          if (err) return resolve({
+            name: file,
+            filename: file,
+            bounds: null,
+            center: null,
+            minzoom: null,
+            maxzoom: null,
+            format: null,
+            scheme: null
+          });
           mbtiles.getInfo((infoErr, info) => {
             mbtiles.close(() => {
-              if (infoErr) resolve({ name: file });
-              else resolve({
+              if (infoErr) {
+                return resolve({
+                  name: file,
+                  filename: file,
+                  bounds: null,
+                  center: null,
+                  minzoom: null,
+                  maxzoom: null,
+                  format: null,
+                  scheme: null
+                });
+              }
+
+              resolve({
                 name: file,
-                bounds: info.bounds, // [minLon, minLat, maxLon, maxLat]
-                minzoom: info.minzoom,
-                maxzoom: info.maxzoom
+                filename: file,
+                bounds: info.bounds ?? null,
+                center: info.center ?? null,
+                minzoom: info.minzoom ?? null,
+                maxzoom: info.maxzoom ?? null,
+                format: info.format ?? null,
+                scheme: info.scheme ?? null
               });
             });
           });

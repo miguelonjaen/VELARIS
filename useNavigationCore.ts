@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { calculateDistanceNM, calculateBearing } from '@lib/utils';
 import { calculateLaylineDeviation, calculateAnchorDrift, calculateETA } from '@lib/laylineCalculator';
-import { VELARISAlarm, AlarmSeverity, ProcessedWeather, ShipData } from '@/shared/types';
+import { VELARISAlarm, AlarmSeverity, ShipData } from '@/shared/types';
+import { WeatherData } from '@/lib/useWeather';
 
 interface NavigationCoreProps {
   shipPosition: { lat: number; lng: number } | null;
-  weather: ProcessedWeather;
+  weather: WeatherData | null;
   selectedShip: ShipData | null;
   simulatedSog: number;
   isTravesiaActive: boolean;
@@ -105,7 +106,7 @@ export const useNavigationCore = ({
     } else {
       removeAlarmByType('layline_deviation');
     }
-  }, [isTravesiaActive, navPlan.targetCoords, shipPosition, simulatedSog, weather.windDir, selectedShip, addAlarm, removeAlarmByType]);
+  }, [isTravesiaActive, navPlan.targetCoords, shipPosition, simulatedSog, weather?.twd, selectedShip, addAlarm, removeAlarmByType]);
 
   // Monitor de Alarma de Garreo (Anchor Watch)
   useEffect(() => {

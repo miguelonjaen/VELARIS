@@ -1,6 +1,7 @@
 export interface VesselState {
   lat: number;
   lng: number;
+  
   sog: number; // Speed Over Ground
   cog: number; // Course Over Ground
   hdg: number; // Heading
@@ -73,6 +74,9 @@ export interface ShipData {
   manual_pdf?: string;
   lat?: number;
   lng?: number;
+   puerto_base?: string | null;
+  puerto_base_lat?: number | null;
+  puerto_base_lng?: number | null;
   tipo_barco?: string;
   type?: string;
   cog?: number;
@@ -137,8 +141,8 @@ export interface ProcessedWeather {
   humidity: number;
   pressure: number;
   visibility: number;
-  waveHeight: number;
-  tideLevel: number;
+  waveHeight?: number;
+  tideLevel?: number;
 }
 
 export interface WeatherResponse {

@@ -1,6 +1,7 @@
 import React from "react";
 import { Marker } from "react-leaflet";
 import L from "leaflet";
+import { createBoatSVG } from "./utils/createBoatSVG";
 
 import { createInstrumentGeometry } from "./utils/InstrumentGeometry";
 import { createCompassRoseSVG } from "./utils/createCompassRoseSVG";
@@ -79,7 +80,11 @@ createPerformanceArcSVG(
   // COMPASS ROSE
   // ============================================================
 
-  const compass = createCompassRoseSVG(g, heading);
+  const compass = createCompassRoseSVG(g, 0);
+  const boat = createBoatSVG(
+  g,
+  heading
+);
 
   // ============================================================
   // LUBBER LINE
@@ -189,6 +194,8 @@ ${performanceZone}
 ${tacticalCore}
 
 ${compass}
+
+${boat}
 
 ${lubber}
 

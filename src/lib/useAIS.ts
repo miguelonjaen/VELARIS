@@ -14,8 +14,8 @@ export const useAIS = (ownShip: { lat: number; lng: number; sog: number; cog: nu
       { mmsi: '224555444', nombre: 'PESCA SUR V', tipo: 'Pesquero', lat: ownShip.lat + 0.005, lng: ownShip.lng - 0.015, cog: 120, sog: 3, status: 'Navegando' },
       { mmsi: '224000111', nombre: 'LADY BLUE', tipo: 'Yate', lat: ownShip.lat + 0.01, lng: ownShip.lng - 0.005, cog: 10, sog: 0, status: 'Fondeado' },
     ];
-    setTargets(initialTargets);
-  }, []);
+    setTargets(prev => prev.length > 0 ? prev : initialTargets);
+  }, [ownShip]);
 
   // Bucle de actualización cada 3 segundos
   useEffect(() => {

@@ -19,8 +19,8 @@ export const DepthPage = ({ currentDepth, depthHistory, shipId }: any) => {
               barco_id: shipId,
               titulo: 'ALERTA DE SEGURIDAD',
               descripcion: `Baja profundidad detectada: ${currentDepth.toFixed(1)} metros`,
-              tipo_evento: 'ALERTA_SEGURIDAD',
               categoria: 'Seguridad',
+              fecha: new Date().toISOString().slice(0, 10),
               created_at: new Date().toISOString(),
           }]);
         } catch (err) {
