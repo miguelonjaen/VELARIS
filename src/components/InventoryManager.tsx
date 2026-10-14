@@ -619,3 +619,5 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
 };
 
 export default InventoryManager;
+
+\n

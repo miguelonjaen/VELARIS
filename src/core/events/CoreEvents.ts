@@ -1,5 +1,4 @@
 export type CoreEventName =
-    | "core.position.updated"
     | "core.motion.updated"
     | "core.depth.updated"
     | "core.wind.updated"
@@ -23,16 +22,6 @@ export interface CoreEventEnvelope<
     readonly source: CoreUpdateSource;
     readonly payload: TPayload;
 }
-
-export interface PositionUpdatedPayload {
-    readonly lat: number;
-    readonly lng: number;
-}
-
-export type PositionUpdatedEvent = CoreEventEnvelope<
-    "core.position.updated",
-    PositionUpdatedPayload
->;
 
 export interface MotionUpdatedPayload {
     readonly sog: number;
@@ -110,9 +99,7 @@ export type AisUpdatedEvent = CoreEventEnvelope<
     AisUpdatedPayload
 >;
 
-export type CoreEvent =
-    | PositionUpdatedEvent
-    | MotionUpdatedEvent
+export type CoreEvent =    | MotionUpdatedEvent
     | DepthUpdatedEvent
     | WindUpdatedEvent
     | NavigationUpdatedEvent

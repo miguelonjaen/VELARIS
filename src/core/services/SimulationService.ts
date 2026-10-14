@@ -1,4 +1,4 @@
-import { GPSTelemetry } from "@/core/types/TelemetryMessage";
+﻿import { GPSTelemetry } from "@/core/types/TelemetryMessage";
 
 export interface SimulationPosition {
     readonly lat: number;
@@ -18,11 +18,6 @@ export interface EngineSimulationData {
     readonly voltage: number;
     readonly fuel: number;
     readonly water: number;
-}
-
-export interface NavigationSimulationData {
-    readonly xte: number;
-    readonly dtw: number;
 }
 
 export interface SimulatedAisTarget {
@@ -139,16 +134,7 @@ export class SimulationService {
             cog: Math.floor(Math.random() * 360)
         };
     }
-
-    public simulateNavigationData<T extends NavigationSimulationData>(previousData: T): T {
-        return {
-            ...previousData,
-            xte: (previousData.xte || 0) + (Math.random() - 0.5) * 0.01,
-            dtw: Math.max(0, (previousData.dtw || 0) - 0.001)
-        };
-    }
-
-    public simulateEngineData(
+public simulateEngineData(
         previousData: EngineSimulationData,
         isTravesiaActive: boolean
     ): EngineSimulationData {
@@ -276,29 +262,9 @@ export class SimulationService {
             }
         }
 
-        const btw = bearingBetween(nextLat, nextLng, target[0], target[1]);
-        dtw = distanceNm(nextLat, nextLng, target[0], target[1]);
-        const segmentStart = this.waypointIndex === 0
-            ? this.initialPosition
-            : input.route[this.waypointIndex - 1];
-        const segmentStartLat = segmentStart?.lat ?? segmentStart?.[0] ?? nextLat;
-        const segmentStartLng = segmentStart?.lng ?? segmentStart?.[1] ?? nextLng;
-        const segmentLength = distanceNm(segmentStartLat, segmentStartLng, target[0], target[1]);
-        const xte = segmentLength === 0
-            ? 0
-            : Math.abs(
-                Math.asin(Math.min(1, Math.max(-1,
-                    Math.sin(distanceNm(segmentStartLat, segmentStartLng, nextLat, nextLng) / earthRadiusNm)
-                    * Math.sin(toRadians(
-                        bearingBetween(segmentStartLat, segmentStartLng, nextLat, nextLng)
-                        - bearingBetween(segmentStartLat, segmentStartLng, target[0], target[1])
-                    ))
-                ))) * earthRadiusNm
-            );
-        const etaHours = validSog > 0 ? dtw / validSog : 0;
         const cog = distanceNm(input.position.lat, input.position.lng, nextLat, nextLng) > 0
             ? bearingBetween(input.position.lat, input.position.lng, nextLat, nextLng)
-            : btw;
+            : 0;
 
         this.destinationReached = false;
 
@@ -308,12 +274,9 @@ export class SimulationService {
             lng: nextLng,
             sog: validSog,
             cog,
-            nav: {
-                btw,
-                dtw,
-                xte,
-                eta: etaHours
-            }
-        } as any;
+            timestamp: new Date().toISOString()
+        };
     }
 }
+
+\n

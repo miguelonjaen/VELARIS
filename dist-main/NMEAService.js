@@ -7,7 +7,7 @@ exports.NMEAService = void 0;
 const serialport_1 = require("serialport");
 const parser_readline_1 = require("@serialport/parser-readline");
 const main_1 = __importDefault(require("electron-log/main"));
-const NMEAParser_1 = require("./src/core/services/NMEAParser");
+const NMEAParser_1 = require("./src/core/services/NMEAParser.js");
 class NMEAService {
     onData;
     activePort = null;

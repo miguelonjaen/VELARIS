@@ -29,6 +29,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { LogEntry, UserProfile, ShipData } from '../shared/types';
 import { cn } from '../lib/utils';
+import { useVelarisLink } from '../features/link/velarisLinkStore';
+import { isLinkEntryId, linkEventToLogEntry } from '../features/link/linkLogbook';
 
 interface LogbookProps {
   userProfile: UserProfile;
@@ -59,6 +61,16 @@ const Logbook: React.FC<LogbookProps> = ({
   isEngineOn,
   setIsEngineOn
 }) => {
+  // Eventos de VELARIS Link (tracks de VELARISdroid) guardados localmente: se muestran junto a la
+  // bitácora de Supabase sin mezclarse con su estado ni con sus operaciones de edición y borrado.
+  const linkState = useVelarisLink();
+  const visibleEntries = React.useMemo(() => {
+    if (linkState.events.length === 0) return logEntries;
+    const linked = linkState.events.map((event) => linkEventToLogEntry(event, selectedShipId));
+    const time = (entry: LogEntry) => new Date(entry.created_at || entry.fecha).getTime() || 0;
+    return [...logEntries, ...linked].sort((a, b) => time(b) - time(a));
+  }, [logEntries, linkState.events, selectedShipId]);
+
   const today = new Date();
   const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   
@@ -417,8 +429,8 @@ const Logbook: React.FC<LogbookProps> = ({
     return 'bg-slate-800 text-slate-400 border-slate-700';
   };
 
-  const filteredEntries = logEntries.filter(entry => {
-    const isAuto = entry.titulo === 'Evento Automático' || entry.titulo === 'Despacho de Travesía' || entry.titulo === 'Cierre de Travesía' || entry.titulo === 'Cambio de Guardia';
+  const filteredEntries = visibleEntries.filter(entry => {
+    const isAuto = (isLinkEntryId(entry.id) && entry.is_auto === true) || entry.titulo === 'Evento Automático' || entry.titulo === 'Despacho de Travesía' || entry.titulo === 'Cierre de Travesía' || entry.titulo === 'Cambio de Guardia';
     const isAlert = (entry.categoria || '').toLowerCase().includes('seguridad') || (entry.titulo || '').toLowerCase().includes('alerta');
     
     if (filter === 'manual') return !isAuto;
@@ -640,6 +652,11 @@ const Logbook: React.FC<LogbookProps> = ({
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
+                                {isLinkEntryId(entry.id) ? (
+                                  <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-fuchsia-950/40 text-fuchsia-400" title="Recibido de VELARISdroid por VELARIS Link; guardado en este equipo">
+                                    Link · local
+                                  </span>
+                                ) : (
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button 
                                     onClick={() => {
@@ -659,6 +676,7 @@ const Logbook: React.FC<LogbookProps> = ({
                                     <Trash2 className="w-3 h-3" />
                                   </button>
                                 </div>
+                                )}
                               </div>
                             </div>
 

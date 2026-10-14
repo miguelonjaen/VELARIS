@@ -1,54 +1,83 @@
-# Progress
+﻿# Progress
 
-**What works**
+## Completed
 
-- ✅ **Centrado inicial del chart (2026-08-23)**
-  - Mapa se centra en posición real del barco activo al iniciar
-  - Centrado al cambiar `selectedShipId` (una sola vez por barco)
-  - NO hay centrado continuo cuando shipPosition cambia
-  - Usuario puede desplazar libremente el mapa
-  - Funcionalidad MBTILES (cambios de sector) preservada
-  - Validación: shipPosition debe tener lat/lng finitos, `selectedShipId` debe existir
-  - File: `src/App.tsx` línea 1573 (useEffect con dependencias `[selectedShipId]`)
-  - Build: ✅ npm run build OK | TypeScript: ✅ tsc --noEmit OK
+### VELARIS CORE base
+- `VelarisCore` centralizes vessel, navigation, environment, route and alert state.
+- Partial updates are supported.
+- Typed synchronous Core events are implemented.
+- Core contracts reuse existing domain types where appropriate.
+- Production integration is now established through `Application`.
 
-- ✅ **FASE 1: Collision Prediction Engine (2026-08-23)**
-  - Pure math motor en `src/core/navigation/CollisionPrediction.ts` (240 líneas, sin dependencias)
-  - Calcula: CPA, TCPA (hours), TCA (Date), closingSpeed, relativeBearing, isApproaching
-  - ENU (East-North-Up) local coordinate projection
-  - 6/6 tests determinísticos PASSED
-  - Build: ✅ | TypeScript: ✅
+### Navigation architecture
+- `NavigationEngine` implemented as a pure/stateless calculation engine.
+- `NavigationAdapter` connects Core state to NavigationEngine.
+- Navigation metrics are written back to `VelarisCore.navigation`.
+- NavigationEngine calculates DTW, BTW, XTE and ETA.
+- HDG and COG remain independent.
 
-- ✅ **FASE 2: Collision Risk Engine (2026-08-23)**
-  - Motor de clasificación en `src/core/navigation/CollisionRiskEngine.ts` (193 líneas)
-  - Thresholds: CAUTION (2.0 NM, 30 min) | WARNING (1.0 NM, 20 min) | CRITICAL (0.5 NM, 10 min)
-  - Lógica de gates: NOT approaching → TCPA null → closingSpeed → threshold checks
-  - 10/10 tests determinísticos PASSED
-  - Build: ✅ | TypeScript: ✅
+### Telemetry architecture
+- `TelemetryService` bridges telemetry into `VelarisCore`.
+- Simulation telemetry follows the same pipeline.
+- `SimulationService` is a source/simulator of telemetry, not a navigation engine.
+- Legacy navigation simulation data generation was removed.
 
-- ✅ **FASE 3: AIS Integration + Visual Risk (2026-08-23)**
-  - Adaptador en `src/core/navigation/AisCollisionRisk.ts` (185 líneas)
-  - Integración: AISStream → aisTargets[] → enrichAisTargetsWithRisk() → FleetMarkers
-  - Color mapping: SAFE (#22c55e) | CAUTION (#facc15) | WARNING (#f97316) | CRITICAL (#ef4444)
-  - Updated `src/App.tsx`: tacticalAisTargets usa nuevo adaptador
-  - Updated `src/features/traffic/renderers/FleetMarkers.tsx`: riskLevel-based colors
-  - 12/12 tests determinísticos PASSED
-  - Build: ✅ (2,303 modules transformed) | TypeScript: ✅ (0 errors)
-  - Validación: Missing data/OwnShip → defaults to SAFE (no crash)
+### Phase 3A
+- SimulationService cleanup completed.
+- Removed `NavigationSimulationData`.
+- Removed `simulateNavigationData()`.
+- Removed obsolete navigation simulation code from `App.tsx`.
+- Verified `SimulationService.tick()` emits GPS telemetry without `nav`.
 
-**Not started / backlog**
+### Phase 3B — Simulation End-to-End
+Validated end-to-end flow:
 
-- ⏳ **FASE 4: Tactical Alerts & HUD** (user approval required)
-  - Alarmas sonoras
-  - TacticalHUD integration
-  - Panel CPA/TCPA
-  - COLREG recognition
-  - Maneuver automation
-  - Real-time messaging
+`SimulationService → TelemetryService → VelarisCore → NavigationAdapter → NavigationEngine`
 
-**Known issues**
+Validation:
+- Simulation E2E: **23/23 passed**
+- `npm run lint`: **PASS**
+- Full Vitest: **283 tests passed**
+- Full Vitest: 4 pre-existing empty test files report `No test suite found`
+- `npm run build`: **PASS**
 
-- ⚠️ Refs a Motril (36.7215, -3.5235) existen legítimamente en PORT_LIST, rutas, datos históricos — no son centros funcionales del mapa
-- ⚠️ FleetMarkers aún tiene otras referencias a `target.risk` (línea ~1151 en App.tsx enriquecimiento individual) — compatible por compatibilidad hacia atrás
+Validated behaviours:
+- GPS telemetry reaches Core.
+- COG reaches Core from simulation.
+- Heading is not derived from COG.
+- Independent HEADING telemetry updates heading without changing COG.
+- Navigation metrics are calculated by NavigationEngine.
+- ETA scales correctly with SOG.
+- Simulation advances through waypoints.
+- Simulation waypoint progression does not mutate Core active waypoint index.
+- No `gpsMessage.nav`.
+- No duplicated NAV calculation in SimulationService.
+- No SimulationService/NavigationEngine loop.
+- HUD/UI can obtain navigation metrics from `core.getState().navigation`.
 
-_Keep bullets factual and small; link issues or PRs when useful._
+## Known non-blocking issues
+
+- Four empty legacy test files are still detected by Vitest:
+  - `CollisionPrediction.test.ts`
+  - `CollisionRiskEngine.test.ts`
+  - `ColregRulesEngine.test.ts`
+  - `GeoMath.test.ts`
+- These files currently have no test suite. Do not modify them as part of Phase 3 unless explicitly planned.
+- Vite reports configuration/deprecation warnings.
+- Production build reports a large JS chunk.
+- Browserslist database is stale.
+
+These are separate technical-debt items and do not block Phase 3.
+
+## Next
+
+Audit remaining domain-state ownership in `App.tsx` and determine the next incremental migration.
+
+Priority:
+1. Identify remaining duplicated canonical state.
+2. Identify remaining direct telemetry/navigation ownership in App/UI.
+3. Select one bounded migration.
+4. Add/update tests.
+5. Validate lint, relevant tests and build.
+
+Avoid mass refactoring.

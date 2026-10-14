@@ -1,10 +1,10 @@
-export interface MissionState {
+﻿export interface MissionState {
 
     isTravesiaActive: boolean;
 
     startTime?: Date | null;
 
-    navigationMode: string;
+    navigationMode: string | null;
 
     currentOfficer?: {
         nombre: string;

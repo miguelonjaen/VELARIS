@@ -1,11 +1,11 @@
 import { supabase } from '../supabaseClient';
-import { UserProfile, ShipData, LogEntry, VesselStatus } from '@/shared/types';
+import { UserProfile, ShipData, LogEntry, VesselStatus, AdminUserView } from '@/shared/types';
 
 export const userRepository = {
   async getProfile(userId: string) {
     return supabase
       .from('usuarios')
-      .select(`*, suscripciones (plan_tactico)`)
+      .select(`*, suscripciones (plan_nivel, plan_tactico, activa)`)
       .eq('id', userId)
       .single();
   },
@@ -15,8 +15,63 @@ export const userRepository = {
   async updateAvatar(userId: string, url: string) {
     return supabase.from('usuarios').update({ foto_perfil_url: url }).eq('id', userId);
   },
-  async getAllUsers() {
-    return supabase.from('usuarios').select('*');
+  async getAllUsers(): Promise<{ data: AdminUserView[] | null; error: any }> {
+    const response = await supabase
+      .from('usuarios')
+      .select(`
+        *,
+        suscripciones (plan_nivel, plan_tactico, activa)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (response.error || !response.data) {
+      return { data: null, error: response.error };
+    }
+
+    const now = Date.now();
+    const users = response.data.map((user: any) => {
+      const lastSeen = user.last_seen_at ? new Date(user.last_seen_at).getTime() : 0;
+      const presence_status = lastSeen > now - 2 * 60 * 1000
+        ? 'conectado'
+        : lastSeen > now - 30 * 60 * 1000
+          ? 'activo recientemente'
+          : 'desconectado';
+      const subscription = user.suscripciones?.[0];
+
+      return {
+        ...user,
+        name: user.nombre || user.nombre_completo || user.email,
+        role: user.rol,
+        total_barcos: 0,
+        barcos_list: [],
+        plan_tactico: subscription?.plan_tactico || 'basico',
+        suscripcion_activa: subscription?.activa ?? user.suscripcion_activa,
+        cuenta_activa: user.cuenta_activa ?? user.suscripcion_activa,
+        presence_status
+      } as AdminUserView;
+    });
+
+    return { data: users, error: null };
+  },
+  async updateUserPlan(userId: string, plan: 'gratis' | 'plata' | 'oro', active: boolean) {
+    return supabase.rpc('admin_update_user_plan', {
+      target_user_id: userId,
+      target_plan: plan,
+      target_tactical_plan: null,
+      target_active: active
+    });
+  },
+  async updateUserAccount(userId: string, active: boolean) {
+    return supabase.rpc('admin_update_user_account', {
+      target_user_id: userId,
+      target_active: active
+    });
+  },
+  async touchCurrentUserAccess() {
+    return supabase.rpc('touch_current_user_access');
+  },
+  async recordCurrentUserAccess() {
+    return supabase.rpc('record_current_user_access');
   }
 };
 

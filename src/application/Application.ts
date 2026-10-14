@@ -10,8 +10,9 @@ import { TelemetryService } from "@/core/services/TelemetryService";
 import { SimulationService } from "@/core/services/SimulationService";
 import { CoreEvents } from "@/core/events/CoreEvents";
 import { SynchronousCoreEvents } from "@/core/events/SynchronousCoreEvents";
-import { NavigationService } from "@/core/services/NavigationService";
 import { ElectronTelemetryAdapter } from "@/platform/telemetry/ElectronTelemetryAdapter";
+import { VelarisCore } from "@/core/VelarisCore";
+import { NavigationAdapter } from "@/core/adapters/NavigationAdapter";
 
 
 
@@ -36,39 +37,45 @@ export class Application {
 
     public readonly simulation: SimulationService;
 
-    public readonly navigation: NavigationService;
 
+    public readonly core: VelarisCore;
+
+    public readonly navigationAdapter: NavigationAdapter;
 
 
     constructor() {
+        const events = new SynchronousCoreEvents();
 
-    const events = new SynchronousCoreEvents();
+        this.events = events;
 
-    this.events = events;
+        this.state = new CoreState(events);
 
-    this.state = new CoreState(events);
+        this.contacts = new ContactRepository(
+            new MemoryRepository<Contact>(contact => contact.id)
+        );
 
-    this.contacts = new ContactRepository(
-        new MemoryRepository<Contact>(contact => contact.id)
-    );
+        this.tactical = new TacticalEngine(
+            this.contacts
+        );
 
-    this.tactical = new TacticalEngine(
-        this.contacts
-    );
+        this.ais = new AISService(this.contacts);
 
-    this.ais = new AISService(this.contacts);
+        this.core = new VelarisCore();
 
-    this.telemetry = new TelemetryService(this.state);
+        this.telemetry = new TelemetryService(this.state, this.core);
 
-    this.electronTelemetry = new ElectronTelemetryAdapter(this.telemetry);
+        this.electronTelemetry = new ElectronTelemetryAdapter(this.telemetry);
 
-    this.navigation = new NavigationService(this.events);
 
-    this.simulation = new SimulationService();
+        this.simulation = new SimulationService();
 
-    this.rendering = new RenderingEngine();
+        this.rendering = new RenderingEngine();
 
-}
+        this.navigationAdapter = new NavigationAdapter({
+            core: this.core
+        });
+        this.navigationAdapter.start();
+    }
     
 
 }

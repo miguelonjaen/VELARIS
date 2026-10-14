@@ -1,65 +1,109 @@
-# Active context
+﻿# Active context
 
-**Current focus**: FASE 3 - Integración AIS real + motores de riesgo — COMPLETADO ✅
+**Current focus:** VELARIS CORE — Phase 3A/3B completed and validated.
 
-**Task**: Conectar sistemas de predicción (Phase 1/2) con datos AIS reales, colorear contactos según riesgo.
+## Current architecture
 
-**Solution implemented**:
-- **Files created**:
-  - `src/core/navigation/AisCollisionRisk.ts` — Adaptador de transformación AIS + cálculo de riesgo
-  - `src/core/navigation/AisCollisionRisk.test.ts` — 12 tests deterministas para validar integración
+The canonical domain flow is:
 
-- **Architecture**:
-  - `AISStream` (WebSocket) → `aisTargets[]` → `enrichAisTargetsWithRisk()` → `tacticalAisTargets[]` → `FleetMarkers.tsx`
-  - Phase 1: `calculateCollisionPrediction()` (CPA/TCPA/closingSpeed)
-  - Phase 2: `calculateCollisionRisk()` (SAFE/CAUTION/WARNING/CRITICAL)
-  - Adaptador: `calculateAisTargetRisk()` genera `riskLevel` para cada target
+SimulationService / NMEA / other telemetry source
+    ↓
+TelemetryService
+    ↓
+VelarisCore
+    ↓
+NavigationAdapter
+    ↓
+NavigationEngine
+    ↓
+navigation metrics
+    ↓
+VelarisCore / UI
 
-- **Color mapping**:
-  ```
-  SAFE     → #22c55e  (Green)
-  CAUTION  → #facc15  (Yellow)
-  WARNING  → #f97316  (Orange)
-  CRITICAL → #ef4444  (Red)
-  ```
+### Core ownership
 
-- **Integration points**:
-  1. **App.tsx**: `tacticalAisTargets` useMemo updated to use `enrichAisTargetsWithRisk()`
-  2. **FleetMarkers.tsx**: 
-     - Changed `target.risk` → `target.riskLevel`
-     - Updated color mapping logic
-     - Popup displays new risk levels
+- `VelarisCore` is the central canonical domain state.
+- `NavigationEngine` is pure/stateless and calculates navigation metrics.
+- `NavigationAdapter` connects `VelarisCore` state with `NavigationEngine`.
+- `TelemetryService` is the telemetry bridge into `VelarisCore`.
+- `SimulationService` is a telemetry/source simulator, NOT a second navigation engine.
+- `CoreState` remains as temporary compatibility infrastructure.
 
-- **Data flow**:
-  - OwnShip: `shipPosition.lat/lng + app.state.sog/cog` → Vessel object
-  - Target: `target.lat/lng + target.sog/target.cog` → Vessel object
-  - Both → `calculateCollisionPrediction()` (PHASE 1)
-  - Prediction → `calculateCollisionRisk()` (PHASE 2)
-  - Result: `{ riskLevel, cpaNm, tcpaMinutes, closingSpeed, isApproaching, relativeBearing }`
+### Simulation
 
-- **Error handling**:
-  - Missing OwnShip → defaults to SAFE
-  - Missing target position/motion → defaults to SAFE, no crash
-  - Invalid coordinates (NaN/Infinity) → defaults to SAFE
-  - Original target properties preserved via spread operator
+`SimulationService.tick()` generates GPS telemetry containing:
 
-**Test Results**: ✅ 12/12 PASSED
-  1-4. Basic scenarios (head-on, moderate distance, receding, parallel)
-  5-7. Robustness (missing data, invalid data, no own ship)
-  8-9. OwnShip changes, time-based TCPA
-  10. Alternative property name ("lon" vs "lng")
-  11. Batch enrichment
-  12. Color mapping verification
+- position
+- SOG
+- COG
+- timestamp
 
-**Build/TypeScript**: ✅ CLEAN
-  - TypeScript: 0 errors
-  - Build: SUCCESS (2,303 modules transformed)
-  - No breaking changes to existing code
+It does NOT generate:
 
-**PHASE 4 BLOCKED UNTIL**: User approval
-- Tactical HUD integration
-- Real-time alerts
-- COLREG recommendations
-- Maneuver automation
+- BTW
+- DTW
+- XTE
+- ETA
+- `nav`
 
-_Tarea completada: 2026-08-23 18:03_
+Internal distance/DTW calculations used only to move the simulated vessel are allowed and are not emitted as navigation metrics.
+
+### Navigation
+
+Navigation metrics are calculated by `NavigationEngine` and exposed through:
+
+`core.getState().navigation`
+
+The navigation pipeline is responsible for:
+
+- distance / DTW
+- bearing / BTW
+- signed XTE
+- ETA
+- waypoint-related navigation calculations
+
+Simulation waypoint progression must not mutate `VelarisCore.activeWaypointIndex`.
+
+### HDG / COG
+
+COG comes from GPS telemetry.
+
+Heading is an independent telemetry value.
+
+The system must NOT derive heading from COG automatically.
+
+## Phase 3 validation
+
+Phase 3A — SimulationService / telemetry architecture:
+- Completed.
+- Legacy `NavigationSimulationData` removed.
+- `simulateNavigationData()` removed.
+- Legacy navigation simulation block removed from `App.tsx`.
+- `SimulationService` no longer emits `gpsMessage.nav`.
+
+Phase 3B — Simulation End-to-End:
+- Completed.
+- `SimulationService → TelemetryService → VelarisCore → NavigationAdapter → NavigationEngine` validated.
+- Integration test: 23/23 passed.
+- `npm run lint`: passed.
+- Full Vitest run: 283 tests passed.
+- 4 empty legacy test files still report `No test suite found`; these are pre-existing and are not part of the Phase 3 failure analysis.
+- `npm run build`: passed.
+
+## Important architectural rule
+
+Do not reintroduce navigation calculations into `SimulationService`, `TelemetryService`, `App.tsx`, React hooks, or UI components.
+
+Navigation calculations belong to `NavigationEngine`.
+
+Do not create additional `VelarisCore` instances from React/components/hooks/pages.
+
+Application owns the production Core instance.
+
+## Next work
+
+Before starting a new functional phase, audit remaining ownership boundaries in `App.tsx` and identify the next safe incremental migration.
+
+Do not perform a mass rewrite.
+Do not modify unrelated functionality.
+Prefer small, testable migrations with explicit ownership.

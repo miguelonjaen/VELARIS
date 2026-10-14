@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Clock, Battery, Activity } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import { VelarisLinkStatusChip } from '../../link/VelarisLinkPanel';
 
 interface StatusBarProps {
   vmg: number;
@@ -56,6 +57,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({ vmg, gpsStatus, battery, s
           <span className="text-[10px] font-black uppercase">VMG:</span>
           <span className="text-[11px] font-mono font-bold">{vmg.toFixed(1)} <span className="text-[8px] opacity-60">KT</span></span>
         </div>
+        <div className="h-4 w-px bg-white/10" />
+        <VelarisLinkStatusChip />
       </div>
 
       <div className="absolute left-1/2 -translate-x-1/2">

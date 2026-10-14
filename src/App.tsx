@@ -77,7 +77,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 import { supabase } from './supabaseClient';
 import { userRepository, vesselRepository, logRepository } from './lib/supabaseRepository';
-import { db, auth, onAuthStateChanged, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from './firebase';
 import { getTripLogger, TripLogger } from './lib/tripLogger';
 import { useNavigationCore } from '../useNavigationCore';
 import { TacticalTerminal } from './components/TacticalTerminal';
@@ -102,7 +101,6 @@ import { GPXRoute, GPXWaypoint } from './lib/gpxParser';
 import { UserProfile, ShipData, LogEntry, VesselStatus, InventoryItem, VELARISAlarm, SecurityThresholds, AlarmSeverity } from '@/shared/types';
 import { calculateTwa } from './lib/useWeather';
 import { useWeatherCore } from './lib/useWeatherCore';
-// ... (rest of imports remains same, just fixing firebase ones)
 import AuthScreen from './components/AuthScreen';
 import TestSubidaFoto from './components/TestSubidaFoto';
 import Logbook from './components/Logbook';
@@ -139,7 +137,7 @@ import { updateRealSensors } from "@/telemetry/helpers/SensorQualityUpdater";
 import { AboutVelarisModal } from './shared/components/AboutVelarisModal';
 import NavPage from "./features/navigation/components/nav/NavPage";
 import { RouteBuilder } from "./navigation/engine/RouteBuilder";
-import { RouteManager } from "./navigation/engine/RouteManager";
+import { Route } from "./navigation/engine/Route";
 import { getSimulationPath } from "./navigation/engine/RouteSimulationAdapter";
 import { ManeuverEngineAdapter } from "./navigation/engine/ManeuverEngineAdapter";
 import { ManeuverEvent } from "./navigation/engine/ManeuverEngine";
@@ -164,12 +162,12 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
 
   useEffect(() => {
     const onOverlayAdd = (e: any) => {
-      //console.log(`⚓ Capa seleccionada en el puente: ${e.name}`); // Para ver el nombre exacto en consola
+      //console.log(`? Capa seleccionada en el puente: ${e.name}`); // Para ver el nombre exacto en consola
 
       // 1. Limpiamos el nombre de la capa que viene del click para comparar de forma flexible
       // Quitamos la palabra "Carta:", espacios y lo pasamos a minúsculas
       console.log('AIS API:', import.meta.env.VITE_AISSTREAM_API_KEY);
-      console.log(`⚓ Capa seleccionada en el puente: ${e.name}`);
+      console.log(`? Capa seleccionada en el puente: ${e.name}`);
       const cleanEventName = e.name.replace(/carta:/i, '').trim().toLowerCase();
 
       // 2. Buscamos la carta en tu array de datos
@@ -186,7 +184,7 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
         const maxLat = parseFloat(chart.bounds[3]);
 
         if (!isNaN(minLat) && !isNaN(minLon) && !isNaN(maxLat) && !isNaN(maxLon)) {
-          console.log(`🗺️ [ÉXITO] Saltando a los límites de la carta local: ${chart.name}`);
+          console.log(`??? [ÉXITO] Saltando a los límites de la carta local: ${chart.name}`);
 
           // 3. Forzamos el encuadre inmediato sin animaciones intermedias
           map.fitBounds([[minLat, minLon], [maxLat, maxLon]], {
@@ -200,10 +198,10 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
       }
 
 
-      // 🛟 FALLBACK DE RESPALDO: Si la comparación falló pero sabemos que es una carta local,
+      // ?? FALLBACK DE RESPALDO: Si la comparación falló pero sabemos que es una carta local,
       // o si estás probando la app, el mapa te lleva directo a tu zona base de Motril
       if (cleanEventName.includes('motril') || cleanEventName.includes('carta')) {
-        console.log("⚓ Aplicando ruta directa por defecto a la costa de Motril.");
+        console.log("? Aplicando ruta directa por defecto a la costa de Motril.");
         map.setView([36.72, -3.52], 13, { animate: false });
       }
       // 1. FORZADO DE ZOOM NÁUTICO: Desactivamos cualquier intento de Leaflet
@@ -219,7 +217,7 @@ const ChartCenteringHandler = ({ charts }: { charts: any[] }) => {
       //   map.setView([vesselPosition.lat, vesselPosition.lng], 14, { animate: false });
       // }
 
-      console.log("🎯 Vista protegida: Bloqueado el salto al mapa mundial.");
+      console.log("?? Vista protegida: Bloqueado el salto al mapa mundial.");
     };
 
     map.on('overlayadd', onOverlayAdd);
@@ -250,14 +248,14 @@ const SUPABASE_URL = "https://tgcamohglqnrhbpxjyjr.supabase.co";
 const SUPABASE_ANON_KEY_VAL = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1eGtlZm5zY3Z6enJkc21ja2p0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTUwMDIsImV4cCI6MjA5MDQzMTAwMn0.b02TnDBYir17BtzA79pec1EO8Lkf3CYJsMGD4ldAXbE";
 
 
-const MapBoundsHandler = ({ path, showControl, showSystems }: { path: [number, number][], showControl: boolean, showSystems: boolean }) => {
+const MapBoundsHandler = ({ path, showControl, showSystems, navigationMode }: { path: [number, number][], showControl: boolean, showSystems: boolean, navigationMode?: string | null }) => {
   const map = useMap();
   useEffect(() => {
     setTimeout(() => map.invalidateSize(), 300);
   }, [showControl, showSystems, map]);
 
   useEffect(() => {
-    if (path && path.length >= 2) {
+    if (navigationMode !== "Ruta" && path && path.length >= 2) {
       try {
         const bounds = L.latLngBounds(path);
         const paddingLeft = showControl ? 380 : 80;
@@ -316,8 +314,49 @@ const MapEventsHandler: React.FC<MapEventsHandlerProps> = ({
 
 function App() {
   const routeBuilder = useRef(new RouteBuilder()).current;
-const routeManager = useRef(new RouteManager()).current;
-  // 🏷️ [ETIQUETA: CARTAS LOCALES - ESTADOS Y EFECTOS]
+
+
+const getCoreSimulationRoute = () => {
+    const activeRoute = app.core.getState().activeRoute;
+
+    if (!activeRoute) {
+        return null;
+    }
+
+    const route = new Route(
+        activeRoute.id,
+        activeRoute.name ?? "Ruta"
+    );
+
+    route.waypoints = activeRoute.waypoints.map(waypoint =>
+        new Waypoint(
+            waypoint.id,
+            waypoint.position.lat,
+            waypoint.position.lng
+        )
+    );
+
+    return route;
+};
+
+  const syncRouteToCore = useCallback(() => {
+    const route = routeBuilder.getRoute();
+
+    app.core.setRoute({
+      id: route.id,
+      name: route.name,
+      waypoints: route.waypoints.map(waypoint => ({
+        id: waypoint.id,
+        name: waypoint.name,
+        position: {
+          lat: waypoint.lat,
+          lng: waypoint.lng
+        }
+      }))
+    });
+  }, [routeBuilder]);
+
+  // ??? [ETIQUETA: CARTAS LOCALES - ESTADOS Y EFECTOS]
   const [cartasPath, setCartasPath] = useState<string>('Buscando entorno VELARIS...');
   // --- CONTROL DE NOVEDADES (CHANGELOG) ---
   const [showChangelog, setShowChangelog] = useState(false);
@@ -404,7 +443,12 @@ const routeManager = useRef(new RouteManager()).current;
 
 
   const [listaCartas, setListaCartas] = useState<any[]>([]);
-  // 🗺️ CONTROL DE CAPAS DESPLEGABLES
+  const [encOverlay, setEncOverlay] = useState<{
+    filename: string;
+    bounds: [number, number, number, number];
+  } | null>(null);
+  const [encOverlayStatus, setEncOverlayStatus] = useState<'loading' | 'ready' | 'empty' | 'error' | 'zoom-in'>('ready');
+  // ??? CONTROL DE CAPAS DESPLEGABLES
   const [isLayersMenuOpen, setIsLayersMenuOpen] = useState<boolean>(false);
   const [cartasActivas, setCartasActivas] = useState<Record<string, boolean>>({});
   const [cartasOpacity, setCartasOpacity] = useState<Record<string, number>>({});
@@ -431,7 +475,7 @@ const routeManager = useRef(new RouteManager()).current;
         setCartasOpacity(ops);
         setCartasActivas(actives);
       })
-      .catch(err => console.info("🛰️ Servidor de cartas MBTiles offline o no iniciado:", err));
+      .catch(err => console.info("??? Servidor de cartas MBTiles offline o no iniciado:", err));
   }, []);
 
   useEffect(() => {
@@ -490,7 +534,7 @@ const routeManager = useRef(new RouteManager()).current;
           console.error('Error al obtener la ruta de cartas por defecto:', err);
         });
     }
-  }, []); // 👈 Aquí termina de forma limpia el useEffect en la línea 230
+  }, []); // ?? Aquí termina de forma limpia el useEffect en la línea 230
 
   const handleCambiarCarpeta = async () => {
     try {
@@ -576,7 +620,6 @@ const routeManager = useRef(new RouteManager()).current;
   }, []);
 
   useEffect(() => {
-    const unsubscribePosition = app.events.subscribe("core.position.updated", refreshCoreTelemetry);
     const unsubscribeMotion = app.events.subscribe("core.motion.updated", refreshCoreTelemetry);
     const unsubscribeDepth = app.events.subscribe("core.depth.updated", refreshCoreTelemetry);
     const unsubscribeWind = app.events.subscribe("core.wind.updated", refreshCoreTelemetry);
@@ -603,7 +646,6 @@ const routeManager = useRef(new RouteManager()).current;
     });
 
     return () => {
-      unsubscribePosition();
       unsubscribeMotion();
       unsubscribeDepth();
       unsubscribeWind();
@@ -611,6 +653,44 @@ const routeManager = useRef(new RouteManager()).current;
       maneuverEngineAdapter.reset();
     };
   }, [maneuverEngineAdapter, refreshCoreTelemetry]);
+
+  const updateNavDataFromCore = useCallback(() => {
+    const nav = app.core.getState().navigation;
+    const activeRoute = app.core.getState().activeRoute;
+    const activeWaypointIndex = nav.activeWaypointIndex;
+    const waypointName = activeRoute?.waypoints?.[activeWaypointIndex]?.name ?? '---';
+
+    setNavData(prev => ({
+      ...prev,
+      btw: nav.bearingToWaypoint ?? 0,
+      dtw: nav.distanceToWaypoint ?? 0,
+      xte: nav.crossTrackError ?? 0,
+      waypointName,
+      eta: nav.etaSeconds != null && nav.etaSeconds > 0
+        ? `${(nav.etaSeconds / 3600).toFixed(1)} h`
+        : "--:--"
+    }));
+  }, []);
+
+  useEffect(() => {
+    const unsubscribeRouteChanged = app.core.subscribe("RouteChanged", () => updateNavDataFromCore());
+    const unsubscribeActiveWaypointChanged = app.core.subscribe("ActiveWaypointChanged", () => updateNavDataFromCore());
+    const unsubscribeNavigationStarted = app.core.subscribe("NavigationStarted", () => updateNavDataFromCore());
+    const unsubscribeNavigationStopped = app.core.subscribe("NavigationStopped", () => updateNavDataFromCore());
+    const unsubscribeVesselPositionChanged = app.core.subscribe("VesselPositionChanged", () => updateNavDataFromCore());
+    const unsubscribeSpeedChanged = app.core.subscribe("SpeedChanged", () => updateNavDataFromCore());
+
+    updateNavDataFromCore();
+
+    return () => {
+      unsubscribeRouteChanged();
+      unsubscribeActiveWaypointChanged();
+      unsubscribeNavigationStarted();
+      unsubscribeNavigationStopped();
+      unsubscribeVesselPositionChanged();
+      unsubscribeSpeedChanged();
+    };
+  }, [updateNavDataFromCore]);
 
   const shipPosition = app.state.shipPosition ?? DEFAULT_SHIP_POSITION;
   const setShipPosition = useCallback((value: React.SetStateAction<{ lat: number; lng: number } | null>) => {
@@ -859,12 +939,9 @@ useEffect(() => {
   const handleUndoWaypoint = () => {
 
     routeBuilder.removeLastWaypoint();
+    syncRouteToCore();
 
-    routeManager.setRoute(
-        routeBuilder.getRoute()
-    );
-
-    const route = routeManager.getRoute();
+    const route = getCoreSimulationRoute();
 
     if (!route) return;
 
@@ -880,25 +957,20 @@ useEffect(() => {
 };
 
   const handleClearRoute = () => {
-
     routeBuilder.clear();
+    syncRouteToCore();
 
-    routeManager.setRoute(
-        routeBuilder.getRoute()
-    );
-
-    const simulationRoute = getSimulationPath(routeBuilder.getRoute());
-    const path = simulationRoute.valid ? simulationRoute.path : [];
+    const route = getCoreSimulationRoute();
+    const simulationRoute = route ? getSimulationPath(route) : null;
+    const path = simulationRoute?.valid ? simulationRoute.path : [];
 
     setRutaActiva(path);
     setPlannedPath(path);
     setCurrentPath(path);
 
     console.log("ROUTE CLEARED");
-
 };
-
-  const prevMessagesLength = useRef(0);
+const prevMessagesLength = useRef(0);
 
   useEffect(() => {
     // Only auto-scroll if we have new messages and auto-scroll is enabled
@@ -933,7 +1005,7 @@ useEffect(() => {
       const portFound = PORT_LIST.find(p => order.toLowerCase().includes(p.name.toLowerCase()));
       
       if (portFound) {
-        console.log('⚓ Puerto detectado:', portFound.name);
+        console.log('? Puerto detectado:', portFound.name);
         updateNavigationPlan(portFound.coords, portFound.name);
       } else {
         // Intento de extraer coordenadas si el Almirante las proporciona
@@ -1000,7 +1072,7 @@ useEffect(() => {
       3. **Advertencia de Seguridad**: Basada en ficha técnica vs entorno real.
     `.trim();
 
-    console.log("⚓ Iniciando orden táctica:", order);
+    console.log("? Iniciando orden táctica:", order);
     const userMsg = { id: crypto.randomUUID(), role: 'user', text: order, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     // Persistir mensaje de usuario en Supabase
@@ -1052,7 +1124,7 @@ console.log('FUNCTION CALLS RECIBIDAS:', functionCalls);
           .catch(err => console.error("Error updating AI message log:", err));
       }
     } catch (error) {
-      console.error("❌ Error AI:", error);
+      console.error("? Error AI:", error);
       const errorMsg = { id: crypto.randomUUID(), role: 'ai', text: "Error de conexión con el núcleo estratégico.", isError: true, timestamp: new Date() };
       setMessages(prev => [...prev, errorMsg]);
 
@@ -1147,7 +1219,7 @@ if (selectedShipId) {
 
       if (s.id === selectedShipId) {
 
-        console.log("✅ MATCH");
+        console.log("? MATCH");
         console.log("ACTUALIZANDO:", s.nombre);
         console.log("COG recibido:", data.cog);
 
@@ -1164,19 +1236,6 @@ if (selectedShipId) {
     })
   );
 
-}
-
-if ((data as any).nav) {
-  setNavData(prev => ({
-    ...prev,
-    btw: (data as any).nav.btw,
-    dtw: (data as any).nav.dtw,
-    xte: (data as any).nav.xte,
-    eta:
-      (data as any).nav.eta > 0
-        ? `${(data as any).nav.eta.toFixed(1)} h`
-        : "--:--"
-  }));
 }
 
 break;
@@ -1293,59 +1352,6 @@ break;
     }
   };
 
-  // Firestore sync effect - Robust Auth Check
-  /*
-  useEffect(() => {
-    // Escucha de autenticación de Firebase para asegurar permisos correctos
-    const authUnsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser) {
-        console.log("🔒 Usuario no autenticado en Firebase.");
-        return;
-      }
-
-      console.log("🔓 Usuario autenticado en Firebase:", firebaseUser.email);
-
-      // Path: /artifacts/${APP_ID}/public/data/intel_logs/{logId}
-      const q = query(
-        collection(db, `artifacts/${APP_ID}/public/data/intel_logs`)
-      );
-      
-      const unsubscribeSnap = onSnapshot(q, (snapshot) => {
-        try {
-          const dbMessages = snapshot.docs.map(doc => ({
-            id: doc.id,
-            role: doc.data().role,
-            text: doc.data().content,
-            timestamp: doc.data().timestamp?.toDate() || new Date()
-          })).sort((a, b) => (a.timestamp?.getTime() || 0) - (b.timestamp?.getTime() || 0));
-
-          if (dbMessages.length > 0) {
-            setMessages(prev => {
-              const prevIds = new Set(prev.map(m => m.id));
-              const newMsgs = dbMessages.filter(m => !prevIds.has(m.id));
-              return [...prev, ...newMsgs];
-            });
-          }
-        } catch (err) {
-          console.error("Error procesando snapshots de Intel:", err);
-        }
-      }, (error) => {
-        // Manejador de errores robusto según requerimientos
-        const errInfo = {
-          error: error instanceof Error ? error.message : String(error),
-          authInfo: { userId: auth.currentUser?.uid, email: auth.currentUser?.email },
-          operationType: 'list',
-          path: `artifacts/react-example/public/data/intel_logs`
-        };
-        console.error('Firestore Tactical Error: ', JSON.stringify(errInfo));
-      });
-
-      return () => unsubscribeSnap();
-    });
-
-    return () => authUnsubscribe();
-  }, [isLoggedIn]);
-  */
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [captainPreferences] = useState<string>("Siempre mantente a 1 milla de la costa si es posible. Prioriza rutas con calado superior a 5 metros.");
   const [advisorMessage, setAdvisorMessage] = useState('');
@@ -1362,7 +1368,10 @@ break;
   const [pendingTravesiaData, setPendingTravesiaData] = useState<any>(null);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [tipoTravesia, setTipoTravesia] = useState<any>(null);
-  const [navigationMode, setNavigationMode] = useState<any>(null);
+  type NavigationMode = 'Libre' | 'Ruta' | 'IA' | 'Planificada';
+
+const [navigationMode, setNavigationMode] =
+    useState<NavigationMode | null>(null);
   const [lastTacticalAlerts, setLastTacticalAlerts] = useState<string>('');
   const [currentPath, setCurrentPath] = useState<[number, number][]>([]);
   const [aiBriefing, setAiBriefing] = useState<string | null>(null);
@@ -1458,7 +1467,6 @@ const gpsMessage = app.simulation.tick({
         lng: gpsMessage.lng,
         sog: gpsMessage.sog,
         cog: gpsMessage.cog,
-        nav: gpsMessage.nav,
         positionChanged: previousSimulationPosition === null
           ? null
           : gpsMessage.lat !== previousSimulationPosition.lat
@@ -1475,7 +1483,7 @@ const gpsMessage = app.simulation.tick({
       console.groupEnd();
 
       if (app.simulation.hasReachedDestination()) {
-        console.log('🏁 DESTINO ALCANZADO');
+        console.log('?? DESTINO ALCANZADO');
         setIsTravesiaActive(false);
         handleEndTravesia();
         return;
@@ -1585,7 +1593,7 @@ const gpsMessage = app.simulation.tick({
           waterLevel: engineData.water
         }));
 
-        notifyAdmiral('📊 Logger de Travesía: Grabación iniciada. Historial guardado cada 5 minutos.', 'info');
+        notifyAdmiral('?? Logger de Travesía: Grabación iniciada. Historial guardado cada 5 minutos.', 'info');
       } else if (tripLoggerRef.current.getCurrentSession()) {
         // End current session
         const endedSession = await tripLoggerRef.current.endSession();
@@ -1595,7 +1603,7 @@ const gpsMessage = app.simulation.tick({
           const metrics = TripLogger.calculateMetrics(endedSession);
           if (metrics) {
             notifyAdmiral(
-              `📊 Travesía completada.\nDistancia: ${metrics.totalDistance.toFixed(1)} NM\nVelocidad promedio: ${metrics.avgSOG.toFixed(1)} kts\nDuración: ${metrics.durationHours.toFixed(1)}h`,
+              `?? Travesía completada.\nDistancia: ${metrics.totalDistance.toFixed(1)} NM\nVelocidad promedio: ${metrics.avgSOG.toFixed(1)} kts\nDuración: ${metrics.durationHours.toFixed(1)}h`,
               'info'
             );
           }
@@ -1754,7 +1762,7 @@ const gpsMessage = app.simulation.tick({
   };
 
   const generateMorningReport = async () => {
-    console.log('🚫 MORNING REPORT EJECUTADO');
+    console.log('?? MORNING REPORT EJECUTADO');
     if (!userProfile || !selectedShipId) {
       console.warn('Morning Report: No profile or ship selected yet.');
       return;
@@ -2501,7 +2509,7 @@ const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New stat
         });
       }
     } catch (error) {
-      console.warn("📡 ENLACE METEO INESTABLE: Activando protocolos tácticos secundarios.", error);
+      console.warn("?? ENLACE METEO INESTABLE: Activando protocolos tácticos secundarios.", error);
       // Fallback: Datos sintéticos coherentes para evitar fallos en la UI
       setWeather({
         temp: 22,
@@ -2779,7 +2787,7 @@ if (activeShip) {
     titulo: string,
     descripcion: string,
     categoria: string = 'Técnico',
-    tipo_navegacion?: 'Libre' | 'Planificada',
+    tipo_navegacion?: 'Libre' | 'Ruta' | 'IA' | 'Planificada',
     destino_planificado?: string,
     isAuto: boolean = true,
     rutaId?: string,
@@ -2800,7 +2808,7 @@ if (activeShip) {
       recentLogEntries.current[logKey] &&
       now - recentLogEntries.current[logKey] < 600000 // 10 min
     ) {
-      console.log('⏭️ Log duplicado ignorado:', titulo);
+      console.log('?? Log duplicado ignorado:', titulo);
       return;
     } else {
       recentLogEntries.current[logKey] = now;
@@ -2867,7 +2875,29 @@ if (activeShip) {
     }
   };
 
-  const saveTechnicalEvent = (titulo: string, descripcion: string, isAuto: boolean = true) => {
+  const logNavigationModeSelection = async (mode: 'Libre' | 'Ruta' | 'IA') => {
+    const modeTitles: Record<'Libre' | 'Ruta' | 'IA', string> = {
+        Libre: 'NAVEGACIÓN LIBRE',
+        Ruta: 'NAVEGACIÓN POR RUTA',
+        IA: 'NAVEGACIÓN INTELIGENTE'
+    };
+
+    const modeDescriptions: Record<'Libre' | 'Ruta' | 'IA', string> = {
+        Libre: 'Selección del modo de navegación libre. Velaris informa sobre la navegación sin establecer una derrota.',
+        Ruta: 'Selección del modo de navegación por ruta. El usuario define la derrota mediante puntos de paso y Velaris proporciona guía y asesoramiento táctico.',
+        IA: 'Selección del modo de navegación inteligente. Velaris calculará y adaptará la derrota a partir del destino y de las condiciones de navegación.'
+    };
+
+    await saveTechnicalLog(
+        `Modo seleccionado: ${modeTitles[mode]}`,
+        modeDescriptions[mode],
+        'Navegación',
+        mode,
+        undefined,
+        true
+    );
+};
+const saveTechnicalEvent = (titulo: string, descripcion: string, isAuto: boolean = true) => {
     saveTechnicalLog(titulo, descripcion, 'Técnico', undefined, undefined, isAuto);
   };
 
@@ -3062,7 +3092,7 @@ if (activeShip) {
       const result = await callGemini(prompt, undefined, true);
       if (!result.route || !Array.isArray(result.route)) {
 
-  console.log('⚠️ Gemini no disponible. Generando derrota local.');
+  console.log('?? Gemini no disponible. Generando derrota local.');
 
 if (shipPosition && targetDestination) {
 
@@ -3072,7 +3102,7 @@ if (shipPosition && targetDestination) {
   );
 
   console.log(
-    '🧭 RUTA LOCAL GENERADA:',
+    '?? RUTA LOCAL GENERADA:',
     localRoute.length,
     'waypoints'
   );
@@ -3142,7 +3172,7 @@ return;
       targetDestination
     );
 
-    console.log('🧭 FALLBACK LOCAL:', localRoute.length, 'waypoints');
+    console.log('?? FALLBACK LOCAL:', localRoute.length, 'waypoints');
 
     setPlannedPath(localRoute);
     setAdvisorMessage('Ruta local generada (Gemini desactivado)');
@@ -3166,7 +3196,7 @@ return;
       );
 
       notifyAdmiral(
-        `📍 Ruta Importada: "${route.name}"\n` +
+        `?? Ruta Importada: "${route.name}"\n` +
         `${route.waypoints.length} waypoints | ${route.distance?.toFixed(1) || '?'} NM\n` +
         `Navegando a: ${firstWp.name}`,
         'info'
@@ -3176,7 +3206,7 @@ return;
 
   const handleNextWaypoint = async () => {
     if (!currentRoute || waypointIndex >= currentRoute.waypoints.length - 1) {
-      notifyAdmiral('✓ Ruta completada', 'info');
+      notifyAdmiral('? Ruta completada', 'info');
       setCurrentRoute(null);
       return;
     }
@@ -3203,7 +3233,7 @@ return;
     );
 
     notifyAdmiral(
-      `➤ Siguiente waypoint: ${nextWp.name}\n` +
+      `? Siguiente waypoint: ${nextWp.name}\n` +
       `Distancia: ${distance.toFixed(1)} NM | ETA: ${eta ? new Date(eta).toLocaleTimeString() : '--:--'}`,
       'info'
     );
@@ -3211,14 +3241,14 @@ return;
 
   const handleActivateAnchorWatch = () => {
     if (!shipPosition) {
-      notifyAdmiral('⚓ Error: Posición no disponible', 'warning');
+      notifyAdmiral('? Error: Posición no disponible', 'warning');
       return;
     }
 
     setAnchorPosition(shipPosition);
     setIsAnchorWatchActive(true);
     notifyAdmiral(
-      `⚓ Anchor Watch ACTIVO\n` +
+      `? Anchor Watch ACTIVO\n` +
       `Posición de fondeo: ${shipPosition.lat.toFixed(4)}°, ${shipPosition.lng.toFixed(4)}°\n` +
       `Umbral: 200m`,
       'info'
@@ -3230,7 +3260,7 @@ return;
     setAnchorPosition(null);
     removeAlarmByType('anchor_drift');
     removeAlarmByType('anchor_drag');
-    notifyAdmiral('⚓ Anchor Watch DESACTIVADO', 'info');
+    notifyAdmiral('? Anchor Watch DESACTIVADO', 'info');
   };
 
   const toggleAnchorWatch = () => {
@@ -3258,7 +3288,7 @@ return;
   };
 
   const handleStartTravesia = async (
-  modo: "Libre" | "IA",
+    modo: "Libre" | "Ruta" | "IA",
   levels?: {
     fuel_level: number;
     water_level: number;
@@ -3278,9 +3308,9 @@ return;
   });
 };
 
-  const proceedWithStartTravesia = async (modo: 'Libre' | 'IA', levels?: { fuel_level: number; water_level: number }, startingOfficerId?: string) => {
+  const proceedWithStartTravesia = async (modo: 'Libre' | 'Ruta' | 'IA', levels?: { fuel_level: number; water_level: number }, startingOfficerId?: string) => {
     console.trace(
-  "🚀 proceedWithStartTravesia() ejecutado", { modo, levels, startingOfficerId });
+  "?? proceedWithStartTravesia() ejecutado", { modo, levels, startingOfficerId });
 
     voyageLifecycleLogs.current.clear();
 
@@ -3304,7 +3334,7 @@ return;
       undefined,
       'Salida'
     );
-    if (modo === 'Libre') {
+    if (modo === 'Libre' || modo === 'Ruta') {
       setSimulatedSog(isEngineOn ? 15 : 6);
     }
     const allSimulated = Object.values(dataSource).every(v => v === 'simulated');
@@ -3318,12 +3348,12 @@ return;
       conditionResult: simulationInitCondition
     });
 
-    if (simulationInitCondition) {
+    if (allSimulated && shipPosition && navPlan.targetCoords) {
 
       app.simulation.resetNavigation(1);
 
-const managedRoute = modo === 'Libre'
-  ? routeManager.getRoute()
+const managedRoute = modo === 'Ruta'
+  ? getCoreSimulationRoute()
   : null;
 const managedSimulationRoute = managedRoute
   ? getSimulationPath(managedRoute)
@@ -3336,7 +3366,7 @@ const managedPath = managedSimulationRoute?.valid &&
 if (managedPath) {
 
   console.log(
-    '🧭 Derrota manual cargada desde RouteManager:',
+    '?? Derrota manual cargada desde Core:',
     managedPath.length,
     'waypoints'
   );
@@ -3346,7 +3376,7 @@ if (managedPath) {
 } else if (plannedPath.length > 1) {
 
   console.log(
-    '🧭 Derrota cargada:',
+    '?? Derrota cargada:',
     plannedPath.length,
     'waypoints'
   );
@@ -3356,7 +3386,7 @@ if (managedPath) {
 } else {
 
   console.log(
-    '⚠️ Generando derrota local'
+    '?? Generando derrota local'
   );
 
   const localRoute = app.simulation.createLocalOffshoreRoute(
@@ -3381,7 +3411,7 @@ if (managedPath) {
   });
 
 
-    const modeText = modo === 'IA' ? 'Planificada' : 'Libre';
+    const modeText = modo === 'IA' ? 'IA' : modo === 'Ruta' ? 'Ruta' : 'Libre';
       setNavigationMode(modeText as any);
       setTipoTravesia(modo === 'IA' ? 'asistida' : 'libre');
 
@@ -3716,6 +3746,16 @@ await supabase
   return () => subscription.unsubscribe();
 }, []);
 
+  useEffect(() => {
+    if (!userProfile?.id) return;
+
+    void userRepository.recordCurrentUserAccess();
+    const heartbeat = window.setInterval(() => {
+      void userRepository.touchCurrentUserAccess();
+    }, 60_000);
+    return () => window.clearInterval(heartbeat);
+  }, [userProfile?.id]);
+
 
     const fetchProfile = async (userId: string) => {
       const { data, error } = await userRepository.getProfile(userId);
@@ -3745,6 +3785,15 @@ await supabase
       }
 
       if (data) {
+        if (data.cuenta_activa === false) {
+          await supabase.auth.signOut();
+          setAdvisorMessage('Esta cuenta está desactivada. Contacte con un administrador.');
+          setIsLoggedIn(false);
+          setUserProfile(null);
+          setIsInitialLoading(false);
+          return;
+        }
+
         setUserProfile({
           id: data.id,
           email: data.email,
@@ -3816,7 +3865,7 @@ if (
   activeLog.tipo_navegacion
 ) {
 
-  console.log('🧭 Travesía recuperada', activeLog);
+  console.log('?? Travesía recuperada', activeLog);
 
   setIsTravesiaActive(true);
 
@@ -3835,7 +3884,7 @@ if (
 
 } else {
 
-  console.log('✅ No existe travesía activa');
+  console.log('? No existe travesía activa');
 
   setIsTravesiaActive(false);
   setNavigationDestination('');
@@ -4109,12 +4158,12 @@ lng: Number(newShip.lng)
 
     const getShipEmoji = (tipo?: string) => {
       switch (tipo) {
-        case 'Velero': return '⛵';
-        case 'Motora': return '🚤';
-        case 'Catamarán': return '🛥️';
-        case 'Yate': return '🚢';
-        case 'Semirrígida': return '🛶';
-        default: return '⚓';
+        case 'Velero': return '?';
+        case 'Motora': return '??';
+        case 'Catamarán': return '???';
+        case 'Yate': return '??';
+        case 'Semirrígida': return '??';
+        default: return '?';
       }
     };
 
@@ -4412,14 +4461,12 @@ lng: Number(newShip.lng)
         case 'admin':
           return (
             <div className="h-full overflow-y-auto custom-scrollbar">
-              {userProfile?.role === 'almirante' || userProfile?.role === 'admin' ? (
+              {userProfile?.role === 'admin' ? (
                 <PanelAlmirantazgo supabase={supabase} currentUser={userProfile} />
               ) : (
-                <AdminPanel
-                  userProfile={userProfile}
-                  allUsers={allUsers}
-                  allShips={allShips}
-                />
+                <div className="p-8 text-center text-red-400 font-bold uppercase tracking-widest">
+                  Acceso administrativo denegado.
+                </div>
               )}
             </div>
           );
@@ -4596,6 +4643,9 @@ lng: Number(newShip.lng)
                       {(dockPage === "chart" || dockPage === "sail") && (
                       
                       <TacticalMap
+                        encOverlay={encOverlay}
+                        onEncOverlayStatusChange={setEncOverlayStatus}
+                        encOverlayStatus={encOverlayStatus}
                         isLaylinesActive={false}
                         isSailSteerWidgetOpen={isSailSteerWidgetOpen}
                         center={mapCenter}
@@ -4637,7 +4687,7 @@ lng: Number(newShip.lng)
             `Coordenadas fijadas: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
         );
 
-    } else {
+    } else if (navigationMode === 'Ruta') {
 
         // ===== NUEVO MOTOR =====
 
@@ -4648,14 +4698,11 @@ lng: Number(newShip.lng)
         );
 
         routeBuilder.addWaypoint(waypoint);
+      syncRouteToCore();
         
 
-        routeManager.setRoute(
-            routeBuilder.getRoute()
-        );
-        const route = routeManager.getRoute();
-
-        if (route) {
+        const route = getCoreSimulationRoute();
+    if (route) {
 
     const simulationRoute = getSimulationPath(route);
     const path = simulationRoute.valid ? simulationRoute.path : [];
@@ -4676,7 +4723,7 @@ console.table(
 );
 
         console.log(
-            routeManager.getRoute()
+            getCoreSimulationRoute()
         );
 
         // ===== CÓDIGO ACTUAL =====
@@ -4725,6 +4772,7 @@ console.table(
                             path={rutaActiva}
                             showControl={showControl}
                             showSystems={showSystems}
+                            navigationMode={navigationMode}
                           />
                         )}
 
@@ -4835,7 +4883,6 @@ console.table(
                         onToggleAIS={() => setLayersState(prev => ({ ...prev, showAIS: !prev.showAIS }))}
                         onToggleWind={() => setLayersState(prev => ({ ...prev, showWind: !prev.showWind }))}
                         onToggleCollisionFilter={() => setLayersState(prev => ({ ...prev, collisionFilter: !prev.collisionFilter }))}
-                        onStartNavigation={() => setShowSafetyModal(true)}
                         onEndNavigation={handleEndTravesia}
                         isSailSteerWidgetOpen={isSailSteerWidgetOpen}
                         onCloseSailSteerWidget={() => setIsSailSteerWidgetOpen(false)}
@@ -4851,11 +4898,22 @@ console.table(
                         onSelect={(page) => setDockPage(page as any)}
                         onToggleMenu={() => setShowSystems(!showSystems)}
                         isNavigating={isTravesiaActive}
+                        onStartNavigation={() => setIsSelectingNavigationMode(true)}
                         listaCartas={listaCartas}
                         cartasActivas={cartasActivas}
                         toggleCarta={toggleCarta}
                         cartasOpacity={cartasOpacity}
                         setCartasOpacity={setCartasOpacity}
+                        activeEncFilename={encOverlay?.filename ?? null}
+                        onToggleEncOverlay={(filename, bounds) => {
+                          if (!filename || !bounds) {
+                            setEncOverlay(null);
+                            setEncOverlayStatus('ready');
+                            return;
+                          }
+                          setEncOverlay({ filename, bounds });
+                          setEncOverlayStatus('loading');
+                        }}
                         layersState={layersState}
                         setLayersState={setLayersState}
                         aisEnabled={layersState.showAIS} // Pass existing state
@@ -5043,12 +5101,13 @@ console.table(
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button
-                    onClick={() => {
-                      setIsSelectingNavigationMode(false);
-                      setNavigationMode('Libre');
-                      setTipoTravesia('libre');
-                      setShowSafetyModal(true);
-                    }}
+                    onClick={async () => {
+                  setNavigationMode('Libre');
+                  setTipoTravesia('libre');
+                  await logNavigationModeSelection('Libre');
+                  setIsSelectingNavigationMode(false);
+                  setShowSafetyModal(true);
+                }}
                     className="group flex flex-col items-center gap-4 p-6 bg-slate-950/50 border border-white/5 rounded-3xl hover:border-cyan-500 hover:bg-cyan-950/20 transition-all text-center"
                   >
                     <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-cyan-600 group-hover:text-white transition-all shadow-xl">
@@ -5061,20 +5120,21 @@ console.table(
                   </button>
 
                   <button
-                    onClick={() => {
-                      setIsSelectingNavigationMode(false);
-                      setNavigationMode('Planificada');
-                      setTipoTravesia('asistida');
-                      setIsExplainingAiRoute(true);
-                    }}
+                    onClick={async () => {
+                  setNavigationMode('Ruta');
+                  setTipoTravesia('asistida');
+                  await logNavigationModeSelection('Ruta');
+                  setIsSelectingNavigationMode(false);
+                  setShowSafetyModal(true);
+                }}
                     className="group flex flex-col items-center gap-4 p-6 bg-slate-950/50 border border-white/5 rounded-3xl hover:border-emerald-500 hover:bg-emerald-950/20 transition-all text-center"
                   >
                     <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-xl">
                       <Zap className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-black text-white uppercase tracking-tight">Ruta Asistida (IA)</h3>
-                      <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Optimización VMG y meteorología avanzada</p>
+                      <h3 className="text-sm font-black text-white uppercase tracking-tight">Navegación por Ruta</h3>
+                      <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Derrota definida por el usuario y asesoramiento táctico</p>
                     </div>
                   </button>
                 </div>
@@ -5211,7 +5271,7 @@ console.table(
             setShowSafetyModal(false);
             // Small delay to ensure modal close doesn't interfere with new modal open
             setTimeout(() => {
-              const finalMode = navigationMode === 'Planificada' ? 'IA' : 'Libre';
+              const finalMode = navigationMode === 'Planificada' || navigationMode === 'IA' ? 'IA' : navigationMode === 'Ruta' ? 'Ruta' : 'Libre';
               handleStartTravesia(finalMode, levels, crew);
             }, 100);
           }}
@@ -5281,3 +5341,27 @@ console.table(
   }
 
   export default App;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\r\n

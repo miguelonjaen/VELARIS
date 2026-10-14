@@ -1,5 +1,5 @@
 process.env["ELECTRON_DISABLE_SECURITY_WARNINGS"] = "true";
-const { app, BrowserWindow, ipcMain, dialog, globalShortcut } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, globalShortcut, safeStorage, Tray, Menu, nativeImage } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { autoUpdater } = require("electron-updater");
@@ -7,6 +7,8 @@ const log = require("electron-log");
 const dotenv = require("dotenv");
 const packageJson = require("./package.json");
 const { connectAIS } = require("./aisBridge");
+const { initVelarisLink } = require("./link/linkMain");
+const { createCloseBehavior, buildTrayMenuTemplate } = require("./link/closeBehavior");
 const isProduction = app.isPackaged;
 if (!isProduction) {
     dotenv.config({
@@ -22,6 +24,7 @@ let nmeaService;
 let tacticalEngine;
 let aisApiKey = process.env.VITE_AISSTREAM_API_KEY || null;
 let aisConnected = false;
+let velarisLink = null;
 function connectAISIfAvailable(window) {
     if (aisConnected)
         return;
@@ -88,6 +91,74 @@ function setupAutoUpdater() {
         }
     });
 }
+// === BANDEJA DEL SISTEMA (D4) ===
+// Cerrar la ventana la oculta y deja VELARIS Link activo; la salida real es «Salir» en la bandeja.
+let tray = null;
+function showMainWindow() {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+        createWindow();
+        return;
+    }
+    if (mainWindow.isMinimized())
+        mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+}
+const closeBehavior = createCloseBehavior({
+    hideWindow: () => { if (mainWindow && !mainWindow.isDestroyed())
+        mainWindow.hide(); },
+    onFirstHide: () => {
+        try {
+            if (tray && typeof tray.displayBalloon === 'function') {
+                tray.displayBalloon({ title: 'VELARIS sigue activo', content: 'VELARIS Link continúa en la bandeja del sistema. Para salir, usa «Salir» en su menú.' });
+            }
+        }
+        catch (error) {
+            log.warn('[Bandeja] No se pudo mostrar el aviso:', error);
+        }
+    }
+});
+function refreshTrayMenu() {
+    if (!tray)
+        return;
+    let linkEnabled = false;
+    let devices = 0;
+    try {
+        const status = velarisLink && velarisLink.server.getStatus();
+        if (status) {
+            linkEnabled = status.running === true || status.enabled === true;
+            devices = (status.connections || []).length;
+        }
+    }
+    catch (error) {
+        log.warn('[Bandeja] Estado de Link no disponible:', error);
+    }
+    tray.setContextMenu(Menu.buildFromTemplate(buildTrayMenuTemplate({ linkEnabled, devices, show: showMainWindow, quit: () => app.quit() })));
+}
+function createTray() {
+    if (tray)
+        return;
+    try {
+        tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'public', 'icon.ico')));
+        tray.setToolTip('VELARIS');
+        tray.on('click', showMainWindow);
+        tray.on('double-click', showMainWindow);
+        refreshTrayMenu();
+        if (velarisLink)
+            velarisLink.server.on('status', refreshTrayMenu);
+    }
+    catch (error) {
+        log.error('[Bandeja] No se pudo crear la bandeja:', error);
+    }
+}
+// Una sola instancia: dos VELARIS compartirían el puerto de Link (47811).
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+    app.quit();
+}
+else {
+    app.on('second-instance', showMainWindow);
+}
 /**
  * Creación de la ventana principal
  */
@@ -123,6 +194,7 @@ function createWindow() {
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
     });
+    mainWindow.on('close', (event) => closeBehavior.onWindowClose(event));
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
@@ -198,6 +270,8 @@ ipcMain.on('ais:set-api-key', (event, apiKey) => {
 });
 // === EVENTOS DE CICLO DE VIDA DE LA APP ===
 app.whenReady().then(() => {
+    if (!gotSingleInstanceLock)
+        return;
     setupAutoUpdater();
     createWindow();
     if (!app.isPackaged) {
@@ -215,20 +289,31 @@ app.whenReady().then(() => {
         });
     }
     initializeServices(mainWindow);
+    // VELARIS Link: enlace local con VELARISdroid (desactivado hasta que el usuario lo active).
+    try {
+        velarisLink = initVelarisLink({ app, ipcMain, safeStorage, getWindow: () => mainWindow, log });
+    }
+    catch (error) {
+        log.error('[VELARIS Link] No se pudo inicializar:', error);
+    }
+    createTray();
     if (aisApiKey) {
         connectAISIfAvailable(mainWindow);
     }
 });
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin')
+    // La ventana se oculta al cerrarla (bandeja): solo se termina tras «Salir».
+    if (process.platform !== 'darwin' && closeBehavior.shouldQuitWhenAllWindowsClosed())
         app.quit();
 });
 app.on('before-quit', () => {
+    closeBehavior.markQuitting();
     stopMapServer();
+    if (velarisLink)
+        velarisLink.shutdown().catch(() => { });
 });
 app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0)
-        createWindow();
+    showMainWindow();
 });
 app.on("will-quit", () => {
     globalShortcut.unregisterAll();

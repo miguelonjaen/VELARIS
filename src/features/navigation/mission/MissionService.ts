@@ -1,5 +1,5 @@
 export interface StartMissionOptions {
-  modo: "Libre" | "IA";
+  modo: "Libre" | "Ruta" | "IA";
   levels?: {
     fuel_level: number;
     water_level: number;
@@ -13,7 +13,7 @@ export interface StartMissionOptions {
   setShowWatchSelection: (show: boolean) => void;
 
   proceedWithStartTravesia: (
-    modo: "Libre" | "IA",
+    modo: "Libre" | "Ruta" | "IA",
     levels?: {
       fuel_level: number;
       water_level: number;

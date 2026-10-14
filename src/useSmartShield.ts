@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { UserProfile, ShipData, VELARISAlarm, AlarmSeverity, SecurityThresholds } from '@/shared/types';
 import { SensorQualityMap } from './lib/sensorQuality';
-import { calculateDistanceNM } from './lib/aisMath';
+import { evaluateAisCollisionAlarm, DEFAULT_AIS_ALARM_OPTIONS } from '@/core/navigation/AisCollisionAlarm';
+
+/** SOG propio mínimo (kn) para vigilar AIS sin travesía activa ni motor (navegación a vela) */
+const AIS_MIN_OWN_SOG_KN = 1;
 
 interface SmartShieldProps {
   userProfile: UserProfile | null;
@@ -112,8 +115,48 @@ export const useSmartShield = ({
   }, [alarms, userProfile, fleet, selectedShipId, supabase]);
 
   // Watchdog: Monitoreo Activo de Telemetria
+  const checkSecurityRef = useRef<() => void>(() => {});
+  const lastAisAlarmKeyRef = useRef<string | null>(null);
   useEffect(() => {
     const checkSecurity = () => {
+      // --- Alarma de colisión AIS (CPA/TCPA) ---
+      // Se vigila con travesía activa, motor encendido o navegando (SOG >= AIS_MIN_OWN_SOG_KN),
+      // para cubrir también la navegación a vela sin travesía iniciada.
+      const aisMonitoringActive = isTravesiaActive || isEngineOn
+        || (Number.isFinite(ownShipSog) && ownShipSog >= AIS_MIN_OWN_SOG_KN);
+      const aisAlarm = aisMonitoringActive && ownShipPosition
+        ? evaluateAisCollisionAlarm(aisTargets, { ...DEFAULT_AIS_ALARM_OPTIONS, minCpaNm: thresholds.minCPA })
+        : null;
+      const aisAlarmKey = aisAlarm?.severity ? aisAlarm.severity + ':' + aisAlarm.targetId : null;
+      if (aisAlarmKey !== lastAisAlarmKeyRef.current) {
+        console.info('[AIS COLLISION ALARM]', aisAlarm?.severity
+          ? {
+            severity: aisAlarm.severity,
+            target: aisAlarm.targetId,
+            cpaNm: aisAlarm.cpaNm,
+            tcpaMinutes: aisAlarm.tcpaMinutes,
+            dangerousCount: aisAlarm.dangerousCount,
+            reason: aisAlarm.reason
+          }
+          : { severity: null, reason: aisAlarm ? aisAlarm.reason : 'vigilancia AIS inactiva' });
+        lastAisAlarmKeyRef.current = aisAlarmKey;
+      }
+      const existingAisAlarm = alarms.find(a => a.type === 'ais_collision');
+      if (aisAlarm?.severity && aisAlarm.message) {
+        if (existingAisAlarm && existingAisAlarm.severity === aisAlarm.severity) {
+          // Misma severidad: refrescar CPA/TCPA en pantalla sin volver a registrar en bitácora
+          if (existingAisAlarm.message !== aisAlarm.message) {
+            const message = aisAlarm.message;
+            const value = aisAlarm.cpaNm ?? 0;
+            setAlarms(prev => prev.map(a => a.type === 'ais_collision' ? { ...a, message, value } : a));
+          }
+        } else {
+          addAlarm('ais_collision', aisAlarm.severity, aisAlarm.message, aisAlarm.cpaNm ?? 0);
+        }
+      } else if (existingAisAlarm) {
+        removeAlarmByType('ais_collision');
+      }
+
       if (!isTravesiaActive && !isEngineOn) return;
 
       if (depth < thresholds.minDepth) {
@@ -127,85 +170,6 @@ export const useSmartShield = ({
       if (engineData.fuel < thresholds.minFuel) {
         addAlarm('fuel', engineData.fuel < 5 ? 'critical' : 'warning', 'COMBUSTIBLE BAJO: ' + engineData.fuel.toFixed(0) + '%', engineData.fuel);
       } else { removeAlarmByType('fuel'); }
-
-      console.log('[AIS SHIELD INPUT]', aisTargets.map(target => ({
-        id: target.mmsi ?? target.id ?? 'AIS',
-        targetPosition: { lat: target.lat, lng: target.lng },
-        ownPosition: ownShipPosition,
-        targetSog: target.sog,
-        targetCog: target.cog
-      })));
-
-      const normalizedTargets = aisTargets.map(target => {
-        const distanceNm = ownShipPosition
-          && Number.isFinite(target.lat)
-          && Number.isFinite(target.lng)
-          ? calculateDistanceNM(
-            ownShipPosition.lat,
-            ownShipPosition.lng,
-            target.lat,
-            target.lng
-          )
-          : null;
-        const cpaNm = target.cpaNm ?? target.cpa ?? null;
-        const tcpaMinutes = target.tcpaMinutes ?? target.tcpa ?? null;
-
-        console.log('[AIS SHIELD CALC]', {
-          id: target.mmsi ?? target.id ?? 'AIS',
-          distanceNm,
-          bearing: target.relativeBearing ?? null,
-          relativeBearing: target.relativeBearing ?? null,
-          cpaNm,
-          tcpaMinutes,
-          ownSog: ownShipSog,
-          targetSog: target.sog,
-          ownCog: ownShipCog,
-          targetCog: target.cog,
-          riskLevel: target.riskLevel ?? 'SAFE',
-          threshold: thresholds.minCPA
-        });
-
-        return { target, cpaNm, tcpaMinutes, distanceNm };
-      });
-
-      const proximity = normalizedTargets
-        .filter(item => Number.isFinite(item.cpaNm))
-        .sort((a, b) => (a.cpaNm as number) - (b.cpaNm as number))[0];
-      const proximityTarget = proximity?.target;
-      const proximityCpa = proximity?.cpaNm ?? null;
-      const proximityTcpa = proximity?.tcpaMinutes ?? null;
-      const riskLevel = proximityTarget?.riskLevel;
-      const hasRiskLevel = riskLevel === 'CAUTION'
-        || riskLevel === 'WARNING'
-        || riskLevel === 'CRITICAL';
-      const thresholdExceeded = Number.isFinite(proximityCpa)
-        && (proximityCpa as number) < thresholds.minCPA;
-
-      if (proximityTarget && (hasRiskLevel || thresholdExceeded)) {
-        const tcpaText = Number.isFinite(proximityTcpa) ? ' TCPA ' + proximityTcpa.toFixed(1) + ' min' : '';
-        const targetName = proximityTarget.nombre || proximityTarget.name || proximityTarget.mmsi || 'AIS';
-        console.log('[AIS SHIELD ALERT]', {
-          id: proximityTarget.mmsi ?? proximityTarget.id ?? 'AIS',
-          alertLevel: riskLevel === 'CRITICAL' || thresholdExceeded ? 'critical' : 'warning',
-          reason: hasRiskLevel
-            ? `riskLevel=${riskLevel}`
-            : `CPA ${proximityCpa} < ${thresholds.minCPA}`,
-          addedToAlarmStatus: true
-        });
-        addAlarm(
-          'ais_collision',
-          'critical',
-          'PELIGRO COLISION: ' + targetName + '.' + tcpaText,
-          proximityCpa ?? 0
-        );
-      } else {
-        console.log('[AIS SHIELD NO ALERT]', {
-          reason: proximityTarget
-            ? `CPA ${String(proximityCpa)} no supera ${thresholds.minCPA} y riskLevel=${String(riskLevel ?? 'SAFE')}`
-            : 'No hay targets con CPA válido'
-        });
-        removeAlarmByType('ais_collision');
-      }
 
       if (anchorWatch?.anchorTrend === 'drifting') {
         addAlarm('anchor_drag', 'critical', `¡ALERTA GARREO! Deriva: ${anchorWatch.currentAnchorDistance.toFixed(0)}m`, anchorWatch.currentAnchorDistance);
@@ -222,9 +186,15 @@ export const useSmartShield = ({
       } else { removeAlarmByType('sensor_quality'); }
     };
 
-    const interval = setInterval(checkSecurity, 5000);
+    checkSecurityRef.current = checkSecurity;
+  }, [depth, engineData, aisTargets, alarms, thresholds, isTravesiaActive, isEngineOn, sensorQuality, anchorWatch, ownShipPosition, ownShipSog, ownShipCog, addAlarm, removeAlarmByType]);
+
+  // Intervalo único del watchdog: siempre ejecuta la versión más reciente de checkSecurity.
+  // Antes se reiniciaba con cada actualización de telemetría/AIS y podía no llegar a disparar nunca.
+  useEffect(() => {
+    const interval = setInterval(() => checkSecurityRef.current(), 5000);
     return () => clearInterval(interval);
-  }, [depth, engineData, aisTargets, thresholds, isTravesiaActive, isEngineOn, sensorQuality, anchorWatch, ownShipPosition, ownShipSog, ownShipCog, addAlarm, removeAlarmByType]);
+  }, []);
 
   return {
     alarms, alarmHistory, thresholds, setThresholds, 

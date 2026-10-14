@@ -3,6 +3,32 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Radar, Wind, Crosshair, Map, Layers, Navigation, Waves } from 'lucide-react';
 import { cn } from '@lib/utils';
 
+interface EncSource {
+  name: string;
+}
+
+interface EncLayer {
+  name: string;
+  geometry: string;
+  featureCount: number | null;
+  extent: number[] | null;
+  fields: string[];
+}
+
+interface EncInspection {
+  sourceName: string;
+  cellName: string;
+  edition: string | null;
+  updateNumber: string | null;
+  updateApplicationDate: string | null;
+  updateMode: 'APPLY';
+  bounds: [number, number, number, number] | null;
+  gdalVersion: string;
+  layerCount: number;
+  totalLayerFeatures: number;
+  layers: EncLayer[];
+}
+
 interface ZeusLayerMenuProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,6 +45,8 @@ interface ZeusLayerMenuProps {
   toggleCarta: (name: string) => void;
   cartasOpacity: Record<string, number>;
   setCartasOpacity: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  activeEncFilename: string | null;
+  onToggleEncOverlay: (filename: string | null, bounds?: [number, number, number, number]) => void;
 }
 
 export const ZeusLayerMenu: React.FC<ZeusLayerMenuProps> = ({
@@ -31,7 +59,49 @@ export const ZeusLayerMenu: React.FC<ZeusLayerMenuProps> = ({
   toggleCarta,
   cartasOpacity,
   setCartasOpacity,
+  activeEncFilename,
+  onToggleEncOverlay,
 }) => {
+  const [encSources, setEncSources] = React.useState<EncSource[]>([]);
+  const [encInspection, setEncInspection] = React.useState<EncInspection | null>(null);
+  const [encLoading, setEncLoading] = React.useState(false);
+  const [encError, setEncError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    fetch('http://localhost:8089/api/enc-charts', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('No se pudo consultar el directorio de cartas.');
+        const sources = await response.json() as EncSource[];
+        setEncSources(sources);
+        setEncError(null);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        setEncError(error instanceof Error ? error.message : 'Error al consultar las ENC.');
+      });
+    return () => controller.abort();
+  }, [isOpen]);
+
+  const inspectEnc = async (source: EncSource) => {
+    setEncLoading(true);
+    setEncError(null);
+    setEncInspection(null);
+    try {
+      const response = await fetch(`http://localhost:8089/api/enc-charts/${encodeURIComponent(source.name)}/inspect`);
+      const payload = await response.json() as EncInspection | { error?: string };
+      if (!response.ok) {
+        throw new Error('error' in payload && payload.error ? payload.error : 'No se pudo leer la ENC.');
+      }
+      setEncInspection(payload as EncInspection);
+    } catch (error: unknown) {
+      setEncError(error instanceof Error ? error.message : 'Error al inspeccionar la ENC.');
+    } finally {
+      setEncLoading(false);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -134,6 +204,75 @@ export const ZeusLayerMenu: React.FC<ZeusLayerMenuProps> = ({
                     ))
                   )}
                 </div>
+              </div>
+
+              {/* Inspección S-57 informativa; nunca se conecta al renderizador de cartas. */}
+              <div className="space-y-3 border-t border-white/10 pt-4">
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest px-1">ENC S-57 · Inspección</p>
+                <div className="rounded-xl border border-amber-500/30 bg-amber-950/30 p-3">
+                  <p className="text-[9px] font-black uppercase tracking-wide text-amber-300">Vista informativa — no es una carta ECDIS</p>
+                  <p className="mt-1 text-[8px] leading-relaxed text-amber-100/70">No usar para navegar ni para decisiones de seguridad.</p>
+                </div>
+
+                {encSources.length === 0 ? (
+                  <p className="rounded-xl border border-white/5 bg-black/20 p-3 text-[9px] text-slate-500">
+                    No hay ZIP o celdas .000 en el directorio de cartas seleccionado.
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    {encSources.map((source) => (
+                      <button
+                        key={source.name}
+                        type="button"
+                        onClick={() => void inspectEnc(source)}
+                        disabled={encLoading}
+                        className="w-full truncate rounded-lg border border-white/10 bg-black/40 p-2 text-left text-[9px] text-slate-200 hover:border-cyan-500/40 disabled:opacity-50"
+                      >
+                        {source.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {encLoading && <p className="text-[9px] text-cyan-300">Leyendo metadatos y capas con GDAL/OGR…</p>}
+                {encError && <p role="alert" className="rounded-lg border border-red-500/20 bg-red-950/30 p-2 text-[9px] text-red-300">{encError}</p>}
+
+                {encInspection && (
+                  <div className="space-y-2 rounded-xl border border-white/10 bg-black/30 p-3">
+                    <div className="space-y-1 text-[9px] text-slate-300">
+                      <p className="break-all font-bold text-white">{encInspection.cellName}</p>
+                      <p>Edición {encInspection.edition ?? '—'} · actualización {encInspection.updateNumber ?? '—'}</p>
+                      <p>Fecha actualización: {encInspection.updateApplicationDate ?? '—'} · modo S-57: {encInspection.updateMode}</p>
+                      <p>{encInspection.layerCount} capas · {encInspection.totalLayerFeatures} objetos · {encInspection.gdalVersion}</p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={!encInspection.bounds}
+                      onClick={() => {
+                        const isActive = activeEncFilename === encInspection.sourceName;
+                        onToggleEncOverlay(
+                          isActive ? null : encInspection.sourceName,
+                          isActive ? undefined : encInspection.bounds ?? undefined
+                        );
+                        onClose();
+                      }}
+                      className="w-full rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-[9px] font-black uppercase tracking-wide text-cyan-200 hover:bg-cyan-500/20 disabled:opacity-40"
+                    >
+                      {activeEncFilename === encInspection.sourceName ? 'Quitar ENC del mapa' : 'Mostrar ENC en mapa'}
+                    </button>
+                    <div className="max-h-64 space-y-1 overflow-y-auto border-t border-white/10 pt-2">
+                      {encInspection.layers.map((layer) => (
+                        <div key={layer.name} className="rounded-md bg-white/[0.03] px-2 py-1 text-[8px]">
+                          <div className="flex justify-between gap-2 text-slate-200">
+                            <span className="font-bold">{layer.name}</span>
+                            <span className="text-right text-slate-500">{layer.featureCount ?? '—'} · {layer.geometry}</span>
+                          </div>
+                          {layer.fields.length > 0 && <p className="mt-0.5 break-words text-slate-600">{layer.fields.join(', ')}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -41,16 +41,6 @@ export class CoreState {
         const timestamp = new Date().toISOString();
 
         this.events?.publish({
-            name: "core.position.updated",
-            timestamp,
-            source,
-            payload: {
-                lat,
-                lng
-            }
-        });
-
-        this.events?.publish({
             name: "core.motion.updated",
             timestamp,
             source,

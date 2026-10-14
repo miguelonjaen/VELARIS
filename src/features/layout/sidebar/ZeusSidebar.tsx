@@ -23,12 +23,15 @@ interface ZeusSidebarProps {
   activePage: string;
   onSelect: (id: string) => void;
   onToggleMenu: () => void;
+  onStartNavigation: () => void;
   isNavigating: boolean;
   listaCartas: any[];
   cartasActivas: Record<string, boolean>;
   toggleCarta: (name: string) => void;
   cartasOpacity: Record<string, number>;
   setCartasOpacity: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  activeEncFilename: string | null;
+  onToggleEncOverlay: (filename: string | null, bounds?: [number, number, number, number]) => void;
   layersState: any;
   setLayersState: React.Dispatch<React.SetStateAction<any>>;
   aisEnabled: boolean;
@@ -53,6 +56,7 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
   activePage,
   onSelect,
   onToggleMenu,
+  onStartNavigation,
   isNavigating,
   listaCartas,
   cartasActivas,
@@ -60,6 +64,8 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
   aisTargets,
   cartasOpacity,
   setCartasOpacity,
+  activeEncFilename,
+  onToggleEncOverlay,
   layersState,
   setLayersState,
   aisEnabled,
@@ -120,6 +126,8 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
         toggleCarta={toggleCarta}
         cartasOpacity={cartasOpacity}
         setCartasOpacity={setCartasOpacity}
+        activeEncFilename={activeEncFilename}
+        onToggleEncOverlay={onToggleEncOverlay}
       />
 
       <AISTacticalDrawer
@@ -226,6 +234,15 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
 
 </div>
 
+      {/* TRAVESÍA */}
+      <DockButton
+        icon={Flag}
+        hoverLabel="TRAVESÍA"
+        active={isNavigating}
+        statusIndicator={isNavigating ? "green" : "cyan"}
+        onClick={onStartNavigation}
+      />
+
         {/* AIS */}
         <DockButton
     icon={Radar}
@@ -279,3 +296,5 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
     </>
   );
 };
+
+\n

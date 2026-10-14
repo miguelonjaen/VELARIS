@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   Activity,
   Anchor,
@@ -53,7 +53,7 @@ interface Zeus3SChartplotterOverlayProps {
   onToggleAIS: () => void;
   onToggleWind: () => void;
   onToggleCollisionFilter: () => void;
-  onStartNavigation: () => void;
+  onStartNavigation?: () => void;
   onEndNavigation: () => void;
   onToggleAutopilot: () => void;
     isSailSteerWidgetOpen: boolean;
@@ -217,3 +217,5 @@ export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps>
 };
 
 export default Zeus3SChartplotterOverlay;
+
+\n

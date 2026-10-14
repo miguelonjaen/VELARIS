@@ -11,7 +11,7 @@ El sistema de auto-update está **completamente configurado** y listo para usar.
 ### 1. **Búsqueda Automática de Actualizaciones**
 - Se ejecuta automáticamente al iniciar la app
 - Solo en modo **producción** (app empaquetada)
-- Verifica releases en: `https://github.com/miguelonjaen/VELARIS-pro/releases`
+- Verifica releases en: `https://github.com/miguelonjaen/VELARIS/releases`
 
 ### 2. **Flujo de Actualización**
 ```
@@ -66,22 +66,22 @@ npm run electron:build
 npm run build-win
 ```
 
-Esto genera: `dist_electron/VELARIS Setup 1.0.8.exe`
+Esto genera: `dist_electron/VELARIS-Setup-1.4.0.exe`
 
 ### **Paso 3: Crear Release en GitHub**
 
 ```bash
 # Opción A: Usando GitHub CLI (recomendado)
-gh release create v1.0.8 \
-  --title "VELARIS v1.0.8" \
+gh release create v1.4.0 \
+  --title "VELARIS v1.4.0" \
   --notes "Mejoras de navegación y correcciones de bugs" \
-  dist_electron/VELARIS\ Pro\ Setup\ 1.0.8.exe
+  dist_electron/VELARIS-Setup-1.4.0.exe
 
 # Opción B: Usar la interfaz web de GitHub
-# 1. Ve a: https://github.com/miguelonjaen/VELARIS-pro/releases/new
+# 1. Ve a: https://github.com/miguelonjaen/VELARIS/releases/new
 # 2. Crea "New Release"
-# 3. Tag: v1.0.8
-# 4. Title: VELARIS v1.0.8
+# 3. Tag: v1.4.0
+# 4. Title: VELARIS v1.4.0
 # 5. Description: [notas de cambio]
 # 6. Attach binaries: Arrastra el .exe
 # 7. Publish Release
@@ -91,12 +91,12 @@ gh release create v1.0.8 \
 
 ```bash
 # Verificar que el archivo .exe está en la release
-gh release view v1.0.8
+gh release view v1.4.0
 
 # Resultado esperado:
-# Tag: v1.0.8
+# Tag: v1.4.0
 # Assets:
-#   VELARIS Setup 1.0.8.exe
+#   VELARIS-Setup-1.4.0.exe
 ```
 
 ---
@@ -202,7 +202,7 @@ El token se usará automáticamente en `setupAutoUpdater()`.
 ### **❌ "Error: Cannot find matching version"**
 
 - El nombre del archivo `.exe` debe coincidir exactamente con lo esperado
-- Verifica que sea: `VELARIS Setup X.X.X.exe`
+- Verifica que sea: `VELARIS-Setup-X.X.X.exe`
 - No renombres el archivo después de compilar
 
 ### **❌ "Error: 403 Forbidden (repo privado)"**
@@ -217,7 +217,7 @@ El token se usará automáticamente en `setupAutoUpdater()`.
 - Para probar con build empaquetado:
   ```bash
   npm run electron:build
-  # Ejecuta dist_electron/VELARIS Setup.exe
+  # Ejecuta dist_electron/VELARIS-Setup-1.4.0.exe
   ```
 
 ---
@@ -257,7 +257,7 @@ window.ipcRenderer.on('update-error', (data) => {
 |-----------|--------|---------|
 | **electron-updater** | ✅ Instalado | v6.8.3 |
 | **electron-log** | ✅ Agregado | v5.1.2 (para debug) |
-| **GitHub Provider** | ✅ Configurado | miguelonjaen/VELARIS-pro |
+| **GitHub Provider** | ✅ Configurado | miguelonjaen/VELARIS |
 | **Event Listeners** | ✅ Implementados | update-available, error, etc. |
 | **IPC Handlers** | ✅ Listos | check-for-updates, install-update, get-app-version |
 | **Logging** | ✅ Habilitado | Guarda en `%APPDATA%\VELARIS\logs\` |

@@ -5,7 +5,7 @@ export interface ManeuverLogContext {
     barcoId?: string | number;
     userId?: string;
     fecha?: string;
-    tipoNavegacion?: "Libre" | "Planificada";
+    tipoNavegacion?: "Libre" | "Ruta" | "IA" | "Planificada";
     destinoPlanificado?: string;
 }
 
@@ -81,3 +81,5 @@ function formatDegrees(value: number): string {
 function formatSignedDegrees(value: number): string {
     return `${value >= 0 ? "+" : ""}${value.toFixed(0)}°`;
 }
+
+\n

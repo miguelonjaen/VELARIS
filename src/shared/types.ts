@@ -1,4 +1,4 @@
-export interface VesselState {
+﻿export interface VesselState {
   lat: number;
   lng: number;
   
@@ -47,9 +47,23 @@ export interface UserProfile {
   plan_nivel: 'gratis' | 'plata' | 'oro';
   plan_tactico?: 'basico' | 'capitan' | 'almirante';
   suscripcion_activa: boolean;
+  cuenta_activa?: boolean;
+  last_access_at?: string | null;
+  last_seen_at?: string | null;
   total_barcos?: number;
   nombre?: string;
   barco_activo_id?: string | null;
+}
+
+export type UserPresenceStatus = 'conectado' | 'activo recientemente' | 'desconectado';
+
+export interface AdminUserView extends UserProfile {
+  total_barcos: number;
+  barcos_list?: string[];
+  plan_tactico?: 'basico' | 'capitan' | 'almirante';
+  suscripcion_activa: boolean;
+  cuenta_activa: boolean;
+  presence_status: UserPresenceStatus;
 }
 
 export interface ShipData {
@@ -188,7 +202,7 @@ export interface LogEntry {
   puerto_repostaje?: string;
   texto?: string;
   is_auto?: boolean;
-  tipo_navegacion?: 'Libre' | 'Planificada';
+  tipo_navegacion?: 'Libre' | 'Ruta' | 'IA' | 'Planificada';
   destino_planificado?: string;
   ubicacion_texto?: string;
   time?: string;
@@ -207,6 +221,7 @@ export interface LogEntry {
   propulsion_objetivo?: string;
   distancia_total?: number;
   eta?: string;
+  maneuverTimestamp?: number;
 }
 
 export interface VesselStatus {
@@ -240,3 +255,6 @@ export interface SecurityThresholds {
   maxInternalTemp: number;
   maxHumidity: number;
 }
+
+
+\n

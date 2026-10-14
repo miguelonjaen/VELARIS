@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+﻿import React, { useState, useMemo, useCallback } from 'react';
 import { 
   ShieldAlert, 
   Zap, 
@@ -193,72 +193,197 @@ const SafetyModal: React.FC<SafetyModalProps> = ({
               setIsAnalyzing(false);
 
               // Perform auto-checks based on inventory and levels
-              const autoChecked: Partial<typeof safetyChecklist> = {};
-              
-              // 1. Security & Documentation
-              if (items.some(i => (i.nombre.toLowerCase().includes('chaleco') || i.categoria === 'Seguridad') && i.cantidad >= 1)) {
-                autoChecked.chalecos = true;
-              }
-              if (items.some(i => i.nombre.toLowerCase().includes('bengala') || i.nombre.toLowerCase().includes('pirotecnia') || i.nombre.toLowerCase().includes('señal'))) {
-                autoChecked.pirotecnia = true;
-              }
-              if (items.some(i => i.nombre.toLowerCase().includes('extintor') || i.nombre.toLowerCase().includes('incendio'))) {
-                autoChecked.extintores = true;
-              }
-              if (items.some(i => i.categoria === 'Botiquín' || i.nombre.toLowerCase().includes('botiquin'))) {
-                autoChecked.botiquin = true;
-              }
-              
-              // Use real boat documentation fields
-              if (activeShip) {
-                if (activeShip.docs_certificado_navegabilidad && 
-                    activeShip.docs_permiso_navegacion && 
-                    activeShip.docs_seguro_vigente) {
-                  autoChecked.documentacion = true;
-                }
-                if (activeShip.docs_leb_mmsi) {
-                  autoChecked.radio_vhf = true;
-                }
-              } else {
-                // Fallback to inventory scan if no activeShip found (unlikely)
-                if (items.some(i => i.nombre.toLowerCase().includes('documentacion') || i.nombre.toLowerCase().includes('seguro') || i.nombre.toLowerCase().includes('permiso'))) {
-                  autoChecked.documentacion = true;
-                }
-                if (items.some(i => i.nombre.toLowerCase().includes('radio') || i.nombre.toLowerCase().includes('vhf'))) {
-                  autoChecked.radio_vhf = true;
-                }
-              }
+          const autoChecked: Partial<typeof safetyChecklist> = {};
 
-              // 2. Engine & Hull
-              const currentFuel = activeShip?.fuel_level ?? levels.fuel_level;
-              const currentWater = activeShip?.water_level ?? levels.water_level;
+          // 1. Security & Documentation
 
-              // Explicitly set true/false based on thresholds
-              autoChecked.combustible_ok = currentFuel > 30;
-              autoChecked.agua_potable_ok = currentWater > 10;
-              autoChecked.aceite_motor = levels.oil_status === 'OK';
-              
-              if (items.some(i => i.nombre.toLowerCase().includes('bateria') || i.nombre.toLowerCase().includes('electrico'))) {
-                autoChecked.baterias = true;
-              }
-              if (items.some(i => i.nombre.toLowerCase().includes('luz') || i.nombre.toLowerCase().includes('navegacion'))) {
-                autoChecked.luces_nav = true;
-              }
+          // Chalecos: debe existir al menos un chaleco con cantidad disponible.
+          if (
+            items.some(
+              i =>
+                i.nombre.toLowerCase().includes('chaleco') &&
+                Number(i.cantidad_actual ?? 0) >= 1
+            )
+          ) {
+            autoChecked.chalecos = true;
+          }
 
-              // 3. Navigation
-              if (items.some(i => i.nombre.toLowerCase().includes('carta') || i.nombre.toLowerCase().includes('mapa'))) {
-                autoChecked.cartas = true;
-              }
-              if (items.some(i => i.nombre.toLowerCase().includes('ancla') || i.nombre.toLowerCase().includes('fondeo') || i.nombre.toLowerCase().includes('molinete'))) {
-                autoChecked.fondeo = true;
-              }
+          // Pirotecnia: bengalas, cohetes o señales fumígenas disponibles.
+          if (
+            items.some(i => {
+              const nombre = i.nombre.toLowerCase();
+              return (
+                (
+                  nombre.includes('bengala') ||
+                  nombre.includes('cohete') ||
+                  nombre.includes('señal fumígena') ||
+                  nombre.includes('pirotecnia')
+                ) &&
+                Number(i.cantidad_actual ?? 0) >= 1
+              );
+            })
+          ) {
+            autoChecked.pirotecnia = true;
+          }
 
-              // 4. Last minute
-              if (items.some(i => i.nombre.toLowerCase().includes('linterna'))) {
-                autoChecked.linternas = true;
-              }
+          // Extintores disponibles.
+          if (
+            items.some(
+              i =>
+                (
+                  i.nombre.toLowerCase().includes('extintor') ||
+                  i.nombre.toLowerCase().includes('incendio')
+                ) &&
+                Number(i.cantidad_actual ?? 0) >= 1
+            )
+          ) {
+            autoChecked.extintores = true;
+          }
 
-              setSafetyChecklist(prev => ({ ...prev, ...autoChecked }));
+          // Botiquín disponible.
+          if (
+            items.some(
+              i =>
+                (
+                  i.categoria === 'Botiquín' ||
+                  i.nombre.toLowerCase().includes('botiquin') ||
+                  i.nombre.toLowerCase().includes('botiquín')
+                ) &&
+                Number(i.cantidad_actual ?? 0) >= 1
+            )
+          ) {
+            autoChecked.botiquin = true;
+          }
+
+          // Documentación y VHF: usar los datos reales del barco.
+          if (activeShip) {
+            if (
+              activeShip.docs_certificado_navegabilidad &&
+              activeShip.docs_permiso_navegacion &&
+              activeShip.docs_seguro_vigente
+            ) {
+              autoChecked.documentacion = true;
+            }
+
+            if (activeShip.docs_leb_mmsi) {
+              autoChecked.radio_vhf = true;
+            }
+          } else {
+            // Fallback al inventario si no existe activeShip.
+            if (
+              items.some(i => {
+                const nombre = i.nombre.toLowerCase();
+                return (
+                  (
+                    nombre.includes('documentacion') ||
+                    nombre.includes('documentación') ||
+                    nombre.includes('seguro') ||
+                    nombre.includes('permiso')
+                  ) &&
+                  Number(i.cantidad_actual ?? 0) >= 1
+                );
+              })
+            ) {
+              autoChecked.documentacion = true;
+            }
+
+            if (
+              items.some(
+                i =>
+                  (
+                    i.nombre.toLowerCase().includes('radio') ||
+                    i.nombre.toLowerCase().includes('vhf')
+                  ) &&
+                  Number(i.cantidad_actual ?? 0) >= 1
+              )
+            ) {
+              autoChecked.radio_vhf = true;
+            }
+          }
+
+          // 2. Engine & Hull
+          const currentFuel = activeShip?.fuel_level ?? levels.fuel_level;
+          const currentWater = activeShip?.water_level ?? levels.water_level;
+
+          // Estos valores sí proceden del estado real del barco.
+          autoChecked.combustible_ok = currentFuel > 30;
+          autoChecked.agua_potable_ok = currentWater > 10;
+          autoChecked.aceite_motor = levels.oil_status === 'OK';
+
+          // Baterías disponibles.
+          if (
+            items.some(
+              i =>
+                (
+                  i.nombre.toLowerCase().includes('bateria') ||
+                  i.nombre.toLowerCase().includes('batería')
+                ) &&
+                Number(i.cantidad_actual ?? 0) >= 1
+            )
+          ) {
+            autoChecked.baterias = true;
+          }
+
+          // Luces de navegación disponibles.
+          if (
+            items.some(
+              i =>
+                (
+                  i.nombre.toLowerCase().includes('luz') ||
+                  i.nombre.toLowerCase().includes('navegacion') ||
+                  i.nombre.toLowerCase().includes('navegación')
+                ) &&
+                Number(i.cantidad_actual ?? 0) >= 1
+            )
+          ) {
+            autoChecked.luces_nav = true;
+          }
+
+          // 3. Navigation
+
+          // Cartas náuticas disponibles.
+          if (
+            items.some(
+              i =>
+                (
+                  i.nombre.toLowerCase().includes('carta') ||
+                  i.nombre.toLowerCase().includes('mapa')
+                ) &&
+                Number(i.cantidad_actual ?? 0) >= 1
+            )
+          ) {
+            autoChecked.cartas = true;
+          }
+
+          // Fondeo: ancla, cabo o molinete disponibles.
+          if (
+            items.some(
+              i =>
+                (
+                  i.nombre.toLowerCase().includes('ancla') ||
+                  i.nombre.toLowerCase().includes('fondeo') ||
+                  i.nombre.toLowerCase().includes('molinete')
+                ) &&
+                Number(i.cantidad_actual ?? 0) >= 1
+            )
+          ) {
+            autoChecked.fondeo = true;
+          }
+
+          // 4. Last minute
+
+          // Linterna disponible.
+          if (
+            items.some(
+              i =>
+                i.nombre.toLowerCase().includes('linterna') &&
+                Number(i.cantidad_actual ?? 0) >= 1
+            )
+          ) {
+            autoChecked.linternas = true;
+          }
+
+          setSafetyChecklist(prev => ({ ...prev, ...autoChecked }));
               return 100;
             }
             return prev + 5;
@@ -682,3 +807,5 @@ const SafetyModal: React.FC<SafetyModalProps> = ({
 };
 
 export default SafetyModal;
+
+\n
