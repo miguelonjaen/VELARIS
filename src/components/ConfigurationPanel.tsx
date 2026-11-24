@@ -1,7 +1,10 @@
+import { NmeaDiagnostics } from '../features/nmea/NmeaDiagnostics';
+import OpenAIConfiguration from './OpenAIConfiguration';
 import React from 'react';
 import { Settings, Wifi, Compass, Gauge, ShieldAlert, Cpu, ShieldCheck, Activity, FolderOpen, Clock } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { SecurityThresholds } from '../shared/types';
+import { useNmeaGateway } from '../features/nmea/useNmeaGateway';
 
 interface ConfigPanelProps {
   dataSource: Record<string, 'real' | 'simulated'>;
@@ -12,6 +15,7 @@ interface ConfigPanelProps {
   onCambiarCarpeta: () => void; // 📁 Añadido para el control de cartas
   simulationSpeed: number;
   setSimulationSpeed: React.Dispatch<React.SetStateAction<number>>;
+  onShowAbout: () => void;
 }
 
 export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
@@ -22,9 +26,11 @@ export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
   cartasPath, // 📁 Recibido desde App.tsx
   onCambiarCarpeta, // 📁 Recibido desde App.tsx
   simulationSpeed,
-  setSimulationSpeed
+  setSimulationSpeed,
+  onShowAbout
 }) => {
     const [simulatedTime, setSimulatedTime] = React.useState(new Date());
+    const nmea = useNmeaGateway();
 
   const isSimulationMode = Object.values(dataSource).every(v => v === 'simulated');
 
@@ -86,6 +92,8 @@ export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
             Guardar en Kernel
           </button>
         </div>
+
+        <OpenAIConfiguration />
 
         {/* MASTER SWITCH */}
         <div className="bg-gradient-to-r from-slate-900 to-indigo-950 p-8 rounded-[2.5rem] border border-cyan-500/30 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-cyan-950/20">
@@ -167,7 +175,7 @@ export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        {/* SMARTSHIP SHIELD WATCHDOG THRESHOLDS */}
+        {/* GAULOS SHIELD WATCHDOG THRESHOLDS */}
         <div className="col-span-full bg-slate-950/50 p-6 rounded-3xl border border-slate-800">
           <div className="flex items-center gap-2 text-slate-300 mb-6">
             <ShieldCheck size={20} className="text-emerald-400" />
@@ -285,11 +293,127 @@ export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
             <Wifi size={20} />
             <span className="font-bold">Gateway NMEA</span>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <input type="text" placeholder="IP: 192.168.1.1" className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-white" />
-            <input type="text" placeholder="Puerto: 10110" className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-white" />
+          <div className="flex gap-2 mb-4">
+            {(['tcp', 'serial'] as const).map((transport) => (
+              <button
+                key={transport}
+                type="button"
+                onClick={() => nmea.update({ transport })}
+                className={cn(
+                  'px-4 py-2 rounded-xl text-xs font-bold border transition-all',
+                  nmea.config.transport === transport
+                    ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                    : 'bg-slate-900 border-slate-700 text-slate-400'
+                )}
+              >
+                {transport === 'tcp' ? 'TCP / Wi-Fi' : 'Puerto serie'}
+              </button>
+            ))}
           </div>
-        </div>
+          {nmea.config.transport === 'tcp' ? (
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="IP: 127.0.0.1"
+                aria-label="Host del servidor NMEA TCP"
+                value={nmea.config.host}
+                onChange={(event) => nmea.update({ host: event.target.value })}
+                className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-white"
+              />
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Puerto: 10110"
+                aria-label="Puerto TCP del servidor NMEA"
+                value={nmea.config.port}
+                onChange={(event) => nmea.update({ port: event.target.value })}
+                className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-white"
+              />
+              <select
+                aria-label="Origen de los datos TCP"
+                value={nmea.config.tcpSource}
+                onChange={(event) => nmea.update({ tcpSource: event.target.value === 'SIMULATOR' ? 'SIMULATOR' : 'BOAT' })}
+                className="col-span-2 bg-slate-900 border border-slate-700 rounded-xl p-3 text-white"
+              >
+                <option value="BOAT">Instrumentos NMEA · barco o Simulator X (todos los sensores)</option>
+                <option value="SIMULATOR">Simulador, solo visual (por detrás de Droid)</option>
+              </select>
+            </div>
+          ) : (
+            <div className="grid grid-cols-[1fr_auto] gap-4">
+              <select
+                aria-label="Puerto serie NMEA"
+                value={nmea.config.serialPath}
+                onChange={(event) => nmea.update({ serialPath: event.target.value })}
+                className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-white"
+              >
+                <option value="">Selecciona un puerto serie…</option>
+                {nmea.config.serialPath && !nmea.serialPorts.some((port) => port.path === nmea.config.serialPath) && (
+                  <option value={nmea.config.serialPath}>{nmea.config.serialPath} (no detectado)</option>
+                )}
+                {nmea.serialPorts.map((port) => (
+                  <option key={port.path} value={port.path}>
+                    {port.path}{port.manufacturer ? ` · ${port.manufacturer}` : ''}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={nmea.refreshSerialPorts}
+                className="px-4 rounded-xl text-xs font-bold border bg-slate-900 border-slate-700 text-slate-300"
+              >
+                Actualizar
+              </button>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <button
+              type="button"
+              onClick={() => { void nmea.connect(); }}
+              disabled={!nmea.available}
+              className="px-4 py-2 rounded-xl text-xs font-bold border bg-emerald-500/15 border-emerald-500/40 text-emerald-300 disabled:opacity-40"
+            >
+              Conectar
+            </button>
+            <button
+              type="button"
+              onClick={nmea.disconnect}
+              disabled={!nmea.available}
+              className="px-4 py-2 rounded-xl text-xs font-bold border bg-slate-900 border-slate-700 text-slate-300 disabled:opacity-40"
+            >
+              Desconectar
+            </button>
+            <span
+              className={cn(
+                'text-xs',
+                nmea.description.tone === 'ok' && 'text-emerald-400',
+                nmea.description.tone === 'busy' && 'text-cyan-300',
+                nmea.description.tone === 'warn' && 'text-amber-400',
+                nmea.description.tone === 'error' && 'text-red-400',
+                nmea.description.tone === 'idle' && 'text-slate-500'
+              )}
+            >
+              {nmea.description.text}
+            </span>
+          </div>
+          {nmea.description.classification && (
+            <p className={cn('mt-2 text-xs font-bold', nmea.status?.source === 'SIMULATOR' ? 'text-amber-400' : 'text-slate-400')}>
+              {nmea.description.classification}
+            </p>
+          )}
+          {nmea.config.transport === 'tcp' && !nmea.description.classification && (
+            <p className="mt-2 text-xs text-amber-400/80">
+              {nmea.config.tcpSource === 'BOAT'
+                ? 'Los datos TCP se tratarán como instrumentos del barco: tendrán prioridad sobre Droid y llegarán a las alarmas.'
+                : 'Los datos TCP se tratarán como SIMULADOS: solo se muestran y van por detrás de Droid.'}
+            </p>
+          )}
+          <button type="button" disabled={!nmea.available} onClick={() => { void nmea.useAsInstruments(); }} className="mt-3 rounded-xl border border-cyan-600 px-4 py-2 text-xs text-cyan-200">Conectar como instrumentación completa</button>
+          <p className="mt-2 text-xs text-slate-400">Este modo procesa Simulator X igual que un gateway del barco: posición, rumbo, velocidad, viento, profundidad y sensores disponibles. Al conectar se vuelve al GPS recibido y se cierra el ensayo virtual.</p>
+          <NmeaDiagnostics />
+          {nmea.message && <p className="mt-2 text-xs text-red-400">{nmea.message}</p>}
+          {!nmea.available && <p className="mt-2 text-xs text-slate-500">Disponible solo en GAULOS Desktop.</p>}
+          </div>
 
         {/* 📁 SECCIÓN DE CARTAS NÁUTICAS (NUEVA) */}
         <div className="col-span-full bg-slate-950/50 p-6 rounded-3xl border border-slate-800">

@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/features/link/**/*", "src/components/Logbook.tsx", "src/features/layout/statusbar/StatusBar.tsx", "src/features/navigation/components/TacticalMap.tsx", "src/global.d.ts", "src/vite-env.d.ts"],
+  "exclude": []
+}

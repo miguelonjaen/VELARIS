@@ -1,110 +1,46 @@
-import { useEffect, useMemo, useState } from 'react';
-import { generateTacticalAlerts, formatTacticalAdvisory, NavigationTelemetry, TacticalAlert } from '../lib/tacticalAlertSystem';
+import { useEffect, useRef } from 'react';
+import { formatTacticalAdvisory, generateTacticalAlerts, type NavigationTelemetry, type TacticalAlert } from '../lib/tacticalAlertSystem';
 
-export type TacticalAdvisorAction = {
-  label: string;
-  onClick: () => Promise<void> | void;
-  variant?: 'primary' | 'secondary';
+export const TACTICAL_XTE_NM = 0.15;
+export const TACTICAL_APPROACH_NM = 0.3;
+const EVENT_COOLDOWN_MS = 10 * 60_000;
+
+export type VoyageNotice = TacticalAlert & { key: string; journal?: boolean };
+type AdvisorInput = {
+  scope: string | null;
+  telemetry: NavigationTelemetry | null;
+  notices: VoyageNotice[];
+  saveLogEntry: (title: string, description: string, category: string) => Promise<void>;
 };
 
-interface UseTacticalAdvisorProps {
-  shipPos: { lat: number; lng: number } | null;
-  targetPos: { lat: number; lng: number } | null;
-  sog: number;
-  cog: number;
-  windSpeed: number;
-  windDir: number;
-  currentSailConfig?: string;
-  saveLogEntry: (titulo: string, descripcion: string, categoria?: string) => Promise<void>;
-}
-
-export const useTacticalAdvisor = ({
-  shipPos,
-  targetPos,
-  sog,
-  cog,
-  windSpeed,
-  windDir,
-  currentSailConfig,
-  saveLogEntry
-}: UseTacticalAdvisorProps) => {
-  const telemetry = useMemo<NavigationTelemetry | null>(() => {
-    if (!shipPos || !targetPos) return null;
-    return {
-      lat: shipPos.lat,
-      lng: shipPos.lng,
-      cog,
-      sog,
-      windDir,
-      windSpeed,
-      waypointLat: targetPos.lat,
-      waypointLng: targetPos.lng,
-      currentSailConfig
-    };
-  }, [shipPos, targetPos, cog, sog, windDir, windSpeed, currentSailConfig]);
-
-  const alerts = useMemo<TacticalAlert[]>(() => {
-    if (!telemetry) return [];
-    return generateTacticalAlerts(telemetry);
-  }, [telemetry]);
-
-  const advisory = useMemo(() => {
-    if (!alerts.length) {
-      return {
-        message: 'Almirante, sistemas estables. Sin alertas tácticas activas.',
-        priority: 'info' as const
-      };
-    }
-    return formatTacticalAdvisory(alerts);
-  }, [alerts]);
-
-  const [loggedAlertKey, setLoggedAlertKey] = useState('');
-
+export function useTacticalAdvisor({ scope, telemetry, notices, saveLogEntry }: AdvisorInput) {
+  const alerts: VoyageNotice[] = scope ? [...notices, ...(telemetry ? generateTacticalAlerts(telemetry) : [])
+    .filter(alert => alert.type === 'safety' || alert.type === 'sail')
+    .map(alert => ({ ...alert, key: `wind:${telemetry?.windSource}:${alert.type}`, journal: alert.type === 'safety' }))] : [];
+  const advisory = formatTacticalAdvisory(alerts);
+  const events = useRef({ scope, at: new Map<string, number>() });
   useEffect(() => {
-    if (!telemetry || alerts.length === 0) return;
-
-    const relevantAlerts = alerts.filter(alert => alert.severity === 'warning' || alert.severity === 'critical');
-    if (relevantAlerts.length === 0) return;
-
-    const alertKey = relevantAlerts.map(alert => `${alert.type}:${alert.severity}:${alert.message}`).join('|');
-    if (alertKey === loggedAlertKey) return;
-
-    relevantAlerts.forEach(async alert => {
-      try {
-        await saveLogEntry(
-          alert.logbookEntry?.titulo || `Alerta táctica: ${alert.type}`,
-          alert.logbookEntry?.descripcion || alert.message,
-          alert.logbookEntry?.categoria || 'NAVEGACIÓN TÁCTICA'
-        );
-      } catch (error) {
-        console.error('Error al guardar alerta táctica:', error);
+    if (events.current.scope !== scope) events.current = { scope, at: new Map() };
+    const at = events.current.at;
+    const now = Date.now();
+    for (const [key, stamp] of at) if (now - stamp >= EVENT_COOLDOWN_MS && key.endsWith(':cleared')) at.delete(key);
+    for (const alert of alerts) {
+      if (!alert.journal) continue;
+      const key = `${alert.key}:${alert.severity}`;
+      if (at.has(key)) continue;
+      const cleared = at.get(`${key}:cleared`);
+      if (cleared !== undefined && now - cleared < EVENT_COOLDOWN_MS) continue;
+      at.set(key, now);
+      void saveLogEntry(`Aviso táctico · ${alert.key}`, alert.message, 'NAVEGACIÓN TÁCTICA')
+        .catch(error => console.error('Bitácora del asesor táctico:', error));
+    }
+    for (const key of at.keys()) {
+      if (key.endsWith(':cleared')) continue;
+      if (!alerts.some(alert => alert.journal && `${alert.key}:${alert.severity}` === key)) {
+        at.delete(key);
+        at.set(`${key}:cleared`, now);
       }
-    });
-
-    setLoggedAlertKey(alertKey);
-  }, [alerts, loggedAlertKey, saveLogEntry, telemetry]);
-
-  const actions: TacticalAdvisorAction[] = useMemo(() => {
-    if (!alerts.length) return [];
-    const primary = alerts[0];
-    return [
-      {
-        label: primary.severity === 'critical' ? 'Guardar alerta crítica' : 'Guardar recomendación',
-        variant: primary.severity === 'critical' ? 'primary' : 'secondary',
-        onClick: async () => {
-          await saveLogEntry(
-            primary.logbookEntry?.titulo || `Registro táctico: ${primary.type}`,
-            primary.logbookEntry?.descripcion || primary.message,
-            primary.logbookEntry?.categoria || 'NAVEGACIÓN TÁCTICA'
-          );
-        }
-      }
-    ];
-  }, [alerts, saveLogEntry]);
-
-  return {
-    advisory,
-    alerts,
-    actions
-  };
-};
+    }
+  }, [alerts, scope, saveLogEntry]);
+  return { advisory, alerts };
+}

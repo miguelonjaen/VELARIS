@@ -1,5 +1,6 @@
+import { confirmNavigationAction } from '../features/copilot/toolPolicy';
 import { useState, useCallback } from 'react';
-import { callGemini } from '../lib/gemini';
+import { callTacticalAI } from '../lib/gemini';
 import { NAV_TOOLS } from '../lib/tools';
 
 interface AIProps {
@@ -30,14 +31,16 @@ export const useTacticalAI = ({ userProfile, activeShip, shipPosition, weather, 
     setIsProcessing(true);
 
     try {
-      const response = await callGemini(order, systemPrompt, false, NAV_TOOLS);
+      const response = await callTacticalAI(order, systemPrompt, false, NAV_TOOLS);
       if (!response) throw new Error("Respuesta vacía");
+      if (response.isOfflineMode) throw new Error(response.text);
 
       const aiText = response.text || "Orden procesada.";
       const functionCalls = response.functionCalls;
 
       if (functionCalls) {
         for (const call of functionCalls) {
+          if (!confirmNavigationAction(call)) continue;
           if (call.name === 'set_navigation_target') callbacks.onSetTarget(call.args);
           if (call.name === 'start_travesia') callbacks.onStartTravesia(call.args);
           if (call.name === 'end_travesia') callbacks.onEndTravesia();
@@ -47,8 +50,8 @@ export const useTacticalAI = ({ userProfile, activeShip, shipPosition, weather, 
 
       setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'ai', text: aiText, timestamp: new Date() }]);
     } catch (error) {
-      setMessages(prev => [...prev, { 
-        id: crypto.randomUUID(), role: 'ai', text: "Error de conexión con el núcleo estratégico.", isError: true, timestamp: new Date() 
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(), role: 'ai', text: error instanceof Error ? error.message : 'IA no disponible: error interno sin diagnóstico.', isError: true, timestamp: new Date()
       }]);
     } finally {
       setIsProcessing(false);

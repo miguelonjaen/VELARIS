@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"tunisia-gabes","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[9.6,33.4,11.5,35.0],"simplified":false,"layerParts":{"sea":["base-tunisia-gabes-sea-0.json"],"land":["base-tunisia-gabes-land-0.json"],"inlandWater":["base-tunisia-gabes-inlandWater-0.json"]}}

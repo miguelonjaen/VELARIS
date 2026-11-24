@@ -1,0 +1,28 @@
+SmartCHARTS Andalucía coastal pilot v1
+EXPERIMENTAL — NOT FOR NAVIGATION — NOT AN OFFICIAL ENC — NO BATHYMETRY
+
+Geographic data: © OpenStreetMap contributors.
+Source extract: Geofabrik GmbH, Andalucía, dated 20 October 2026.
+https://download.geofabrik.de/europe/spain/andalucia.html
+https://www.openstreetmap.org/copyright
+
+The derived database is distributed under Open Database License (ODbL) 1.0.
+https://opendatacommons.org/licenses/odbl/1-0/
+Individual database contents:
+https://opendatacommons.org/licenses/dbcl/1-0/
+
+Commercial reuse is permitted subject to attribution and the ODbL obligations,
+including share-alike for derivative databases. The software license does not
+replace the database license. No exclusive ownership of OSM data is claimed.
+
+The complete distributed derived database is andalucia-pilot.json. It contains
+a simplified overview and full-detail sectors; sector bounds follow longitude
+bands and are not administrative provincial borders.
+
+Changes: coastline, pier and breakwater selection; coastline clipping to OSM
+Andalusia relation 349044; whole structures retained when intersecting that boundary;
+nearby coastal structures retained using an approximate
+5 km inclusion filter; stable IDs; metadata; overview-only simplification.
+The source extract and all processing instructions are documented in
+SmartCHARTS/examples/andalucia. No surveyed depths, contours, verified navigation
+aids, hydrological completeness or navigational accuracy are provided.

@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"tunisia-east","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[10.0,34.7,11.5,37.1],"simplified":false,"layerParts":{"sea":["base-tunisia-east-sea-0.json"],"land":["base-tunisia-east-land-0.json"],"inlandWater":["base-tunisia-east-inlandWater-0.json"]}}

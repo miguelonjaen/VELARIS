@@ -1,0 +1,977 @@
+{
+  "schemaVersion": 1,
+  "experimental": true,
+  "navigationUse": false,
+  "officialEnc": false,
+  "license": "ODbL-1.0",
+  "attribution": "© OpenStreetMap contributors / Geofabrik",
+  "sourceFile": "spain-261024.osm.pbf",
+  "sourceDate": "2026-10-24",
+  "coverage": "Objects in the Spain extract intersecting [-7.43,35,4.6,42.9]; not complete Mediterranean coverage",
+  "counts": {
+    "pier": 3735,
+    "harbour": 307,
+    "landmark": 65,
+    "light_major": 80,
+    "small_craft_facility": 246,
+    "building": 13,
+    "dock": 29,
+    "lighthouse": 84,
+    "breakwater": 857,
+    "quay": 119,
+    "restricted_area": 61,
+    "cable_submarine": 21,
+    "tower": 1,
+    "beacon": 23,
+    "inshore_traffic_zone": 3,
+    "separation_boundary": 17,
+    "separation_lane": 11,
+    "separation_zone": 7,
+    "seaplane_landing_area": 3,
+    "light_minor": 585,
+    "navigation_line": 5,
+    "pipeline_submarine": 7,
+    "marine_farm": 23,
+    "sea_area": 86,
+    "separation_line": 12,
+    "anchorage": 260,
+    "gate": 91,
+    "crane": 88,
+    "mooring": 561,
+    "cable_area": 1,
+    "beacon_lateral": 46,
+    "recommended_traffic_lane": 4,
+    "rescue_station": 5,
+    "ferry_route": 2,
+    "wall": 2,
+    "floating_barrier": 1,
+    "platform": 5,
+    "harbour_basin": 12,
+    "wreck": 51,
+    "fairway": 4,
+    "beacon_cardinal": 51,
+    "buoy_cardinal": 15,
+    "beacon_special_purpose": 29,
+    "buoy_lateral": 172,
+    "buoy_special_purpose": 389,
+    "buoy_safe_water": 7,
+    "beacon_isolated_danger": 10,
+    "signal_station_warning": 2,
+    "tank": 1,
+    "signal_station_traffic": 2,
+    "buoy_isolated_danger": 7,
+    "rock": 159,
+    "weed": 3,
+    "seabed_area": 65,
+    "radio_station": 1,
+    "unclassified_seamark": 34,
+    "precautionary_area": 1,
+    "notice": 3,
+    "fortified_structure": 1,
+    "bridge": 18,
+    "radar_station": 2,
+    "fuel": 2,
+    "fishing_facility": 5,
+    "anchor_berth": 24,
+    "pilot_boarding": 2,
+    "obstruction": 5,
+    "light": 1
+  },
+  "total": 8544,
+  "outsideRegion": 4313,
+  "sectors": [
+    {
+      "id": "spain--1-37",
+      "bbox": [
+        -0.9959024,
+        37.519995,
+        -0.3100002,
+        37.9857826
+      ],
+      "count": 393,
+      "resource": "spain--1-37.json"
+    },
+    {
+      "id": "spain--1-38",
+      "bbox": [
+        -0.6645384,
+        38.0718468,
+        0.031406,
+        38.9982322
+      ],
+      "count": 255,
+      "resource": "spain--1-38.json"
+    },
+    {
+      "id": "spain--1-39",
+      "bbox": [
+        -5.37297,
+        35.62,
+        5.06725,
+        43.32847
+      ],
+      "count": 437,
+      "resource": "spain--1-39.json"
+    },
+    {
+      "id": "spain--1-40",
+      "bbox": [
+        -0.7432655,
+        40.0616834,
+        -0.3461586,
+        40.2815198
+      ],
+      "count": 2,
+      "resource": "spain--1-40.json"
+    },
+    {
+      "id": "spain--1-41",
+      "bbox": [
+        -0.9336484,
+        41.2517494,
+        -0.0498605,
+        41.9508236
+      ],
+      "count": 26,
+      "resource": "spain--1-41.json"
+    },
+    {
+      "id": "spain--1-42",
+      "bbox": [
+        -0.757421,
+        42.0728768,
+        -0.3238162,
+        42.7886361
+      ],
+      "count": 5,
+      "resource": "spain--1-42.json"
+    },
+    {
+      "id": "spain--2-36",
+      "bbox": [
+        -1.9067104,
+        36.9417012,
+        -1.8909722,
+        36.9912509
+      ],
+      "count": 13,
+      "resource": "spain--2-36.json"
+    },
+    {
+      "id": "spain--2-37",
+      "bbox": [
+        -1.8333922,
+        37.1593278,
+        -1.0043414,
+        37.5862408
+      ],
+      "count": 95,
+      "resource": "spain--2-37.json"
+    },
+    {
+      "id": "spain--2-38",
+      "bbox": [
+        -1.1687345,
+        38.8702629,
+        -1.1527195,
+        38.8738062
+      ],
+      "count": 4,
+      "resource": "spain--2-38.json"
+    },
+    {
+      "id": "spain--2-39",
+      "bbox": [
+        -1.8493639,
+        39.0156089,
+        -1.0340067,
+        39.2412403
+      ],
+      "count": 4,
+      "resource": "spain--2-39.json"
+    },
+    {
+      "id": "spain--2-40",
+      "bbox": [
+        -1.9788663,
+        40.2266875,
+        -1.9256567,
+        40.783068
+      ],
+      "count": 2,
+      "resource": "spain--2-40.json"
+    },
+    {
+      "id": "spain--2-41",
+      "bbox": [
+        -1.3862938,
+        41.7447767,
+        -1.0238052,
+        41.9308302
+      ],
+      "count": 15,
+      "resource": "spain--2-41.json"
+    },
+    {
+      "id": "spain--2-42",
+      "bbox": [
+        -1.6002285,
+        42.0552135,
+        -1.145059,
+        42.8535517
+      ],
+      "count": 8,
+      "resource": "spain--2-42.json"
+    },
+    {
+      "id": "spain--3-35",
+      "bbox": [
+        -2.9438039,
+        35.2698844,
+        -2.9180947,
+        35.3192989
+      ],
+      "count": 58,
+      "resource": "spain--3-35.json"
+    },
+    {
+      "id": "spain--3-36",
+      "bbox": [
+        -2.8475029,
+        36.3306639,
+        -1.8786742,
+        36.9652177
+      ],
+      "count": 118,
+      "resource": "spain--3-36.json"
+    },
+    {
+      "id": "spain--3-37",
+      "bbox": [
+        -2.7874385,
+        37.7013019,
+        -2.1178942,
+        37.8895905
+      ],
+      "count": 6,
+      "resource": "spain--3-37.json"
+    },
+    {
+      "id": "spain--3-38",
+      "bbox": [
+        -2.9126655,
+        38.3662709,
+        -2.5986166,
+        38.9971472
+      ],
+      "count": 10,
+      "resource": "spain--3-38.json"
+    },
+    {
+      "id": "spain--3-40",
+      "bbox": [
+        -2.8154161,
+        40.2319691,
+        -2.0863969,
+        40.8709112
+      ],
+      "count": 28,
+      "resource": "spain--3-40.json"
+    },
+    {
+      "id": "spain--3-41",
+      "bbox": [
+        -2.7130225,
+        41.7146249,
+        -2.4537335,
+        41.8731413
+      ],
+      "count": 5,
+      "resource": "spain--3-41.json"
+    },
+    {
+      "id": "spain--3-42",
+      "bbox": [
+        -2.9551272,
+        42.4706361,
+        -2.4545595,
+        42.6873723
+      ],
+      "count": 6,
+      "resource": "spain--3-42.json"
+    },
+    {
+      "id": "spain--4-35",
+      "bbox": [
+        -3.2836057,
+        35.7372641,
+        -2.7842181,
+        36.1422604
+      ],
+      "count": 8,
+      "resource": "spain--4-35.json"
+    },
+    {
+      "id": "spain--4-36",
+      "bbox": [
+        -3.9871944,
+        36.6943875,
+        -3.0173032,
+        36.7546641
+      ],
+      "count": 128,
+      "resource": "spain--4-36.json"
+    },
+    {
+      "id": "spain--4-37",
+      "bbox": [
+        -3.6772863,
+        37.2371951,
+        -3.6372676,
+        37.2802439
+      ],
+      "count": 3,
+      "resource": "spain--4-37.json"
+    },
+    {
+      "id": "spain--4-38",
+      "bbox": [
+        -3.5114707,
+        38.0867789,
+        -3.5056137,
+        38.0898783
+      ],
+      "count": 2,
+      "resource": "spain--4-38.json"
+    },
+    {
+      "id": "spain--4-39",
+      "bbox": [
+        -3.9880384,
+        39.0614982,
+        -3.3382349,
+        39.4539228
+      ],
+      "count": 14,
+      "resource": "spain--4-39.json"
+    },
+    {
+      "id": "spain--4-40",
+      "bbox": [
+        -3.9674151,
+        40.0407891,
+        -3.443879,
+        40.9198376
+      ],
+      "count": 50,
+      "resource": "spain--4-40.json"
+    },
+    {
+      "id": "spain--4-41",
+      "bbox": [
+        -3.9651736,
+        41.0403552,
+        -3.6914457,
+        41.6995071
+      ],
+      "count": 4,
+      "resource": "spain--4-41.json"
+    },
+    {
+      "id": "spain--4-42",
+      "bbox": [
+        -3.8362716,
+        42.2782142,
+        -3.161033,
+        42.7654341
+      ],
+      "count": 4,
+      "resource": "spain--4-42.json"
+    },
+    {
+      "id": "spain--5-36",
+      "bbox": [
+        -4.9569717,
+        36.4826197,
+        -4.0563731,
+        36.9240655
+      ],
+      "count": 216,
+      "resource": "spain--5-36.json"
+    },
+    {
+      "id": "spain--5-37",
+      "bbox": [
+        -4.7860656,
+        37.635032,
+        -4.2298217,
+        37.996034
+      ],
+      "count": 7,
+      "resource": "spain--5-37.json"
+    },
+    {
+      "id": "spain--5-38",
+      "bbox": [
+        -4.9385744,
+        38.0497342,
+        -4.1046548,
+        38.5462469
+      ],
+      "count": 5,
+      "resource": "spain--5-38.json"
+    },
+    {
+      "id": "spain--5-39",
+      "bbox": [
+        -4.0522515,
+        39.8529547,
+        -4.0204447,
+        39.8766285
+      ],
+      "count": 3,
+      "resource": "spain--5-39.json"
+    },
+    {
+      "id": "spain--5-40",
+      "bbox": [
+        -4.7098713,
+        40.0150249,
+        -4.0809915,
+        40.9720861
+      ],
+      "count": 50,
+      "resource": "spain--5-40.json"
+    },
+    {
+      "id": "spain--5-41",
+      "bbox": [
+        -4.9913615,
+        41.4977002,
+        -4.5817094,
+        41.8067325
+      ],
+      "count": 12,
+      "resource": "spain--5-41.json"
+    },
+    {
+      "id": "spain--5-42",
+      "bbox": [
+        -4.6108329,
+        42.0122408,
+        -4.2659013,
+        42.8069085
+      ],
+      "count": 31,
+      "resource": "spain--5-42.json"
+    },
+    {
+      "id": "spain--6-35",
+      "bbox": [
+        -5.7496667,
+        35.8625,
+        -5.2768333,
+        36.0466667
+      ],
+      "count": 72,
+      "resource": "spain--6-35.json"
+    },
+    {
+      "id": "spain--6-36",
+      "bbox": [
+        -5.9352959,
+        35.9466667,
+        -5.1531642,
+        36.8563374
+      ],
+      "count": 592,
+      "resource": "spain--6-36.json"
+    },
+    {
+      "id": "spain--6-37",
+      "bbox": [
+        -6.000258,
+        37.3161389,
+        -5.0370902,
+        37.8322687
+      ],
+      "count": 111,
+      "resource": "spain--6-37.json"
+    },
+    {
+      "id": "spain--6-38",
+      "bbox": [
+        -5.6671157,
+        38.2594091,
+        -5.222045,
+        38.9969734
+      ],
+      "count": 30,
+      "resource": "spain--6-38.json"
+    },
+    {
+      "id": "spain--6-39",
+      "bbox": [
+        -5.9272702,
+        39.0458552,
+        -5.0007593,
+        39.826071
+      ],
+      "count": 7,
+      "resource": "spain--6-39.json"
+    },
+    {
+      "id": "spain--6-40",
+      "bbox": [
+        -5.7032036,
+        40.3216543,
+        -5.4213032,
+        40.9739421
+      ],
+      "count": 10,
+      "resource": "spain--6-40.json"
+    },
+    {
+      "id": "spain--6-41",
+      "bbox": [
+        -5.9824529,
+        41.4955699,
+        -5.7287971,
+        41.6119449
+      ],
+      "count": 15,
+      "resource": "spain--6-41.json"
+    },
+    {
+      "id": "spain--6-42",
+      "bbox": [
+        -5.9258929,
+        42.0035534,
+        -5.5338209,
+        42.8933653
+      ],
+      "count": 12,
+      "resource": "spain--6-42.json"
+    },
+    {
+      "id": "spain--7-35",
+      "bbox": [
+        -6.2009526,
+        35.9083292,
+        -6.0999979,
+        35.9700059
+      ],
+      "count": 3,
+      "resource": "spain--7-35.json"
+    },
+    {
+      "id": "spain--7-36",
+      "bbox": [
+        -6.4718339,
+        36.1828008,
+        -6.0349271,
+        36.8950607
+      ],
+      "count": 398,
+      "resource": "spain--7-36.json"
+    },
+    {
+      "id": "spain--7-37",
+      "bbox": [
+        -6.9794838,
+        37.0074314,
+        -5.9999367,
+        37.7132481
+      ],
+      "count": 206,
+      "resource": "spain--7-37.json"
+    },
+    {
+      "id": "spain--7-38",
+      "bbox": [
+        -6.9822306,
+        38.2964775,
+        -6.2401913,
+        38.9944838
+      ],
+      "count": 17,
+      "resource": "spain--7-38.json"
+    },
+    {
+      "id": "spain--7-39",
+      "bbox": [
+        -6.8711106,
+        39.6271094,
+        -6.1294318,
+        39.7919588
+      ],
+      "count": 9,
+      "resource": "spain--7-39.json"
+    },
+    {
+      "id": "spain--7-40",
+      "bbox": [
+        -6.622161,
+        40.0254973,
+        -6.0858937,
+        40.2336722
+      ],
+      "count": 6,
+      "resource": "spain--7-40.json"
+    },
+    {
+      "id": "spain--7-41",
+      "bbox": [
+        -6.9299215,
+        41.0268936,
+        -6.1390392,
+        41.5657477
+      ],
+      "count": 8,
+      "resource": "spain--7-41.json"
+    },
+    {
+      "id": "spain--7-42",
+      "bbox": [
+        -6.9218192,
+        42.0005896,
+        -6.4308255,
+        42.1178469
+      ],
+      "count": 6,
+      "resource": "spain--7-42.json"
+    },
+    {
+      "id": "spain--8-37",
+      "bbox": [
+        -7.4264294,
+        37.1458411,
+        -7.0522222,
+        37.2744718
+      ],
+      "count": 146,
+      "resource": "spain--8-37.json"
+    },
+    {
+      "id": "spain--8-38",
+      "bbox": [
+        -7.3112385,
+        38.4604718,
+        -7.2286037,
+        38.7378626
+      ],
+      "count": 41,
+      "resource": "spain--8-38.json"
+    },
+    {
+      "id": "spain--8-39",
+      "bbox": [
+        -7.4098642,
+        39.0988272,
+        -7.1211174,
+        39.6498806
+      ],
+      "count": 27,
+      "resource": "spain--8-39.json"
+    },
+    {
+      "id": "spain--8-41",
+      "bbox": [
+        -7.4272821,
+        41.8048977,
+        -7.4271749,
+        41.8050522
+      ],
+      "count": 2,
+      "resource": "spain--8-41.json"
+    },
+    {
+      "id": "spain--8-42",
+      "bbox": [
+        -7.3562009,
+        42.1727984,
+        -7.0341387,
+        42.4692146
+      ],
+      "count": 11,
+      "resource": "spain--8-42.json"
+    },
+    {
+      "id": "spain--9-42",
+      "bbox": [
+        -12.71775,
+        35.5004,
+        -4.950883,
+        50.0430757
+      ],
+      "count": 1,
+      "resource": "spain--9-42.json"
+    },
+    {
+      "id": "spain-0-37",
+      "bbox": [
+        -0.7324321,
+        35.7373394,
+        1.1333333,
+        39.46
+      ],
+      "count": 2,
+      "resource": "spain-0-37.json"
+    },
+    {
+      "id": "spain-0-38",
+      "bbox": [
+        0.0002848,
+        38.628338,
+        0.4799942,
+        38.8690298
+      ],
+      "count": 132,
+      "resource": "spain-0-38.json"
+    },
+    {
+      "id": "spain-0-39",
+      "bbox": [
+        0.0003832,
+        39.5131167,
+        0.7151667,
+        39.9925
+      ],
+      "count": 75,
+      "resource": "spain-0-39.json"
+    },
+    {
+      "id": "spain-0-40",
+      "bbox": [
+        0.0310486,
+        40.0015044,
+        0.9309301,
+        40.9903344
+      ],
+      "count": 289,
+      "resource": "spain-0-40.json"
+    },
+    {
+      "id": "spain-0-41",
+      "bbox": [
+        0.1523481,
+        41.0315636,
+        0.9997664,
+        41.9309848
+      ],
+      "count": 87,
+      "resource": "spain-0-41.json"
+    },
+    {
+      "id": "spain-0-42",
+      "bbox": [
+        0.4909842,
+        42.0300301,
+        0.9970952,
+        42.5848739
+      ],
+      "count": 11,
+      "resource": "spain-0-42.json"
+    },
+    {
+      "id": "spain-1-38",
+      "bbox": [
+        1.1590194,
+        38.6410766,
+        1.5881316,
+        38.9936194
+      ],
+      "count": 227,
+      "resource": "spain-1-38.json"
+    },
+    {
+      "id": "spain-1-39",
+      "bbox": [
+        -0.2798084,
+        39.0009591,
+        2.6106259,
+        39.6730913
+      ],
+      "count": 31,
+      "resource": "spain-1-39.json"
+    },
+    {
+      "id": "spain-1-40",
+      "bbox": [
+        1.2076991,
+        40.7164129,
+        1.3587567,
+        41.0821667
+      ],
+      "count": 3,
+      "resource": "spain-1-40.json"
+    },
+    {
+      "id": "spain-1-41",
+      "bbox": [
+        1.0005493,
+        41.0428224,
+        1.9999707,
+        41.6846107
+      ],
+      "count": 429,
+      "resource": "spain-1-41.json"
+    },
+    {
+      "id": "spain-1-42",
+      "bbox": [
+        1.133788,
+        42.128002,
+        1.901907,
+        42.5849737
+      ],
+      "count": 5,
+      "resource": "spain-1-42.json"
+    },
+    {
+      "id": "spain-12-34",
+      "bbox": [
+        -4.950883,
+        31.2546065,
+        29.9753085,
+        38.1490237
+      ],
+      "count": 1,
+      "resource": "spain-12-34.json"
+    },
+    {
+      "id": "spain-2-39",
+      "bbox": [
+        2.2893333,
+        39.1206531,
+        2.9994492,
+        39.8966667
+      ],
+      "count": 831,
+      "resource": "spain-2-39.json"
+    },
+    {
+      "id": "spain-2-41",
+      "bbox": [
+        2.0002736,
+        41.2581333,
+        2.9816014,
+        41.9986876
+      ],
+      "count": 497,
+      "resource": "spain-2-41.json"
+    },
+    {
+      "id": "spain-2-42",
+      "bbox": [
+        2.1526381,
+        42.0127192,
+        2.9498998,
+        42.4449945
+      ],
+      "count": 40,
+      "resource": "spain-2-42.json"
+    },
+    {
+      "id": "spain-3-39",
+      "bbox": [
+        2.8322409,
+        38.948808,
+        3.9887897,
+        40.000226
+      ],
+      "count": 869,
+      "resource": "spain-3-39.json"
+    },
+    {
+      "id": "spain-3-40",
+      "bbox": [
+        2.82883,
+        36.77963,
+        5.07322,
+        43.32842
+      ],
+      "count": 26,
+      "resource": "spain-3-40.json"
+    },
+    {
+      "id": "spain-3-41",
+      "bbox": [
+        2.5121667,
+        41.0361667,
+        3.6878333,
+        41.9762495
+      ],
+      "count": 169,
+      "resource": "spain-3-41.json"
+    },
+    {
+      "id": "spain-3-42",
+      "bbox": [
+        2.40562,
+        41.40435,
+        5.06723,
+        43.32808
+      ],
+      "count": 764,
+      "resource": "spain-3-42.json"
+    },
+    {
+      "id": "spain-4-39",
+      "bbox": [
+        4.0007471,
+        39.71,
+        4.42,
+        39.9975038
+      ],
+      "count": 220,
+      "resource": "spain-4-39.json"
+    },
+    {
+      "id": "spain-4-40",
+      "bbox": [
+        4.0284329,
+        40.0001356,
+        4.2209958,
+        40.0890533
+      ],
+      "count": 76,
+      "resource": "spain-4-40.json"
+    },
+    {
+      "id": "spain-4-41",
+      "bbox": [
+        3.6433333,
+        41.09,
+        5.9583333,
+        42.655
+      ],
+      "count": 1,
+      "resource": "spain-4-41.json"
+    },
+    {
+      "id": "spain-5-41",
+      "bbox": [
+        2.1656421,
+        40.841565,
+        8.4109437,
+        41.3624151
+      ],
+      "count": 1,
+      "resource": "spain-5-41.json"
+    },
+    {
+      "id": "spain-6-41",
+      "bbox": [
+        2.1658214,
+        41.2908433,
+        11.782536,
+        42.1107965
+      ],
+      "count": 1,
+      "resource": "spain-6-41.json"
+    }
+  ],
+  "sourceSha256": "f924ea1f74a209417bfbfc0285b5750409f1ebc99dbe7157315d429f98353c16",
+  "sourceTimestamp": "2026-10-24T20:20:51+00:00"
+}

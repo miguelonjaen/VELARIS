@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"morocco-rif","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-4.6,34.9,-2.2,35.7],"simplified":false,"layerParts":{"sea":["base-morocco-rif-sea-0.json"],"land":["base-morocco-rif-land-0.json"],"inlandWater":["base-morocco-rif-inlandWater-0.json"]}}

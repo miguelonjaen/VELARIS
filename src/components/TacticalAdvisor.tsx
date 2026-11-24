@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Zap, Terminal, AlertTriangle, ShieldCheck, MessageSquareCode, Loader2 } from 'lucide-react';
-import { callGemini } from '../lib/gemini';
+import { callTacticalAI } from '../lib/gemini';
 
 interface TacticalAdvisorProps {
   windSpeed: number;
@@ -89,7 +89,7 @@ export const TacticalAdvisor: React.FC<TacticalAdvisorProps> = ({
             
             Da un consejo táctico BREVE y DIRECTO (máximo 12 palabras). Usa lenguaje náutico profesional.`;
           
-          const result = await callGemini(prompt);
+          const result = await callTacticalAI(prompt);
           const resultText = result.text.trim();
           
           if (resultText) {

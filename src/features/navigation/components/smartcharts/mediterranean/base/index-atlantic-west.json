@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"atlantic-west","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-7.43,36.7,-6.7,37.6],"simplified":false,"layerParts":{"sea":["base-atlantic-west-sea-0.json"],"land":["base-atlantic-west-land-0.json"],"inlandWater":["base-atlantic-west-inlandWater-0.json"]}}

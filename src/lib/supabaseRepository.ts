@@ -1,11 +1,12 @@
+import { fleetFilter } from './fleetLoading';
 import { supabase } from '../supabaseClient';
-import { UserProfile, ShipData, LogEntry, VesselStatus } from '@/shared/types';
+import { UserProfile, ShipData, LogEntry, VesselStatus, AdminUserView } from '@/shared/types';
 
 export const userRepository = {
   async getProfile(userId: string) {
     return supabase
       .from('usuarios')
-      .select(`*, suscripciones (plan_tactico)`)
+      .select(`*, suscripciones (plan_nivel, plan_tactico, activa)`)
       .eq('id', userId)
       .single();
   },
@@ -15,14 +16,69 @@ export const userRepository = {
   async updateAvatar(userId: string, url: string) {
     return supabase.from('usuarios').update({ foto_perfil_url: url }).eq('id', userId);
   },
-  async getAllUsers() {
-    return supabase.from('usuarios').select('*');
+  async getAllUsers(): Promise<{ data: AdminUserView[] | null; error: any }> {
+    const response = await supabase
+      .from('usuarios')
+      .select(`
+        *,
+        suscripciones (plan_nivel, plan_tactico, activa)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (response.error || !response.data) {
+      return { data: null, error: response.error };
+    }
+
+    const now = Date.now();
+    const users = response.data.map((user: any) => {
+      const lastSeen = user.last_seen_at ? new Date(user.last_seen_at).getTime() : 0;
+      const presence_status = lastSeen > now - 2 * 60 * 1000
+        ? 'conectado'
+        : lastSeen > now - 30 * 60 * 1000
+          ? 'activo recientemente'
+          : 'desconectado';
+      const subscription = user.suscripciones?.[0];
+
+      return {
+        ...user,
+        name: user.nombre || user.nombre_completo || user.email,
+        role: user.rol,
+        total_barcos: 0,
+        barcos_list: [],
+        plan_tactico: subscription?.plan_tactico || 'basico',
+        suscripcion_activa: subscription?.activa ?? user.suscripcion_activa,
+        cuenta_activa: user.cuenta_activa ?? user.suscripcion_activa,
+        presence_status
+      } as AdminUserView;
+    });
+
+    return { data: users, error: null };
+  },
+  async updateUserPlan(userId: string, plan: 'gratis' | 'plata' | 'oro', active: boolean) {
+    return supabase.rpc('admin_update_user_plan', {
+      target_user_id: userId,
+      target_plan: plan,
+      target_tactical_plan: null,
+      target_active: active
+    });
+  },
+  async updateUserAccount(userId: string, active: boolean) {
+    return supabase.rpc('admin_update_user_account', {
+      target_user_id: userId,
+      target_active: active
+    });
+  },
+  async touchCurrentUserAccess() {
+    return supabase.rpc('touch_current_user_access');
+  },
+  async recordCurrentUserAccess() {
+    return supabase.rpc('record_current_user_access');
   }
 };
 
 export const vesselRepository = {
-  async getFleet(userId: string) {
-    return supabase.from('barcos').select('*').eq('capitan_id', userId);
+  async getFleet(userId: string, signal?: AbortSignal) {
+    return supabase.from('barcos').select('*').or(fleetFilter(userId)).retry(false).abortSignal(signal ? AbortSignal.any([signal, AbortSignal.timeout(12000)]) : AbortSignal.timeout(12000));
   },
   async getAllVessels() {
     return supabase.from('barcos').select(`*, usuarios:capitan_id (email)`);
@@ -35,6 +91,10 @@ export const vesselRepository = {
     if (!id) return { data: null, error: null };
     return supabase.from('barcos').update(data).eq('id', id);
   },
+  /** Require a returned row: an RLS-filtered zero-row UPDATE is not a saved identity. */
+  async updateVesselIdentity(id: string, data: Record<string, unknown>) {
+    return supabase.from('barcos').update(data).eq('id', id).abortSignal(AbortSignal.timeout(12000)).select('id').single();
+  },
   async updateVesselStatus(barcoId: string | null, status: any) {
     if (!barcoId) return { data: null, error: null };
     return supabase.from('vessel_status').update(status).eq('barco_id', barcoId);
@@ -43,9 +103,7 @@ export const vesselRepository = {
     return supabase.from('vessel_status').upsert(status, { onConflict: 'barco_id' });
   },
   async setActiveVessel(userId: string, shipId: string) {
-    await supabase.from('barcos').update({ is_active: false }).eq('capitan_id', userId);
-    await supabase.from('barcos').update({ is_active: true }).eq('id', shipId);
-    return supabase.from('usuarios').update({ barco_activo_id: shipId }).eq('id', userId);
+    return supabase.rpc('set_active_vessel', { p_user_id: userId, p_ship_id: shipId });
   },
   async deleteVessel(id: string) {
     return supabase.from('barcos').delete().eq('id', id);
@@ -55,27 +113,59 @@ export const vesselRepository = {
   },
   async getInventory(barcoId: string | null) {
     if (!barcoId) return { data: null, error: null };
-    return supabase.from('inventario').select('*').eq('barco_id', barcoId);
+    return supabase.from('inventario').select('*').eq('barco_id', barcoId).abortSignal(AbortSignal.timeout(8000));
+  },
+  async getMaintenance(barcoId: string | null) {
+    if (!barcoId) return { data: null, error: null };
+    return supabase.from('mantenimiento').select('*').eq('barco_id', barcoId)
+      .order('proxima_revision', { ascending: true, nullsFirst: false })
+      .abortSignal(AbortSignal.timeout(8000));
   },
   async updateInventoryItem(id: string | number, data: any) {
     return supabase.from('inventario').update(data).eq('id', id);
   }
 };
 
+let journalWrites: Promise<unknown> = Promise.resolve();
+
 export const logRepository = {
+  /** Stable event timestamp + vessel + title identify a local event on retries. No schema migration. */
+  insertEntryOnce(entry: Record<string, unknown>) {
+    const operation = journalWrites.catch(() => undefined).then(async () => {
+      const existing = await supabase.from('bitacora').select('*')
+        .eq('barco_id', entry.barco_id).eq('created_at', entry.created_at).eq('titulo', entry.titulo).limit(1)
+        .abortSignal(AbortSignal.timeout(8000));
+      if (existing.error || existing.data?.length) return existing;
+      return supabase.from('bitacora').insert([entry]).select().abortSignal(AbortSignal.timeout(8000));
+    });
+    journalWrites = operation;
+    return operation;
+  },
   async insertEntry(entry: any) {
     return supabase.from('bitacora').insert([entry]).select();
   },
   async getActiveLog(barcoId: string | null) {
-    if (!barcoId) return { data: null, error: null };
-    return supabase.from('bitacora')
-      .select('id, titulo, destino_planificado, tipo_navegacion')
-      .eq('barco_id', barcoId)
-      .is('fecha_fin', null)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-  },
+  if (!barcoId) return { data: null, error: null };
+
+  const result = await supabase
+    .from('bitacora')
+    .select(`
+      id,
+      titulo,
+      destino_planificado,
+      tipo_navegacion,
+      created_at,
+      categoria,
+      descripcion
+    `)
+    .eq('barco_id', barcoId)
+    .eq('categoria', 'Navegación')
+    .in('titulo', ['Salida', 'Arribada'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return { ...result, data: result.data?.titulo === 'Salida' ? result.data : null };
+},
   async updateLog(logId: string | number, data: any) {
     return supabase.from('bitacora').update(data).eq('id', logId);
   },

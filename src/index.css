@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "./";
 @import "leaflet/dist/leaflet.css";
 
 :root {
@@ -215,3 +216,108 @@ body.night-mode ::-webkit-scrollbar-thumb:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: #06b6d4;
 }
+
+/* ==========================================================================
+   GAULOS · Arquitectura de layout compartida (rediseño UI)
+   Una única fuente de verdad para dimensiones y capas de superposición.
+   Los componentes la consumen con utilidades Tailwind v4 del tipo
+   z-(--vl-z-panel) o con var(--vl-...) en estilos en línea.
+   ========================================================================== */
+:root {
+  /* Dimensiones */
+  --vl-statusbar-h: 28px;      /* barra superior de estado */
+  --vl-rail-w: 64px;           /* barra izquierda (plegada) */
+  --vl-rail-w-open: 232px;     /* barra izquierda (desplegada, se superpone) */
+  --vl-dock-w: 64px;           /* barra derecha de herramientas */
+  --vl-gap: 8px;               /* margen de seguridad entre elementos flotantes */
+  /* Espacio reservado a la derecha de la carta para la barra de herramientas */
+  --vl-dock-reserve: calc(var(--vl-dock-w) + var(--vl-gap) * 2);
+  /* Alto de la banda Command Center (se actualiza en tiempo real) */
+  --vl-band-h: 52px;
+  /* Primera fila libre bajo la banda */
+  --vl-content-top: calc(var(--vl-band-h) + var(--vl-gap) * 2);
+  /* Ancho del panel meteorológico (columna izquierda de la carta) */
+  --vl-weather-w: 232px;
+
+  /* Jerarquía de superposición (de abajo a arriba) */
+  --vl-z-chart-widget: 1000;   /* widgets dentro de la carta (meteo, aviso ENC, terminal) */
+  --vl-z-hud: 6400;            /* banda Command Center */
+  --vl-z-command: 7100;        /* línea de comandos táctica (un panel abierto la cubre en ventanas estrechas) */
+  --vl-z-panel: 7200;          /* paneles de carta (capas, AIS, misión) */
+  --vl-z-dock: 7300;           /* barra derecha (nunca se solapa con los paneles; sus tooltips quedan por encima) */
+  --vl-z-rail: 8500;           /* barra izquierda desplegada */
+  --vl-z-drawer: 9000;         /* cajones laterales a pantalla completa */
+  --vl-z-modal: 10000;         /* diálogos modales */
+  --vl-z-modal-top: 11000;     /* diálogos sobre diálogos (novedades, acerca de) */
+  --vl-z-toast: 13000;         /* alarmas: siempre visibles */
+}
+
+/* Superficie de panel GAULOS: azul marino muy oscuro, borde sutil */
+.vl-surface {
+  background: rgba(7, 12, 22, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+}
+
+/* Los controles de Leaflet de la esquina derecha no deben quedar bajo la
+   barra de herramientas ni bajo la banda Command Center. */
+.vl-chart .leaflet-top.leaflet-right {
+  right: var(--vl-dock-reserve);
+  top: var(--vl-content-top);
+}
+.vl-chart .leaflet-bottom.leaflet-right {
+  right: var(--vl-dock-reserve);
+}
+.vl-chart .leaflet-control-zoom a {
+  background: rgba(7, 12, 22, 0.92);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.18);
+}
+.vl-chart .leaflet-control-zoom a:hover {
+  background: rgba(8, 47, 73, 0.95);
+  color: #67e8f9;
+}
+.vl-chart .leaflet-bar {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.vl-chart .leaflet-control-attribution {
+  background: rgba(2, 6, 23, 0.55);
+  color: #64748b;
+}
+.vl-chart .leaflet-control-attribution a {
+  color: #67e8f9;
+}
+
+/* Tooltip compacto para las barras laterales */
+.vl-tip {
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: max-content;
+  max-width: 240px;
+  white-space: normal;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.96);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  color: #e2e8f0;
+  font-size: 11px;
+  line-height: 1.3;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  z-index: 1;
+}
+.vl-tip small {
+  display: block;
+  color: #94a3b8;
+  font-size: 10px;
+  white-space: normal;
+}
+.vl-tip-left { right: calc(100% + 10px); }
+.vl-tip-right { left: calc(100% + 10px); }
+.group:hover > .vl-tip,
+.group:focus-visible > .vl-tip { opacity: 1; }

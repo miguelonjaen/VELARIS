@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"tunisia-djerba","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[10.5,32.9,11.75,34.0],"simplified":false,"layerParts":{"sea":["base-tunisia-djerba-sea-0.json"],"land":["base-tunisia-djerba-land-0.json"],"inlandWater":["base-tunisia-djerba-inlandWater-0.json"]}}

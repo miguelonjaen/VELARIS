@@ -1,3 +1,8 @@
+import { describeManualBoatEvent, parseManualBoatEvent } from '../features/boat/boatOperationsModel';
+import { deleteLogbookEntries, logbookDate, isPersistentLogEntry, excludedLogbookIds, excludeLogbookIds } from '../lib/logbookDeletion';
+import { getTripLogger } from '../lib/tripLogger';
+import { repairDisplayText } from '../lib/textEncoding';
+import { isRouteTrialEntryId } from '../features/navigation/hooks/useRouteTrial';
 import React, { useState, useEffect } from 'react';
 import { 
   DollarSign, 
@@ -29,6 +34,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { LogEntry, UserProfile, ShipData } from '../shared/types';
 import { cn } from '../lib/utils';
+import { useGaulosLink } from '../features/link/gaulosLinkStore';
+import { isLinkEntryId, linkEventToLogEntry } from '../features/link/linkLogbook';
 
 interface LogbookProps {
   userProfile: UserProfile;
@@ -37,10 +44,13 @@ interface LogbookProps {
   selectedShipId: string | number | null;
   setAdvisorMessage: (msg: string) => void;
   logEntries: LogEntry[];
+  localTrialEntries?: LogEntry[];
   setLogEntries: React.Dispatch<React.SetStateAction<LogEntry[]>>;
   saveLogEntry: (titulo: string, descripcion: string, categoria?: string) => Promise<void>;
   onClearAdvisor?: () => void;
   isEngineOn?: boolean;
+  propulsionAutomatic?: boolean;
+  onDeclarePropulsion?: (value: boolean) => Promise<void>;
   setIsEngineOn?: (val: boolean) => void;
 }
 
@@ -53,18 +63,43 @@ const Logbook: React.FC<LogbookProps> = ({
   selectedShipId, 
   setAdvisorMessage,
   logEntries,
+  localTrialEntries = [],
   setLogEntries,
   saveLogEntry,
   onClearAdvisor,
   isEngineOn,
+  propulsionAutomatic = false,
+  onDeclarePropulsion,
   setIsEngineOn
 }) => {
+  // Eventos de GAULOS Link (tracks de GAULOSdroid) guardados localmente: se muestran junto a la
+  // bitácora de Supabase sin mezclarse con su estado ni con sus operaciones de edición y borrado.
+  const linkState = useGaulosLink();
+  const isAutomaticLocal = (id: LogEntry['id']) => String(id).startsWith('auto:');
+  const [exclusionRevision, setExclusionRevision] = useState(0);
+  const exclusions = React.useMemo(() => excludedLogbookIds(selectedShipId), [selectedShipId, exclusionRevision]);
+  const visibleEntries = React.useMemo(() => {
+    const linked = linkState.events.map((event) => linkEventToLogEntry(event, selectedShipId));
+    const time = (entry: LogEntry) => new Date(entry.created_at || entry.fecha).getTime() || 0;
+    const local = localTrialEntries.filter(entry => String(entry.barco_id) === String(selectedShipId));
+    // Prefer durable local identities; a confirmed cloud copy represents the same event.
+    const key = (e: LogEntry) => `${e.barco_id}|${e.created_at}|${e.titulo}`;
+    const localKeys = new Set(local.map(key));
+    return [...logEntries.filter(e => !localKeys.has(key(e))), ...linked, ...local]
+      .filter(entry => !exclusions.has(String(entry.id)))
+      .sort((a, b) => time(b) - time(a));
+  }, [logEntries, linkState.events, selectedShipId, localTrialEntries, exclusions]);
+
   const today = new Date();
   const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedDate, setSelectedDate] = useState<string>(localToday);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const displayDates = React.useMemo(() => Array.from(new Set([
+    ...availableDates.filter(date => visibleEntries.some(entry => logbookDate(entry) === date)),
+    ...visibleEntries.map(entry => logbookDate(entry))
+  ].filter(Boolean))).sort().reverse(), [availableDates, visibleEntries]);
   const [showArchive, setShowArchive] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | number | null>(null);
   const [editDescription, setEditDescription] = useState('');
@@ -104,17 +139,14 @@ const Logbook: React.FC<LogbookProps> = ({
     try {
       const { data, error } = await supabase
         .from('bitacora')
-        .select('created_at')
+        .select('fecha, created_at')
         .eq('barco_id', selectedShipId)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
 
       if (data) {
-        const dates = Array.from(new Set(data.map(d => {
-          const date = new Date(d.created_at);
-          return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        })));
+        const dates = Array.from(new Set(data.map(d => logbookDate(d))));
         setAvailableDates(dates);
       }
     } catch (err) {
@@ -152,75 +184,67 @@ const Logbook: React.FC<LogbookProps> = ({
     };
   }, [selectedShipId, supabase]);
 
-  const handleDeleteEntry = async (id: string | number) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este registro táctico?')) return;
-    
-    // OPTIMISMO: Borrado instantáneo local
-    const originalLogs = [...logEntries];
-    setLogEntries(prev => prev.filter(e => e.id !== id));
-
-    try {
-      const { error } = await supabase
-        .from('bitacora')
-        .delete()
-        .eq('id', id)
-        .eq('barco_id', selectedShipId); // BORRADO ESTANCO
-        
-      if (error) throw error;
-
-      setAdvisorMessage('Registro eliminado de la caja negra.');
-      fetchAvailableDates();
-    } catch (err: unknown) {
-      console.error('Error deleting log entry:', err);
-      setLogEntries(originalLogs); // Revertir si falla
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-      setAdvisorMessage(`Fallo en borrado universal: ${errorMessage}`);
+  const [pendingDelete, setPendingDelete] = useState<{shipId: string | number; entries: LogEntry[]; label: string} | null>(null);
+  const [deleteError, setDeleteError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const deleteLock = React.useRef(false);
+  const requestDelete = (date: string | null, id?: LogEntry['id']) => {
+    if (selectedShipId === null || deleteLock.current) return;
+    const entries = visibleEntries.filter(entry => String(entry.barco_id) === String(selectedShipId)
+      && (date ? logbookDate(entry) === date : String(entry.id) === String(id)));
+    setDeleteError('');
+    if (!entries.length) {
+      setDeleteError('No hay registros de bitácora en esta selección.');
+      return;
     }
+    setPendingDelete({ shipId: selectedShipId, entries, label: date ? `del día ${date}` : 'seleccionado' });
   };
-
-  const handleDeleteDay = async (dateStr: string) => {
-    if (!selectedShipId) return;
-    
-    const confirmDelete = window.confirm(`¿Deseas eliminar ABSOLUTAMENTE TODOS los registros de este barco para el día ${new Date(dateStr).toLocaleDateString('es-ES')}?`);
-    if (!confirmDelete) return;
-
-    // OPTIMISMO: Borrado instantáneo local por fecha
-    const originalLogs = [...logEntries];
-    setLogEntries(prev => prev.filter(entry => {
-      if (!entry.created_at) return true;
-      const entryDate = new Date(entry.created_at).toLocaleDateString('en-CA');
-      return entryDate !== dateStr;
-    }));
-
+  const handleDeleteEntry = (id: LogEntry['id']) => requestDelete(null, id);
+  const handleDeleteDay = (date: string) => requestDelete(date);
+  const confirmDelete = async () => {
+    if (!pendingDelete || deleteLock.current) return;
+    const { shipId, entries } = pendingDelete;
+    if (String(selectedShipId) !== String(shipId)) {
+      setPendingDelete(null);
+      setDeleteError('La embarcación ha cambiado. Selecciona de nuevo los registros.');
+      return;
+    }
+    deleteLock.current = true;
+    setDeleting(true);
+    setDeleteError('');
     try {
-      const startOfDay = new Date(dateStr);
-      startOfDay.setHours(0, 0, 0, 0);
-      
-      const endOfDay = new Date(dateStr);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      // SIN FILTROS DE CATEGORÍA: Borrado total por barco y fecha
-      const { error } = await supabase
-        .from('bitacora')
-        .delete()
-        .eq('barco_id', selectedShipId)
-        .gte('created_at', startOfDay.toISOString())
-        .lte('created_at', endOfDay.toISOString());
-
-      if (error) throw error;
-      
-      setAdvisorMessage(`Bitácora purgada para el día ${dateStr}.`);
-      fetchAvailableDates();
-      
-      // SINCRONIZACIÓN ADVISOR: Limpiar alertas si se purga hoy
-      const today = new Date().toLocaleDateString('en-CA');
-      if (dateStr === today && onClearAdvisor) {
-        onClearAdvisor();
+      const selectedKeys = new Set(entries.map(entry => `${entry.created_at}|${entry.titulo}`));
+      const cloudIds = [...new Set(logEntries.filter(entry => String(entry.barco_id) === String(shipId)
+        && isPersistentLogEntry(entry.id)
+        && (entries.some(selected => String(selected.id) === String(entry.id))
+          || selectedKeys.has(`${entry.created_at}|${entry.titulo}`)))
+        .map(entry => entry.id))];
+      const localIds = [...new Set(entries.filter(entry => !isPersistentLogEntry(entry.id)).map(entry => String(entry.id)))];
+      const autoIds = localIds.filter(id => id.startsWith('auto:'));
+      // Remove automatic retry sources before deleting their cloud copies.
+      if (autoIds.length) await getTripLogger().removeAutomaticJournalEntries(String(shipId), autoIds);
+      let deleted: LogEntry['id'][] = [];
+      if (cloudIds.length) {
+        deleted = await deleteLogbookEntries(supabase, shipId, cloudIds);
+        if (deleted.length !== cloudIds.length) {
+          throw new Error(`Borrado parcial en Supabase: ${deleted.length} de ${cloudIds.length}. Reintenta para completar.`);
+        }
       }
-    } catch (err) {
-      console.error('Error deleting day entries:', err);
-      setLogEntries(originalLogs);
-      setAdvisorMessage('Fallo en purgado universal de bitácora.');
+      // Link events and trial logs remain in their original stores; only the logbook view is excluded.
+      excludeLogbookIds(shipId, localIds);
+      setExclusionRevision(value => value + 1);
+      const ids = new Set(deleted.map(String));
+      setLogEntries(previous => previous.filter(entry => String(entry.barco_id) !== String(shipId) || !ids.has(String(entry.id))));
+      setPendingDelete(null);
+      setAdvisorMessage(`${entries.length} registros retirados de la bitácora.`);
+      void fetchAvailableDates();
+    } catch (cause: unknown) {
+      const message = cause instanceof Error ? cause.message : 'Error desconocido';
+      setDeleteError(`No se pudo completar el borrado: ${message}`);
+      setAdvisorMessage(`No se pudo completar el borrado: ${message}`);
+    } finally {
+      deleteLock.current = false;
+      setDeleting(false);
     }
   };
 
@@ -265,48 +289,6 @@ const Logbook: React.FC<LogbookProps> = ({
     }
   };
 
-  const handleClearToday = async () => {
-    if (!selectedShipId) return;
-    if (!window.confirm(`¿BORRADO TOTAL? Se eliminarán ABSOLUTAMENTE TODOS los registros (Navegación, Alertas, IA, etc.) del día ${selectedDate} para esta embarcación.`)) return;
-    
-    // OPTIMISMO: Borrado instantáneo local total por fecha
-    const originalLogs = [...logEntries];
-    setLogEntries(prev => prev.filter(entry => {
-      if (!entry.created_at) return true;
-      const entryDate = new Date(entry.created_at).toLocaleDateString('en-CA');
-      return entryDate !== selectedDate;
-    }));
-
-    try {
-      const startOfDay = new Date(`${selectedDate}T00:00:00.000Z`).toISOString();
-      const endOfDay = new Date(`${selectedDate}T23:59:59.999Z`).toISOString();
-
-      // SIN FILTROS DE CATEGORÍA O CAPITÁN: Borrado universal por barco y fecha
-      const { error } = await supabase
-        .from('bitacora')
-        .delete()
-        .eq('barco_id', selectedShipId)
-        .gte('created_at', startOfDay)
-        .lte('created_at', endOfDay);
-        
-      if (error) throw error;
-
-      setAdvisorMessage(`Limpieza universal completada para el día ${selectedDate}.`);
-      fetchAvailableDates();
-      
-      // SINCRONIZACIÓN ADVISOR: Limpiar alertas si el día actual fue borrado
-      const today = new Date().toLocaleDateString('en-CA');
-      if (selectedDate === today && onClearAdvisor) {
-        onClearAdvisor();
-      }
-    } catch (err: unknown) {
-      console.error('Error clearing today logs:', err);
-      setLogEntries(originalLogs);
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-      setAdvisorMessage(`Fallo en limpieza universal de bitácora: ${errorMessage}`);
-    }
-  };
-
   const handleAddLogEntry = async (e?: React.FormEvent, overrideEntry?: any) => {
     if (e) e.preventDefault();
     const effectiveProfileId = userProfile?.id || 'demo-user';
@@ -327,6 +309,7 @@ const Logbook: React.FC<LogbookProps> = ({
       ubicacion_texto: 'Puerto de Motril',
       horas_motor: Number(newLogEntry.horas_motor || 0),
       created_at: now.toISOString(),
+      fecha: now.toISOString().slice(0, 10),
       viento_nudos: newLogEntry.viento_nudos || null,
       velocidad_gps: newLogEntry.velocidad_gps || null,
       rumbo: newLogEntry.rumbo ? Number(newLogEntry.rumbo) : null,
@@ -416,8 +399,8 @@ const Logbook: React.FC<LogbookProps> = ({
     return 'bg-slate-800 text-slate-400 border-slate-700';
   };
 
-  const filteredEntries = logEntries.filter(entry => {
-    const isAuto = entry.titulo === 'Evento Automático' || entry.titulo === 'Despacho de Travesía' || entry.titulo === 'Cierre de Travesía' || entry.titulo === 'Cambio de Guardia';
+  const filteredEntries = visibleEntries.filter(entry => {
+    const isAuto = entry.is_auto === true || entry.titulo === 'Evento Automático' || entry.titulo === 'Despacho de Travesía' || entry.titulo === 'Cierre de Travesía' || entry.titulo === 'Cambio de Guardia';
     const isAlert = (entry.categoria || '').toLowerCase().includes('seguridad') || (entry.titulo || '').toLowerCase().includes('alerta');
     
     if (filter === 'manual') return !isAuto;
@@ -428,7 +411,7 @@ const Logbook: React.FC<LogbookProps> = ({
 
   // Group entries by date
   const groupedEntries = filteredEntries.reduce((groups: { [key: string]: LogEntry[] }, entry) => {
-    const date = new Date(entry.fecha || entry.created_at || new Date()).toLocaleDateString('en-CA'); // YYYY-MM-DD
+    const date = logbookDate(entry);
     if (!groups[date]) {
       groups[date] = [];
     }
@@ -445,6 +428,27 @@ const Logbook: React.FC<LogbookProps> = ({
       transition={{ duration: 0.6 }}
       className="p-4 md:p-8 space-y-8 w-full max-w-none bg-slate-950 min-h-screen pointer-events-auto"
     >
+      {deleteError && <p role="alert" className="p-4 border border-red-500 rounded-xl text-red-300">{deleteError}</p>}
+      {pendingDelete && <div className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center p-4">
+        <section role="dialog" aria-modal="true" aria-labelledby="log-delete-title" className="bg-slate-900 border border-slate-600 rounded-2xl p-6 max-w-lg text-white"
+          onKeyDown={event => {
+            if (event.key === 'Escape' && !deleting) setPendingDelete(null);
+            if (event.key === 'Tab') {
+              const buttons = event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)');
+              const first = buttons[0], last = buttons[buttons.length - 1];
+              if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+              else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+            }
+          }}>
+          <h3 id="log-delete-title" className="text-xl font-bold">Confirmar eliminación</h3>
+          <p className="my-4">Eliminar {pendingDelete.entries.length} registros de bitácora {pendingDelete.label} de la embarcación {fleet.find(ship => String(ship.id) === String(pendingDelete.shipId))?.nombre || pendingDelete.shipId}. Esta acción no se puede deshacer. Se conservan tracks, travesías y datos originales de navegación. Los eventos locales se excluyen de la vista de bitácora.</p>
+          {deleteError && <p role="alert" className="text-red-300">{deleteError}</p>}
+          <div className="flex gap-4 mt-4">
+            <button type="button" autoFocus disabled={deleting} onClick={() => setPendingDelete(null)} className="px-4 py-3 rounded-xl bg-slate-700">Cancelar</button>
+            <button type="button" disabled={deleting} onClick={() => void confirmDelete()} className="px-4 py-3 rounded-xl bg-red-700">{deleting ? 'Eliminando…' : 'Eliminar registros'}</button>
+          </div>
+        </section>
+      </div>}
       <div className="flex flex-col gap-12">
         {/* List - History ABOVE */}
         <div className="space-y-8 w-full">
@@ -455,8 +459,12 @@ const Logbook: React.FC<LogbookProps> = ({
             </div>
             
             <div className="flex items-center gap-2">
-              <button 
+              <button
+                disabled={propulsionAutomatic}
+                title={propulsionAutomatic ? 'Selección automática según RPM de los instrumentos' : 'Selección manual de propulsión'}
+
                 onClick={async () => {
+                  if (onDeclarePropulsion) { await onDeclarePropulsion(!isEngineOn); return; }
                   if (setIsEngineOn) {
                     setIsEngineOn(!isEngineOn);
                     await saveLogEntry(
@@ -479,8 +487,12 @@ const Logbook: React.FC<LogbookProps> = ({
               >
                 ⚙️ Motor
               </button>
-              <button 
+              <button
+                disabled={propulsionAutomatic}
+                title={propulsionAutomatic ? 'Selección automática según RPM de los instrumentos' : 'Selección manual de propulsión'}
+
                 onClick={async () => {
+                  if (onDeclarePropulsion) { await onDeclarePropulsion(false); return; }
                   if (setIsEngineOn && isEngineOn) {
                     setIsEngineOn(false);
                   }
@@ -529,10 +541,10 @@ const Logbook: React.FC<LogbookProps> = ({
               exit={{ opacity: 0, height: 0 }}
               className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl flex flex-wrap gap-2"
             >
-              {availableDates.length === 0 ? (
+              {displayDates.length === 0 ? (
                 <p className="text-sm text-slate-500">No hay fechas en el archivo.</p>
               ) : (
-                availableDates.map(date => (
+                displayDates.map(date => (
                   <button
                     key={date}
                     onClick={() => {
@@ -603,9 +615,9 @@ const Logbook: React.FC<LogbookProps> = ({
 
                   <div className="space-y-8">
                     {groupedEntries[dateStr].map((entry, index) => {
-                      const isAuto = entry.is_auto || entry.titulo === 'Evento Automático' || entry.titulo === 'Despacho de Travesía' || entry.titulo === 'Cierre de Travesía' || entry.titulo === 'Cambio de Guardia' || entry.categoria === 'Técnico';
+                      const isAuto = entry.is_auto === true || entry.is_auto || entry.titulo === 'Evento Automático' || entry.titulo === 'Despacho de Travesía' || entry.titulo === 'Cierre de Travesía' || entry.titulo === 'Cambio de Guardia' || entry.categoria === 'Técnico';
                       const isMob = (entry.categoria === 'SEGURIDAD CRÍTICA' || entry.categoria === 'Seguridad' || entry.titulo === 'EMERGENCIA MOB') && (entry.texto?.includes('MOB') || entry.descripcion?.includes('MOB'));
-                      const entryDate = new Date(entry.fecha || entry.created_at || new Date());
+                      const entryDate = new Date(entry.created_at || entry.fecha || new Date());
                       
                       return (
                         <motion.div 
@@ -639,6 +651,11 @@ const Logbook: React.FC<LogbookProps> = ({
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
+                                {(isLinkEntryId(entry.id) || isRouteTrialEntryId(entry.id) || isAutomaticLocal(entry.id) || parseManualBoatEvent(entry.descripcion)) ? (
+                                  <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-fuchsia-950/40 text-fuchsia-400" title={parseManualBoatEvent(entry.descripcion) ? "Declaración manual del patrón; no confirma ejecución física" : isAutomaticLocal(entry.id) ? "Bitácora automática guardada en este equipo" : isRouteTrialEntryId(entry.id) ? "Ensayo virtual guardado en este equipo; sin sincronizar con el barco" : "Recibido de GAULOSdroid por GAULOS Link; guardado en este equipo"}>
+                                    {parseManualBoatEvent(entry.descripcion) ? (isAutomaticLocal(entry.id) ? "Manual · local" : "Manual · registrado") : isAutomaticLocal(entry.id) ? "Automático · local" : isRouteTrialEntryId(entry.id) ? "Ensayo · local" : "Link · local"}
+                                  </span>
+                                ) : (
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button 
                                     onClick={() => {
@@ -658,6 +675,7 @@ const Logbook: React.FC<LogbookProps> = ({
                                     <Trash2 className="w-3 h-3" />
                                   </button>
                                 </div>
+                                )}
                               </div>
                             </div>
 
@@ -665,7 +683,7 @@ const Logbook: React.FC<LogbookProps> = ({
                               "text-sm font-black uppercase tracking-tight mb-1",
                               isMob ? "text-red-500" : "text-white"
                             )}>
-                              {entry.titulo || entry.categoria}
+                              {repairDisplayText(entry.titulo || entry.categoria || '')}
                             </h4>
 
                             {editingEntryId === entry.id ? (
@@ -695,7 +713,7 @@ const Logbook: React.FC<LogbookProps> = ({
                                 "text-xs leading-relaxed mb-3",
                                 isMob ? "text-red-400 font-bold" : "text-slate-400"
                               )}>
-                                {entry.texto || entry.descripcion}
+                                {repairDisplayText(describeManualBoatEvent(entry.texto || entry.descripcion || ''))}
                               </p>
                             )}
 

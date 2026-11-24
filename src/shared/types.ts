@@ -1,6 +1,7 @@
 export interface VesselState {
   lat: number;
   lng: number;
+
   sog: number; // Speed Over Ground
   cog: number; // Course Over Ground
   hdg: number; // Heading
@@ -46,23 +47,37 @@ export interface UserProfile {
   plan_nivel: 'gratis' | 'plata' | 'oro';
   plan_tactico?: 'basico' | 'capitan' | 'almirante';
   suscripcion_activa: boolean;
+  cuenta_activa?: boolean;
+  last_access_at?: string | null;
+  last_seen_at?: string | null;
   total_barcos?: number;
   nombre?: string;
   barco_activo_id?: string | null;
+}
+
+export type UserPresenceStatus = 'conectado' | 'activo recientemente' | 'desconectado';
+
+export interface AdminUserView extends UserProfile {
+  total_barcos: number;
+  barcos_list?: string[];
+  plan_tactico?: 'basico' | 'capitan' | 'almirante';
+  suscripcion_activa: boolean;
+  cuenta_activa: boolean;
+  presence_status: UserPresenceStatus;
 }
 
 export interface ShipData {
   id: string;
   nombre: string;
   is_active?: boolean;
-  horas_motor?: number;
+  horas_motor?: number | null;
   modelo: string;
   marca: string;
-  matricula: string;
-  eslora: number;
-  manga: number;
-  calado: number;
-  potencia_cv: number;
+  matricula: string | null;
+  eslora: number | null;
+  manga: number | null;
+  calado: number | null;
+  potencia_cv: number | null;
   numero_serie_casco: string;
   fecha_itb: string;
   fecha_seguro: string;
@@ -73,6 +88,9 @@ export interface ShipData {
   manual_pdf?: string;
   lat?: number;
   lng?: number;
+   puerto_base?: string | null;
+  puerto_base_lat?: number | null;
+  puerto_base_lng?: number | null;
   tipo_barco?: string;
   type?: string;
   cog?: number;
@@ -108,10 +126,10 @@ export interface ShipData {
   name?: string;
   brand?: string;
   model?: string;
-  registration?: string;
-  length?: number;
-  beam?: number;
-  draft?: number;
+  registration?: string | null;
+  length?: number | null;
+  beam?: number | null;
+  draft?: number | null;
 }
 
 export interface InventoryItem {
@@ -137,8 +155,8 @@ export interface ProcessedWeather {
   humidity: number;
   pressure: number;
   visibility: number;
-  waveHeight: number;
-  tideLevel: number;
+  waveHeight?: number;
+  tideLevel?: number;
 }
 
 export interface WeatherResponse {
@@ -184,7 +202,7 @@ export interface LogEntry {
   puerto_repostaje?: string;
   texto?: string;
   is_auto?: boolean;
-  tipo_navegacion?: 'Libre' | 'Planificada';
+  tipo_navegacion?: 'Libre' | 'Ruta' | 'IA' | 'Planificada';
   destino_planificado?: string;
   ubicacion_texto?: string;
   time?: string;
@@ -203,6 +221,7 @@ export interface LogEntry {
   propulsion_objetivo?: string;
   distancia_total?: number;
   eta?: string;
+  maneuverTimestamp?: number;
 }
 
 export interface VesselStatus {
@@ -219,9 +238,9 @@ export interface VesselStatus {
 
 export type AlarmSeverity = 'normal' | 'warning' | 'critical';
 
-export interface SmartshipAlarm {
+export interface GAULOSAlarm {
   id: string;
-  type: 'depth' | 'engine_temp' | 'fuel' | 'ais_collision' | 'internal_temp' | 'humidity' | 'layline_deviation' | 'anchor_drift' | 'anchor_drag' | 'sensor_quality';
+  type: 'depth' | 'engine_temp' | 'fuel' | 'ais_collision' | 'internal_temp' | 'humidity' | 'layline_deviation' | 'anchor_drift' | 'anchor_drag' | 'sensor_quality' | 'oil_pressure' | 'battery_low' | 'water_low';
   severity: AlarmSeverity;
   message: string;
   timestamp: number;
@@ -233,6 +252,7 @@ export interface SecurityThresholds {
   maxEngineTemp: number;
   minFuel: number;
   minCPA: number;
+  maxAisTcpaMinutes?: number;
   maxInternalTemp: number;
   maxHumidity: number;
 }

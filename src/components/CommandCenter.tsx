@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { 
-  Zap, 
-  Wind, 
-  Sun, 
-  Thermometer, 
-  Droplets, 
-  Gauge, 
-  AlertTriangle, 
-  LifeBuoy, 
-  Moon, 
-  ArrowUp, 
-  Activity, 
-  X, 
+import {
+  Zap,
+  Wind,
+  Sun,
+  Thermometer,
+  Droplets,
+  Gauge,
+  AlertTriangle,
+  LifeBuoy,
+  Moon,
+  ArrowUp,
+  Activity,
+  X,
   Navigation,
   Fuel,
   ChevronDown,
@@ -23,7 +23,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 
 import { cn } from '../lib/utils';
 
-import { RouteBriefing } from './RouteBriefing';
+// import { RouteBriefing } from './RouteBriefing';
 import { TacticalHUD } from './TacticalHUD';
 import { calculateDistanceNM } from '../lib/utils';
 
@@ -232,9 +232,21 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
       .eq('barco_id', selectedShipId)
       .maybeSingle()
       .then(({ data }) => {
+        console.log("SUPABASE STATUS", data);
         if (data) {
+
+           console.log(
+        "FETCH STATUS -> Supabase:",
+        data.is_navigating,
+        "| React:",
+        isTravesiaActive
+      );
           setVesselStatus(data);
           if (data.is_navigating !== isTravesiaActive) {
+            console.log(
+                ">>> SUPABASE ACTIVA LA TRAVESIA",
+                data.is_navigating
+            );
             setIsTravesiaActive(data.is_navigating);
           }
         }
@@ -253,8 +265,22 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
         },
         (payload) => {
           const newData = payload.new as VesselStatus;
+
+          console.log(
+    "REALTIME STATUS -> Supabase:",
+    newData.is_navigating,
+    "| React:",
+    isTravesiaActive
+  );
+
           setVesselStatus(newData);
           if (newData.is_navigating !== isTravesiaActive) {
+
+            console.log(
+      ">>> REALTIME CAMBIA EL ESTADO A",
+      newData.is_navigating
+    );
+
             setIsTravesiaActive(newData.is_navigating);
             if (!newData.is_navigating) {
               setCurrentPath([]);
@@ -273,7 +299,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
     const newState = !isEngineOn;
     setIsEngineOn(newState);
     await saveTechnicalEvent(
-      'Sistema de Propulsión', 
+      'Sistema de Propulsión',
       newState ? 'Motor Encendido' : 'Navegando a Vela'
     );
   };
@@ -281,10 +307,10 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   const toggleControl = async (id: 'pump' | 'music') => {
     const newState = !activeControls[id];
     setActiveControls(prev => ({ ...prev, [id]: newState }));
-    
+
     let message = '';
     let title = 'Evento de Sistemas';
-    
+
     if (id === 'pump') {
       title = 'Sistema de Achique';
       message = `Bomba de Achique: ${newState ? 'ON' : 'OFF'}`;
@@ -293,7 +319,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
       title = 'Sistema Multimedia';
       message = `Sistema de Música: ${newState ? 'ON' : 'OFF'}`;
     }
-    
+
     await saveTechnicalEvent(title, message);
   };
 
@@ -349,7 +375,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
         .from('vessel_status')
         .update({ is_navigating: false })
         .eq('barco_id', barcoIdReal);
-      
+
       if (error) throw error;
       onEndNavigation();
     } catch (err: unknown) {
@@ -376,12 +402,12 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   };
 
   const [localActiveTab, setLocalActiveTab] = useState<'viento' | 'motor' | 'nav' | 'advisor'>('viento');
-  
+
   const activeShip = fleet.find(s => s.id === selectedShipId) || fleet[0];
   const currentHeading = activeShip?.cog || 113;
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: 50, scale: 0.95 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={{ opacity: 0, x: 50, scale: 0.95 }}
@@ -395,15 +421,18 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
             <Gauge className="w-5 h-5 text-cyan-400" />
           </div>
           <div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-white">Sistemas</h2>
-            <p className="text-[8px] font-bold text-cyan-500 uppercase tracking-widest">Protocolo Activo</p>
-          </div>
+            <h2 className="text-sm font-black tracking-[0.18em] text-white">
+  Command Center</h2>
+  <p className="text-[8px] font-bold text-cyan-500 uppercase tracking-widest">
+  GAULOS Core
+</p>
+           </div>
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="p-2 hover:bg-red-500/10 rounded-full transition-colors group z-[110]"
         >
-          <X className="w-6 h-6 text-slate-500 group-hover:text-red-500" />
+          <X className="w-4 h-4 text-slate-500 group-hover:text-red-500" />
         </button>
       </div>
 
@@ -419,7 +448,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                 <div className="text-4xl font-black text-white font-mono">{simulatedSog.toFixed(1)}</div>
                 <div className="text-[8px] font-bold text-cyan-500 uppercase mt-1">Nudos</div>
               </div>
-              
+
               <div className="absolute top-8 right-8 text-right">
                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">TWA</div>
                 <div className="text-4xl font-black text-white font-mono">{Math.round((weather?.windDir || 0) - currentHeading + 360) % 360}°</div>
@@ -441,7 +470,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
               {/* Main Wind Rose */}
               <div className="relative w-72 h-72 rounded-full flex items-center justify-center">
                 {/* Rotating Degree Ring */}
-                <motion.div 
+                <motion.div
                   animate={{ rotate: -currentHeading }}
                   transition={{ type: 'spring', damping: 30, stiffness: 100 }}
                   className="absolute inset-0 rounded-full border-[1.5px] border-slate-800 shadow-[inset_0_0_40px_rgba(6,182,212,0.05)]"
@@ -478,7 +507,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                   </div>
 
                   {/* True Wind Pointer (Relative to ship orientation) */}
-                  <motion.div 
+                  <motion.div
                     animate={{ rotate: (weather?.windDir || 0) - currentHeading }}
                     transition={{ type: 'spring', damping: 25, stiffness: 80 }}
                     className="absolute inset-0 z-20"
@@ -502,14 +531,14 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                   </div>
                   <div className="text-3xl font-black text-white font-mono">{vesselStatus?.fuel_level ?? 85}%</div>
                   <div className="h-1 bg-slate-800 rounded-full mt-3 overflow-hidden">
-                    <motion.div 
+                    <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${vesselStatus?.fuel_level ?? 85}%` }}
                       className="h-full bg-amber-500"
                     />
                   </div>
                 </div>
-                
+
                 <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Batería</span>
@@ -517,7 +546,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                   </div>
                   <div className="text-3xl font-black text-white font-mono">{(vesselStatus?.battery_voltage || 12.6).toFixed(1)}V</div>
                   <div className="h-1 bg-slate-800 rounded-full mt-3 overflow-hidden">
-                    <motion.div 
+                    <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(100, ((vesselStatus?.battery_voltage || 12.6) / 14.4) * 100)}%` }}
                       className="h-full bg-yellow-500"
@@ -537,7 +566,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                 <div className="text-2xl font-black">1850</div>
                 <div className="absolute bottom-6 text-[10px] font-bold text-slate-500">RPM</div>
               </div>
-              <button 
+              <button
                 onClick={togglePropulsion}
                 className={cn(
                   "w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all",
@@ -572,7 +601,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                 </div>
               </div>
               <div className="pt-4 border-t border-slate-800 flex flex-col gap-3">
-                <button 
+                <button
                   onClick={() => {
                     if (isTravesiaActive) {
                       handleEndVoyage();
@@ -582,8 +611,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                   }}
                   className={cn(
                     "w-full py-4 rounded-2xl font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3",
-                    isTravesiaActive 
-                      ? "bg-red-600 text-white shadow-lg shadow-red-900/40 border border-red-500/30" 
+                    isTravesiaActive
+                      ? "bg-red-600 text-white shadow-lg shadow-red-900/40 border border-red-500/30"
                       : "bg-cyan-600 text-white shadow-lg shadow-cyan-900/40 border border-cyan-500/30"
                   )}
                 >
@@ -641,7 +670,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
               {tab.label}
             </span>
             {localActiveTab === tab.id && (
-              <motion.div 
+              <motion.div
                 layoutId="activeTabUnderline"
                 className="absolute bottom-2 w-8 h-1 bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)] rounded-full"
               />

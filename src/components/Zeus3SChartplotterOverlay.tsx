@@ -1,31 +1,15 @@
-import React from 'react';
-import {
-  Activity,
-  Anchor,
-  Compass,
-  Crosshair,
-  Flag,
-  Layers,
-  Map,
-  Menu,
-  Navigation,
-  Power,
-  Radar,
-  Radio,
-  Route,
-  Sailboat,
-  Settings,
-  Timer,
-  Wind,
-  Zap,
-} from 'lucide-react';
+import type { ResolvedNavigationState } from '../core/navigation/SharedNavigationState';
+import { presentSharedNavigation } from '../features/navigation/utils/sharedNavigationPresentation';
+﻿import React from 'react';
+import { Layers, Navigation } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { motion } from 'motion/react';
-import  SailSteerWidget  from './SailSteerWidget';
+import { useSharedNavigationView } from '../features/navigation/hooks/useSharedNavigationView';
+import type { NavigationCellView } from '../features/navigation/utils/sharedNavigationPresentation';
 
 type ZeusPageId = 'chart' | 'sailsteer' | 'race' | 'laylines' | 'windplot' | 'pilot' | 'weather' | 'charts';
 
 interface Zeus3SChartplotterOverlayProps {
+  /** Ya no se muestran: posición, SOG, COG y rumbo salen de app.navigationState. Se conservan por compatibilidad con App. */
   sog: number;
   hdg: number;
   cog: number;
@@ -44,6 +28,8 @@ interface Zeus3SChartplotterOverlayProps {
   windEnabled: boolean;
   collisionFilter: boolean;
   isNavigating: boolean;
+  tripDistanceNm?: number;
+  navigationOverride?: ResolvedNavigationState;
   autopilotMode: 'standby' | 'auto' | 'wind' | 'nav';
   activePage: ZeusPageId;
   onSelectPage: (page: ZeusPageId) => void;
@@ -53,157 +39,182 @@ interface Zeus3SChartplotterOverlayProps {
   onToggleAIS: () => void;
   onToggleWind: () => void;
   onToggleCollisionFilter: () => void;
-  onStartNavigation: () => void;
+  onStartNavigation?: () => void;
   onEndNavigation: () => void;
   onToggleAutopilot: () => void;
     isSailSteerWidgetOpen: boolean;
   onCloseSailSteerWidget: () => void;
+  isNavFocusMode: boolean;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
+  /** false cuando la profundidad no procede de un sensor (no se muestra el valor por defecto). */
+  depthAvailable?: boolean;
+  /** Identificación de la carta activa que se muestra en la banda. */
+  activeChartDetail?: string;
   className?: string;
-  
 }
 
-const pages: Array<{ id: ZeusPageId; label: string; icon: React.ReactNode; hudIndex?: number }> = [
-  { id: 'chart', label: 'Chart', icon: <Map className="h-4 w-4" /> },
-  { id: 'sailsteer', label: 'SailSteer', icon: <Sailboat className="h-4 w-4" />, hudIndex: 1 },
-  { id: 'race', label: 'RacePanel', icon: <Flag className="h-4 w-4" />, hudIndex: 5 },
-  { id: 'laylines', label: 'Laylines', icon: <Route className="h-4 w-4" /> },
-  { id: 'windplot', label: 'WindPlot', icon: <Wind className="h-4 w-4" />, hudIndex: 3 },
-  { id: 'pilot', label: 'Pilot', icon: <Compass className="h-4 w-4" /> },
-  { id: 'weather', label: 'PredictWind', icon: <Activity className="h-4 w-4" /> },
-  { id: 'charts', label: 'Cartas', icon: <Layers className="h-4 w-4" /> },
-];
+// Nota: la antigua barra de páginas Zeus (Chart, SailSteer, RacePanel...) ya no se
+// renderiza; la navegación entre pantallas vive en la barra derecha (ZeusSidebar).
+// Las props de páginas se conservan por compatibilidad con App.
 
-const StatusPill = ({ label, active }: { label: string; active: boolean }) => (
-  <span
+/** Celda de instrumento: etiqueta pequeña, cifra destacada y unidad visible. */
+const Cell = ({
+  label,
+  value,
+  unit,
+  available = true,
+  tone = 'text-white',
+  title,
+  wide = false,
+  source = null,
+  unavailableTitle,
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+  available?: boolean;
+  tone?: string;
+  title?: string;
+  wide?: boolean;
+  /** Procedencia del dato; se marcan el respaldo de GAULOSdroid y los datos simulados. */
+  source?: 'BOAT' | 'DROID' | 'SIMULATOR' | null;
+  unavailableTitle?: string;
+}) => (
+  <div
     className={cn(
-      'rounded border px-2 py-1 text-[8px] font-black uppercase tracking-[0.18em]',
-      active ? 'border-cyan-400/40 bg-cyan-400/15 text-cyan-200' : 'border-white/10 bg-black/45 text-slate-500',
+      'flex min-w-0 flex-col justify-center border-l border-white/[0.07] px-2.5 py-1',
+      wide ? 'basis-[112px] grow-[2]' : 'basis-[70px] grow',
     )}
+    title={available ? title : (unavailableTitle ?? `${label}: sin dato disponible`)}
   >
-    {label}
-  </span>
-);
-
-const DataBox = ({ label, value, unit }: { label: string; value: string; unit?: string }) => (
-  <div className="min-w-[76px] border border-white/10 bg-black/65 px-2 py-0.5">
-    <p className="text-[7px] font-black uppercase tracking-[0.18em] text-slate-500">{label}</p>
-    <p className="font-mono text-base font-black leading-none text-white">
-      {value}
-      {unit && <span className="ml-1 text-[8px] text-slate-500">{unit}</span>}
-    </p>
+    <span className="text-[8px] font-bold uppercase leading-none tracking-[0.16em] text-slate-500">
+      {label}
+      {available && source === 'DROID' && <span className="ml-1 text-fuchsia-400">· Droid</span>}
+      {available && source === 'SIMULATOR' && <span className="ml-1 text-amber-400">· SIM</span>}
+    </span>
+    <span
+      title={available ? title : unavailableTitle}
+      className={cn(
+        'mt-1 truncate font-mono text-[15px] font-black leading-none tabular-nums',
+        available ? tone : 'text-slate-600',
+      )}
+    >
+      {available ? value : '--'}
+      {unit && <span className="ml-0.5 text-[9px] font-bold text-slate-500">{unit}</span>}
+    </span>
   </div>
 );
+
+/** Celda alimentada por el estado de navegación compartido (sin valor cuando es UNKNOWN). */
+const NavigationCell = ({ cell, wide = false }: { cell: NavigationCellView; wide?: boolean }) => (
+  <Cell
+    label={cell.label}
+    value={cell.value}
+    unit={cell.unit || undefined}
+    available={cell.available}
+    source={cell.source}
+    title={cell.title}
+    unavailableTitle={cell.title}
+    wide={wide}
+  />
+);
+
+const MODE_LABEL: Record<Zeus3SChartplotterOverlayProps['autopilotMode'], string> = {
+  standby: 'STBY',
+  auto: 'AUTO',
+  wind: 'VIENTO',
+  nav: 'NAV',
+};
 
 export const Zeus3SChartplotterOverlay: React.FC<Zeus3SChartplotterOverlayProps> = ({
-  sog, hdg, cog, tws, twd, twa, depth, dtw, btw, eta, xte, waypointName,
-   chartMode, activeChartName, aisEnabled, windEnabled, collisionFilter,
-  isNavigating, autopilotMode, activePage, onSelectPage, onOpenHud,
-  onOpenSystems, onCycleChart, onToggleAIS, onToggleWind,
-  onToggleCollisionFilter, onStartNavigation, onEndNavigation,
-  onToggleAutopilot, onZoomIn, onZoomOut, className,  isSailSteerWidgetOpen,
-  onCloseSailSteerWidget,
-  }) => {
-  const selectedPage = pages.find((page) => page.id === activePage) || pages[0];
-  const xteTone = Math.abs(xte) > 0.1 ? 'text-amber-300' : 'text-emerald-300';
-  const vmg =
-  sog * Math.cos((twa * Math.PI) / 180);
+  dtw, btw, eta, xte, depth, waypointName,
+  activeChartName, activeChartDetail, autopilotMode, isNavFocusMode,
+  depthAvailable = true, className, isNavigating, tripDistanceNm, navigationOverride,
+}) => {
+  const bandRef = React.useRef<HTMLElement | null>(null);
+  const receivedNavigation = useSharedNavigationView();
+  const navigation = navigationOverride ? presentSharedNavigation(navigationOverride) : receivedNavigation;
 
-  const handlePage = (page: (typeof pages)[number]) => {
-    onSelectPage(page.id);
-    if (typeof page.hudIndex === 'number') onOpenHud(page.hudIndex);
-    if (page.id === 'charts') onCycleChart(); // This is now handled by ZeusSidebar
-    if (page.id === 'pilot') onToggleAutopilot(); // This is now handled by ZeusSidebar
-    if (page.id === 'chart') onOpenHud(0); // This is now handled by ZeusSidebar
-  };
+  // Publica el alto real de la banda en --vl-band-h para que los paneles y
+  // widgets de la carta se coloquen siempre debajo, también cuando la banda
+  // ocupa dos filas en ventanas estrechas.
+  React.useLayoutEffect(() => {
+    const root = document.documentElement;
+    const band = bandRef.current;
+    if (isNavFocusMode || !band) {
+      root.style.setProperty('--vl-band-h', '0px');
+      return;
+    }
+    const publish = () => root.style.setProperty('--vl-band-h', `${Math.ceil(band.getBoundingClientRect().height)}px`);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(band);
+    return () => observer.disconnect();
+  }, [isNavFocusMode]);
+
+  const hasWaypoint = Boolean(waypointName && waypointName !== '---');
+  const xteTone = Math.abs(xte) > 0.1 ? 'text-amber-300' : 'text-emerald-300';
+  const pad3 = (value: number) => Math.round(((value % 360) + 360) % 360).toString().padStart(3, '0');
 
   return (
-    <div className={cn('pointer-events-none absolute inset-0 z-[6400]', className)}>
-      <div className="absolute inset-0 pointer-events-none border-[10px] border-[#111827]/85 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08),inset_0_0_40px_rgba(0,0,0,0.45)]" />
-
-      <header className="pointer-events-auto absolute left-56 right-24 top-4 flex items-center justify-between gap-2 border border-white/10 bg-[#07111e]/88 px-4 py-1.5 shadow-2xl backdrop-blur-md"> {/* Reduced padding and gap */}
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-sm border border-cyan-400/40 bg-cyan-400/10 text-cyan-300">
-            <Navigation className="h-4 w-4" />
+    <div className={cn('pointer-events-none absolute inset-0 z-(--vl-z-hud)', className)}>
+      {!isNavFocusMode && (
+        <header
+          ref={bandRef}
+          aria-label="GAULOS Command Center"
+          className="vl-surface pointer-events-auto absolute flex flex-wrap items-stretch overflow-hidden rounded-xl"
+          style={{ top: 'var(--vl-gap)', left: 'var(--vl-gap)', right: 'var(--vl-dock-reserve)', minHeight: 44 }}
+        >
+          {/* Identidad + carta activa: bloque compacto, sin espacio muerto */}
+          <div className="flex shrink-0 items-center gap-2 px-3 py-1.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md border border-cyan-400/40 bg-cyan-400/10 text-cyan-300">
+              <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
+            </div>
+            <div className="leading-none">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white">GAULOS</p>
+              <p className="mt-1 text-[7px] font-bold uppercase tracking-[0.2em] text-cyan-400/80">Command Center</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white">SMARTSHIP-PRO COMMAND CENTER</p>
-            <p className="text-[7px] font-bold uppercase tracking-[0.2em] text-slate-500">TACTICAL NAVIGATION SYSTEM</p>
+
+          <div
+            className="flex min-w-0 max-w-[220px] shrink items-center gap-2 border-l border-white/[0.07] px-2.5 py-1"
+            title={activeChartDetail ?? activeChartName}
+          >
+            <Layers className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+            <div className="min-w-0 leading-none">
+              <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-slate-500">Carta</span>
+              <p className="mt-1 truncate text-[11px] font-bold text-slate-200">{activeChartName}</p>
+            </div>
           </div>
-        </div>
-        <div className="grid grid-cols-5 gap-2">
-          <DataBox label="SOG" value={sog.toFixed(1)} unit="kt" />
-<DataBox label="HDG" value={Math.round(hdg).toString().padStart(3,'0')} unit="deg" />
-<DataBox label="DTW" value={dtw.toFixed(1)} unit="nm" />
-<DataBox label="ETA" value={eta || '--:--'} />
-<DataBox label="DEPTH" value={depth.toFixed(1)} unit="m" />
-        </div>
-      </header>
-      <div className="absolute top-[62px] left-[300px] z-[6500] pointer-events-none">
-  <div className="bg-[#07111e]/92 backdrop-blur-md border border-cyan-500/20 rounded-xl px-4 py-1.5 w-[360px] shadow-xl">
 
-    
-    <div className="grid grid-cols-5 gap-4">
-
-      <div>
-        <div className="text-[8px] text-slate-500 uppercase">WP</div>
-        <div className="text-xs font-bold text-white truncate max-w-[90px]">
-          {waypointName || '---'}
-        </div>
-      </div>
-
-      <div>
-        <div className="text-[8px] text-slate-500 uppercase">DTW</div>
-        <div className="text-xs font-bold text-white">
-          {dtw.toFixed(1)} nm
-        </div>
-      </div>
-
-      <div>
-        <div className="text-[8px] text-slate-500 uppercase">ETA</div>
-        <div className="text-xs font-bold text-white">
-          {eta || '--:--'}
-        </div>
-      </div>
-
-      <div>
-        <div className="text-[8px] text-slate-500 uppercase">XTE</div>
-        <div className="text-xs font-bold text-white">
-          {xte.toFixed(2)}
-        </div>
-      </div>
-
-      <div>
-        <div className="text-[8px] text-slate-500 uppercase">MODE</div>
-        <div className="text-xs font-bold text-cyan-300">
-          {autopilotMode.toUpperCase()}
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-</div>
-<SailSteerWidget
-  isOpen={isSailSteerWidgetOpen}
-  onClose={onCloseSailSteerWidget}
-  hdg={hdg}
-  cog={cog}
-  twa={twa}
-  tws={tws}
-  twd={twd}
-  btw={btw}
-  waypointBearing={btw}
-  waypointName={waypointName}
-  isNavigating={isNavigating}
-  sog={sog}
-  vmg={vmg}
-/>
-      
-      
-    
-
+          {/* Instrumentos: rejilla fluida, se reparte en dos filas si falta ancho */}
+          <div className="flex min-w-[280px] flex-1 flex-wrap items-stretch">
+            <NavigationCell cell={navigation.position} wide />
+            <NavigationCell cell={navigation.sog} />
+            <NavigationCell cell={navigation.cog} />
+            <NavigationCell cell={navigation.heading} />
+            {isNavigating && (
+              <Cell label="Navegadas" value={(tripDistanceNm ?? 0).toFixed(2)} unit="NM"
+                available={typeof tripDistanceNm === 'number' && Number.isFinite(tripDistanceNm) && tripDistanceNm >= 0}
+                title="Millas náuticas acumuladas en la travesía activa según el recorrido GPS" tone="text-cyan-300" />
+            )}
+            <Cell label="DTW" value={dtw.toFixed(1)} unit="NM" available={hasWaypoint} />
+            <Cell label="BTW" value={pad3(btw ?? 0)} unit="°" available={hasWaypoint && Number.isFinite(btw)} />
+            <Cell label="ETA" value={eta || '--:--'} available={hasWaypoint && Boolean(eta)} />
+            <Cell label="XTE" value={xte.toFixed(2)} unit="NM" tone={xteTone} available={hasWaypoint} title={`Separación lateral respecto al tramo activo: ${Math.abs(xte).toFixed(3)} NM (${(Math.abs(xte) * 1852).toFixed(1)} m)`} />
+            <Cell
+              label="Prof."
+              value={depth.toFixed(1)}
+              unit="m"
+              available={depthAvailable}
+              title="Profundidad bajo el transductor"
+            />
+            <Cell label="WP" value={waypointName} available={hasWaypoint} title={waypointName} wide />
+            <Cell label="Piloto" value={MODE_LABEL[autopilotMode]} tone="text-cyan-300" title="Modo de piloto (indicación visual)" />
+          </div>
+        </header>
+      )}
     </div>
   );
 };

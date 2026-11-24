@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"algeria-central","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[0.3,35.8,3.5,37.2],"simplified":false,"layerParts":{"sea":["base-algeria-central-sea-0.json"],"land":["base-algeria-central-land-0.json"],"inlandWater":["base-algeria-central-inlandWater-0.json"]}}

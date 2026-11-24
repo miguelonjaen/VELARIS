@@ -1,3 +1,7 @@
+import type { MissionPlan } from '../core/voyage/missionPlan';
+import { appendVoyageTrack, type VoyageTrack } from '../core/voyage/voyageTrack';
+import type { ResolvedNavigationField } from '../core/navigation/SharedNavigationState';
+import type { LogEntry } from '../shared/types';
 /**
  * Trip Logger (Blackbox) Utility
  * Records vessel telemetry every 5 minutes for performance analysis
@@ -7,15 +11,18 @@ export interface TripLogEntry {
   timestamp: number;           // Unix timestamp in milliseconds
   lat: number;
   lng: number;
-  cog: number;                 // Course over ground (0-359°)
-  sog: number;                 // Speed over ground in knots
-  windDir: number;             // Wind direction (0-359°)
-  windSpeed: number;           // Wind speed in knots
-  depth: number;               // Water depth in meters
-  heading?: number;            // Magnetic heading
+  // null = sin lectura válida en ese instante (nunca se sustituye por un valor por defecto).
+  cog: number | null;          // Course over ground (0-359°)
+  sog: number | null;          // Speed over ground in knots
+  windDir: number | null;      // Dirección del viento real medido por instrumentos (no Open-Meteo)
+  windSpeed: number | null;    // Velocidad del viento real medido por instrumentos, nudos
+  depth: number | null;        // Water depth in meters
+  heading?: number;            // True heading (degrees)
   fuelLevel?: number;          // Fuel percentage
   waterLevel?: number;         // Water percentage
 }
+
+export interface VoyageCrewMember { id: string; nombre: string; rango: string }
 
 export interface TripSession {
   id: string;
@@ -25,6 +32,34 @@ export interface TripSession {
   destination?: string;
   entries: TripLogEntry[];
   isActive: boolean;
+  /** Paused recording is still an open formal voyage. */
+  pausedAt?: number;
+  mode?: 'Libre' | 'Ruta' | 'IA';
+  plan?: MissionPlan;
+  officer?: string;
+  crew?: VoyageCrewMember[];
+  officerId?: string;
+  distanceNm?: number;
+  waypointIndex?: number;
+  routeArrivedAt?: number;
+  track?: VoyageTrack;
+  journal?: VoyageJournalEntry[];
+}
+
+export interface VoyageJournalEntry {
+  id: string;
+  at: number;
+  title: string;
+  text: string;
+  cloudSaved: boolean;
+  payload?: Record<string, unknown>;
+}
+export interface TripStartOptions {
+  mode?: 'Libre' | 'Ruta' | 'IA';
+  plan?: MissionPlan;
+  officer?: string;
+  crew?: VoyageCrewMember[];
+  officerId?: string;
 }
 
 const LOGGING_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -36,12 +71,214 @@ const LOGGING_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 export class TripLogger {
   private logInterval: NodeJS.Timeout | null = null;
   private currentSession: TripSession | null = null;
+  private pendingSession: TripSession | null = null;
+  private telemetryNotBefore = 0;
+  private recordingTransition = false;
+  private recordingCommit: Promise<void> = Promise.resolve();
+  isRecording(): boolean {
+    return Boolean(this.currentSession?.isActive && this.currentSession.pausedAt === undefined && !this.recordingTransition);
+  }
+  getTelemetryNotBefore(): number { return this.telemetryNotBefore; }
   private db: IDBDatabase | null = null;
-  private readonly dbName = 'SmartShipTripLogs';
+  private readonly dbName = 'GAULOSTripLogs';
   private readonly storeName = 'sessions';
 
+  private readonly ready: Promise<void>;
+  private writes: Promise<void> = Promise.resolve();
+  private opening: Promise<TripSession> | null = null;
+  private persistenceError: string | null = null;
+  private autoLoggingState: (() => Omit<TripLogEntry, 'timestamp'> | null) | null = null;
+  private cloudSync: Promise<void> | null = null;
+  private automaticWrites: Promise<void> = Promise.resolve();
+  private automaticRevision = 0;
+  getAutomaticRevision(): number { return this.automaticRevision; }
+
+  /** Remove selected automatic journal entries without touching voyage telemetry or tracks. */
+  async removeAutomaticJournalEntries(shipId: string, ids: readonly string[]): Promise<number> {
+    const wanted = new Set(ids.filter(id => id.startsWith('auto:')));
+    if (!wanted.size) return 0;
+    await this.cloudSync?.catch(() => undefined);
+    const operation = this.automaticWrites.catch(() => undefined).then(async () => {
+      const sessions = await this.getSessionsForShip(shipId, true);
+      let removed = 0;
+      for (const session of sessions) {
+        if (!session.id.startsWith('automatic:') || !session.journal?.length) continue;
+        const before = session.journal.length;
+        session.journal = session.journal.filter(entry => !wanted.has(entry.id));
+        if (session.journal.length === before) continue;
+        removed += before - session.journal.length;
+        await this.saveSessionToDB(session);
+      }
+      if (removed) this.automaticRevision++;
+      return removed;
+    });
+    this.automaticWrites = operation.then(() => undefined);
+    return operation;
+  }
+
+  /** Standalone daily journal, never an active voyage and never truncates historical sessions. */
+  appendAutomaticEntry(entry: LogEntry): Promise<void> {
+    const operation = this.automaticWrites.catch(() => undefined).then(async () => {
+      const id = `automatic:${entry.barco_id}:${entry.fecha}`;
+      const session = await this.getSession(id) ?? {
+        id, shipId: String(entry.barco_id), startTime: Date.parse(entry.created_at!), entries: [], isActive: false, journal: []
+      };
+      if (session.journal?.some(e => e.id === entry.id)) return;
+      (session.journal ??= []).push({ id: String(entry.id), at: Date.parse(entry.created_at!), title: entry.titulo ?? '',
+        text: entry.descripcion, cloudSaved: false, payload: { ...entry } });
+      await this.saveSessionToDB(session);
+      this.automaticRevision++;
+    });
+    this.automaticWrites = operation;
+    return operation;
+  }
+
+  getPersistenceError(): string | null { return this.persistenceError; }
+  async restoreSession(shipId: string): Promise<TripSession | null> {
+    if (this.currentSession?.isActive && this.currentSession.shipId !== shipId)
+      throw new Error('Finalice la travesía activa antes de cambiar de barco');
+    if (this.currentSession?.isActive) return this.currentSession;
+    if (this.pendingSession && this.pendingSession.shipId !== shipId)
+      throw new Error('Finalice o reanude la travesía pendiente antes de cambiar de barco');
+    const sessions = await this.getSessionsForShip(shipId);
+    // An older open voyage must not be hidden by a newer completed voyage.
+    const sorted = sessions.sort((a, b) => b.startTime - a.startTime);
+    this.pendingSession = sorted.find(session => session.isActive) ?? null;
+    return this.pendingSession ?? sorted[0] ?? null;
+  }
+  getPendingSession(): TripSession | null { return this.pendingSession; }
+
+  /** Recovery is an explicit operator decision. No telemetry is accepted beforehand. */
+  async resolvePendingSession(shipId: string, resume: boolean): Promise<TripSession> {
+    const session = this.pendingSession;
+    if (!session || session.shipId !== shipId || this.currentSession)
+      throw new Error('La travesía pendiente no corresponde al barco seleccionado');
+    const resolved = structuredClone(session);
+    if (resolved.track) resolved.track.cursor = null;
+    if (!resume) { resolved.isActive = false; resolved.endTime = Date.now(); }
+    else delete resolved.pausedAt;
+    await this.saveSessionToDB(resolved);
+    this.pendingSession = null;
+    if (resume) {
+      this.telemetryNotBefore = Date.now();
+      this.currentSession = resolved;
+    }
+    return resolved;
+  }
+  /** Pause state and its journal event commit together; a failed write changes neither. */
+  async setRecordingPaused(paused: boolean, payload?: Record<string, unknown>): Promise<void> {
+    const session = this.currentSession;
+    if (!session?.isActive) throw new Error('No hay una travesía abierta');
+    if (this.recordingTransition) throw new Error('Espere a guardar el cambio de grabación');
+    if ((session.pausedAt !== undefined) === paused) return;
+    if (payload?.barco_id !== undefined && payload.barco_id !== session.shipId)
+      throw new Error('El asiento pertenece a otra embarcación');
+    this.recordingTransition = true;
+    try {
+      const next = structuredClone(session), at = Date.now();
+      if (paused) next.pausedAt = at; else delete next.pausedAt;
+      if (next.track) next.track.cursor = null;
+      const title = paused ? 'Pausa de grabación' : 'Reanudación de grabación';
+      const text = `${title} confirmada por el operador. Sesión ${session.id}. Distancia GPS: ${(session.distanceNm ?? 0).toFixed(2)} NM. La pausa no finaliza la travesía.`;
+      (next.journal ??= []).push({ id: crypto.randomUUID(), at, title, text, cloudSaved: false,
+        payload: payload ? { ...payload, barco_id: session.shipId, titulo: title, descripcion: text,
+          categoria: 'Navegación', created_at: new Date(at).toISOString(), fecha: new Date(at).toISOString().slice(0,10), is_auto: false } : undefined });
+      this.recordingCommit = this.saveSessionToDB(next);
+      await this.recordingCommit;
+      Object.assign(session, next);
+      if (!paused) delete session.pausedAt;
+      if (!paused) this.telemetryNotBefore = Date.now();
+    } finally { this.recordingTransition = false; }
+  }
+  async checkpoint(position: ResolvedNavigationField<'position'>, distanceNm: number): Promise<void> {
+    const session = this.currentSession;
+    if (!this.isRecording() || !session) return;
+    if (position.receivedAt !== null && position.receivedAt < this.telemetryNotBefore) return;
+    const old = session.track ?? { segments: [], cursor: null };
+    const next = appendVoyageTrack(old, position);
+    session.track = next;
+    const changed = next.segments !== old.segments || session.distanceNm !== distanceNm;
+    session.distanceNm = distanceNm;
+    if (changed || this.persistenceError) await this.saveSessionToDB(session);
+  }
+  async addJournalEntry(title: string, text: string, payload?: Record<string, unknown>): Promise<VoyageJournalEntry | null> {
+    if (!this.currentSession?.isActive) return null;
+    if (this.recordingTransition) throw new Error('Espere a guardar el cambio de grabación');
+    if (payload?.barco_id !== undefined && payload.barco_id !== this.currentSession.shipId)
+      throw new Error('El asiento pertenece a otra embarcación');
+    const entry: VoyageJournalEntry = { id: crypto.randomUUID(), at: Date.now(), title, text, cloudSaved: false, payload };
+    (this.currentSession.journal ??= []).push(entry);
+    await this.saveSessionToDB(this.currentSession);
+    return entry;
+  }
+  async markCloudSaved(id: string, sessionId?: string): Promise<void> {
+    await this.recordingCommit.catch(() => undefined);
+    if (sessionId?.startsWith('automatic:')) {
+      const operation = this.automaticWrites.catch(() => undefined).then(async () => {
+        const session = await this.getSession(sessionId);
+        const entry = session?.journal?.find(e => e.id === id);
+        if (!session || !entry) return;
+        entry.cloudSaved = true;
+        await this.saveSessionToDB(session);
+      });
+      this.automaticWrites = operation;
+      return operation;
+    }
+    const session = this.currentSession?.id === sessionId ? this.currentSession : sessionId ? await this.getSession(sessionId) : this.currentSession;
+    const entry = session?.journal?.find(e => e.id === id);
+    if (!entry || !session) return;
+    entry.cloudSaved = true;
+    await this.saveSessionToDB(session);
+  }
+  /** Synchronizes the canonical target; does not end the voyage at route arrival. */
+  async synchronizeWaypoint(index: number, arrived = false): Promise<void> {
+    const session = this.currentSession;
+    if (!this.isRecording() || !session?.plan || !Number.isInteger(index)
+        || index < 0 || index >= session.plan.waypoints.length) return;
+    if (index === session.waypointIndex && (!arrived || session.routeArrivedAt !== undefined)
+        && !this.persistenceError) return;
+    session.waypointIndex = index;
+    if (arrived && session.routeArrivedAt === undefined) session.routeArrivedAt = Date.now();
+    await this.saveSessionToDB(session);
+  }
+  async advanceWaypoint(): Promise<number | null> {
+    const session = this.currentSession;
+    if (!session?.isActive || !session.plan) return null;
+    const previous = session.waypointIndex ?? 0;
+    const next = previous + 1;
+    if (next >= session.plan.waypoints.length) return null;
+    session.waypointIndex = next;
+    try { await this.saveSessionToDB(session); }
+    catch (cause) { session.waypointIndex = previous; throw cause; }
+    return next;
+  }
+  /** Explicit retry for active and completed sessions. The callback must deduplicate by event identity. */
+  syncJournal(shipId: string, send: (entry: VoyageJournalEntry) => Promise<void>): Promise<void> {
+    if (this.cloudSync) return this.cloudSync;
+    this.cloudSync = (async () => {
+      const sessions = await this.getSessionsForShip(shipId, true);
+      for (const stored of sessions) {
+        const session = this.currentSession?.id === stored.id ? this.currentSession : stored;
+        for (const entry of session.journal ?? []) {
+          if (entry.cloudSaved || !entry.payload) continue;
+          if (session.id.startsWith('automatic:') && entry.payload) {
+            const { id: _id, user_id: _user, lat: _lat, lng: _lng, time: _time, ...payload } = entry.payload;
+            await send({ ...entry, payload: { ...payload,
+              latitud: payload.latitud ?? null, longitud: payload.longitud ?? null,
+              velocidad_gps: payload.velocidad_gps ?? null, rumbo: payload.rumbo ?? null } });
+          } else await send(entry);
+          entry.cloudSaved = true;
+          await this.markCloudSaved(entry.id, session.id);
+        }
+      }
+    })().finally(() => { this.cloudSync = null; });
+    return this.cloudSync;
+  }
+
   constructor() {
-    this.initializeDB();
+    this.ready = this.initializeDB().catch((error: unknown) => {
+      console.error('[TRIP] No se pudo abrir IndexedDB; registro solo en memoria', error);
+    });
   }
 
   /**
@@ -81,31 +318,35 @@ export class TripLogger {
    */
   async startSession(
     shipId: string,
-    destination?: string
+    destination?: string,
+    options: TripStartOptions = {}
   ): Promise<TripSession> {
-    const sessionId = `trip_${shipId}_${Date.now()}`;
-    
-    this.currentSession = {
-      id: sessionId,
-      shipId,
-      startTime: Date.now(),
-      destination,
-      entries: [],
-      isActive: true
-    };
-
-    // Save to IndexedDB
-    await this.saveSessionToDB(this.currentSession);
-
-    return this.currentSession;
+    if (this.opening) { const session = await this.opening; if (session.shipId !== shipId) throw new Error('Finalice la travesía activa antes de cambiar de barco'); return session; }
+    this.opening = (async () => {
+      if (this.pendingSession) throw new Error('Finalice o reanude la travesía pendiente antes de iniciar otra');
+      if (this.currentSession?.isActive) {
+        if (this.currentSession.shipId !== shipId) throw new Error('Finalice la travesía activa antes de cambiar de barco');
+        return this.currentSession;
+      }
+      const session: TripSession = {
+        id: `trip_${crypto.randomUUID()}`, shipId, startTime: Date.now(), destination,
+        entries: [], isActive: true, ...structuredClone(options), distanceNm: 0, waypointIndex: 0, track: { segments: [], cursor: null }, journal: []
+      };
+      await this.saveSessionToDB(session);
+      this.currentSession = session;
+      return session;
+    })().finally(() => { this.opening = null; });
+    return this.opening;
   }
 
   /**
    * End the current trip session
    */
   async endSession(): Promise<TripSession | null> {
+    if (this.recordingTransition) throw new Error('Espere a guardar el cambio de grabación');
     if (!this.currentSession) return null;
 
+    const previousEnd = this.currentSession.endTime;
     this.currentSession.endTime = Date.now();
     this.currentSession.isActive = false;
 
@@ -115,8 +356,13 @@ export class TripLogger {
       this.logInterval = null;
     }
 
-    // Save to IndexedDB
-    await this.saveSessionToDB(this.currentSession);
+    try { await this.saveSessionToDB(this.currentSession); }
+    catch (error) {
+      this.currentSession.isActive = true;
+      this.currentSession.endTime = previousEnd;
+      if (this.autoLoggingState) this.setupAutoLogging(this.autoLoggingState);
+      throw error;
+    }
 
     const session = this.currentSession;
     this.currentSession = null;
@@ -128,7 +374,7 @@ export class TripLogger {
    * Add telemetry entry to current session
    */
   async addEntry(entry: Omit<TripLogEntry, 'timestamp'>): Promise<void> {
-    if (!this.currentSession) return;
+    if (!this.isRecording() || !this.currentSession) return;
 
     const logEntry: TripLogEntry = {
       timestamp: Date.now(),
@@ -145,16 +391,24 @@ export class TripLogger {
    * Setup automatic logging interval
    */
   setupAutoLogging(
-    getCurrentState: () => Omit<TripLogEntry, 'timestamp'>
+    getCurrentState: () => Omit<TripLogEntry, 'timestamp'> | null
   ): void {
+    this.autoLoggingState = getCurrentState;
     if (this.logInterval) {
       clearInterval(this.logInterval);
     }
 
-    this.logInterval = setInterval(async () => {
-      const state = getCurrentState();
-      await this.addEntry(state);
-    }, LOGGING_INTERVAL_MS);
+    const record = async (): Promise<void> => {
+      try {
+        const state = getCurrentState();
+        if (state) await this.addEntry(state);
+      } catch (error: unknown) {
+        console.error('[TRIP] Error al guardar telemetría', error);
+      }
+    };
+    // Guardar también el punto de salida: una travesía corta no debe quedar vacía.
+    void record();
+    this.logInterval = setInterval(() => { void record(); }, LOGGING_INTERVAL_MS);
   }
 
   /**
@@ -177,10 +431,12 @@ export class TripLogger {
   /**
    * Get all sessions for a ship
    */
-  async getSessionsForShip(shipId: string): Promise<TripSession[]> {
-    return new Promise((resolve) => {
+  async getSessionsForShip(shipId: string, includeAutomatic = false): Promise<TripSession[]> {
+    await this.ready;
+    await this.writes.catch(() => undefined);
+    return new Promise((resolve, reject) => {
       if (!this.db) {
-        resolve([]);
+        reject(new Error('IndexedDB no disponible'));
         return;
       }
 
@@ -190,14 +446,13 @@ export class TripLogger {
 
       request.onsuccess = () => {
         const sessions = (request.result as TripSession[]).filter(
-          s => s.shipId === shipId
+          s => s.shipId === shipId && (includeAutomatic || !s.id.startsWith('automatic:'))
         );
         resolve(sessions);
       };
 
       request.onerror = () => {
-        console.error('Failed to fetch sessions:', request.error);
-        resolve([]);
+        reject(request.error ?? new Error('No se pudieron leer las travesías'));
       };
     });
   }
@@ -206,9 +461,11 @@ export class TripLogger {
    * Get a specific session by ID
    */
   async getSession(sessionId: string): Promise<TripSession | null> {
-    return new Promise((resolve) => {
+    await this.ready;
+    await this.writes.catch(() => undefined);
+    return new Promise((resolve, reject) => {
       if (!this.db) {
-        resolve(null);
+        reject(new Error('IndexedDB no disponible'));
         return;
       }
 
@@ -221,8 +478,7 @@ export class TripLogger {
       };
 
       request.onerror = () => {
-        console.error('Failed to fetch session:', request.error);
-        resolve(null);
+        reject(request.error ?? new Error('No se pudo leer la travesía'));
       };
     });
   }
@@ -248,7 +504,9 @@ export class TripLogger {
 
     session.entries.forEach(entry => {
       const date = new Date(entry.timestamp).toISOString();
-      csv += `${date},${entry.lat.toFixed(6)},${entry.lng.toFixed(6)},${entry.cog},${entry.sog.toFixed(1)},${entry.windDir},${entry.windSpeed.toFixed(1)},${entry.depth.toFixed(1)},${entry.heading || '-'},${entry.fuelLevel || '-'},${entry.waterLevel || '-'}\n`;
+      const fmt = (value: number | null | undefined, digits: number) =>
+        typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '-';
+      csv += `${date},${entry.lat.toFixed(6)},${entry.lng.toFixed(6)},${fmt(entry.cog, 0)},${fmt(entry.sog, 1)},${fmt(entry.windDir, 0)},${fmt(entry.windSpeed, 1)},${fmt(entry.depth, 1)},${fmt(entry.heading, 0)},${fmt(entry.fuelLevel, 0)},${fmt(entry.waterLevel, 0)}\n`;
     });
 
     return csv;
@@ -258,33 +516,34 @@ export class TripLogger {
    * Save session to IndexedDB
    */
   private async saveSessionToDB(session: TripSession): Promise<void> {
-    return new Promise((resolve) => {
-      if (!this.db) {
-        console.warn('IndexedDB not available, session not persisted');
-        resolve();
-        return;
-      }
-
-      const tx = this.db.transaction([this.storeName], 'readwrite');
-      const store = tx.objectStore(this.storeName);
-      const request = store.put(session);
-
-      request.onsuccess = () => {
-        resolve();
-      };
-
-      request.onerror = () => {
-        console.error('Failed to save session:', request.error);
-        resolve();
-      };
+    // Serialize immutable snapshots: late writes cannot reopen a closed session.
+    const snapshot = structuredClone(session);
+    const write = this.writes.catch(() => undefined).then(async () => {
+      await this.ready;
+      if (!this.db) throw new Error('IndexedDB no disponible: la travesía no está guardada');
+      const db = this.db;
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction([this.storeName], 'readwrite');
+        tx.objectStore(this.storeName).put(snapshot);
+        tx.oncomplete = () => resolve();
+        tx.onerror = tx.onabort = () => reject(tx.error ?? new Error('Guardado local abortado'));
+      });
+      this.persistenceError = null;
+    }).catch((error: unknown) => {
+      this.persistenceError = error instanceof Error ? error.message : 'Fallo de guardado local';
+      throw error;
     });
+    this.writes = write;
+    return write;
   }
 
   /**
    * Delete a session
    */
   async deleteSession(sessionId: string): Promise<void> {
-    return new Promise((resolve) => {
+    await this.ready;
+    await this.writes.catch(() => undefined);
+    return new Promise((resolve, reject) => {
       if (!this.db) {
         resolve();
         return;
@@ -326,28 +585,33 @@ export class TripLogger {
       );
     }
 
+    // Promedios solo sobre lecturas presentes (null = sin dato, no cero).
+    const isNum = (v: number | null | undefined): v is number => typeof v === 'number' && Number.isFinite(v);
+    const average = (values: number[]) => values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+
     // Average speed
-    const avgSOG = entries.reduce((sum, e) => sum + e.sog, 0) / entries.length;
+    const avgSOG = average(entries.map(e => e.sog).filter(isNum));
 
     // Average wind
-    const avgWindSpeed =
-      entries.reduce((sum, e) => sum + e.windSpeed, 0) / entries.length;
+    const avgWindSpeed = average(entries.map(e => e.windSpeed).filter(isNum));
 
-    // Best VMG (Velocity Made Good in wind)
-    const vmgValues = entries.map(e => {
-      const angleToWind = Math.abs(e.cog - e.windDir);
-      const vmg = e.sog * Math.cos((angleToWind * Math.PI) / 180);
-      return Math.max(0, vmg);
-    });
-    const bestVMG = Math.max(...vmgValues);
-    const avgVMG = vmgValues.reduce((a, b) => a + b) / vmgValues.length;
+    // Best VMG (Velocity Made Good in wind): solo con SOG, COG y viento medidos.
+    const vmgValues = entries
+      .filter(e => isNum(e.sog) && isNum(e.cog) && isNum(e.windDir))
+      .map(e => {
+        const angleToWind = Math.abs((e.cog as number) - (e.windDir as number));
+        const vmg = (e.sog as number) * Math.cos((angleToWind * Math.PI) / 180);
+        return Math.max(0, vmg);
+      });
+    const bestVMG = vmgValues.length ? Math.max(...vmgValues) : null;
+    const avgVMG = average(vmgValues);
 
     // Duration
     const durationMs = (session.endTime || Date.now()) - session.startTime;
     const durationHours = durationMs / (1000 * 60 * 60);
 
     return {
-      totalDistance,
+      totalDistance: session.distanceNm ?? totalDistance,
       avgSOG,
       avgWindSpeed,
       bestVMG,

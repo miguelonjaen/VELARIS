@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"castellon","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[0.0,39.7,1.1,40.75],"simplified":false,"layerParts":{"sea":["base-castellon-sea-0.json"],"land":["base-castellon-land-0.json"],"inlandWater":["base-castellon-inlandWater-0.json"]}}

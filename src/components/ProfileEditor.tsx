@@ -10,7 +10,6 @@ import {
   Loader2 
 } from 'lucide-react';
 import { UserProfile } from '../shared/types';
-import TestSubidaFoto from './TestSubidaFoto';
 
 interface ProfileEditorProps {
   userProfile: UserProfile | null;
@@ -19,7 +18,6 @@ interface ProfileEditorProps {
   handleUpdateProfile: (e: any) => void;
   isUpdatingProfile: boolean;
   handleAvatarUpload: (e: any) => void;
-  fetchProfile: (id: string) => void;
 }
 
 const ProfileEditor: React.FC<ProfileEditorProps> = ({
@@ -29,7 +27,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   handleUpdateProfile,
   isUpdatingProfile,
   handleAvatarUpload,
-  fetchProfile
 }) => {
   return (
     <div className="p-8 w-full space-y-8">
@@ -65,14 +62,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
             <p className="text-sm font-black text-white uppercase tracking-tighter">{userProfile?.name}</p>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{userProfile?.email}</p>
           </div>
-          
-          {/* Test Component for Verification */}
-          {userProfile && (
-            <TestSubidaFoto 
-              userId={userProfile!.id} 
-              onUploadSuccess={() => fetchProfile(userProfile!.id)} 
-            />
-          )}
         </div>
 
         {/* Personal Info */}

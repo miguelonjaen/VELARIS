@@ -1,18 +1,19 @@
+import { StowagePlan } from '../features/boat/StowagePlan';
 import React, { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { InventoryItem, VesselStatus, UserProfile } from '../shared/types';
-import { 
-  Fuel, 
-  Droplets, 
-  Search, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  AlertTriangle, 
-  Calendar, 
-  Box, 
-  Wrench, 
-  ShieldCheck, 
+import {
+  Fuel,
+  Droplets,
+  Search,
+  Plus,
+  Minus,
+  Trash2,
+  AlertTriangle,
+  Calendar,
+  Box,
+  Wrench,
+  ShieldCheck,
   Utensils,
   Loader2,
   Filter,
@@ -32,18 +33,20 @@ interface InventoryManagerProps {
   onClose?: () => void;
 }
 
-const InventoryManager: React.FC<InventoryManagerProps> = ({ 
-  vesselStatus, 
-  supabase, 
-  selectedShipId, 
+const InventoryManager: React.FC<InventoryManagerProps> = ({
+  vesselStatus,
+  supabase,
+  selectedShipId,
   saveLogEntry,
   userProfile,
   onClose
 }) => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'Técnico' | 'Seguridad' | 'Botiquín' | 'Víveres' | 'General' | 'Todos'>('Todos');
   const [searchTerm, setSearchTerm] = useState('');
+  const [location, setLocation] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [matchingItems, setMatchingItems] = useState<InventoryItem[]>([]);
   const [selectedExistingItem, setSelectedExistingItem] = useState<InventoryItem | null>(null);
@@ -55,15 +58,29 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
   });
 
   useEffect(() => {
-    if (selectedShipId) {
-      fetchInventory();
-    }
-  }, [selectedShipId]);
+    let active = true;
+    setItems([]);
+    setLocation(null);
+    setLoadError(null);
+    if (!selectedShipId) { setLoading(false); return; }
+    setLoading(true);
+    void (async () => {
+      try {
+        const { data, error } = await supabase.from('inventario').select('*')
+          .eq('barco_id', selectedShipId).order('nombre', { ascending: true });
+        if (error) throw error;
+        if (active) setItems(data || []);
+      } catch (error: unknown) {
+        if (active) setLoadError(error instanceof Error ? error.message : 'No se pudo cargar el inventario');
+      } finally { if (active) setLoading(false); }
+    })();
+    return () => { active = false; };
+  }, [selectedShipId, supabase]);
 
   // Handle Autocomplete logic
   useEffect(() => {
     if (newItem.nombre && newItem.nombre.length > 1 && !selectedExistingItem) {
-      const matches = items.filter(i => 
+      const matches = items.filter(i =>
         i.nombre.toLowerCase().includes(newItem.nombre!.toLowerCase()) ||
         i.referencia?.toLowerCase().includes(newItem.nombre!.toLowerCase())
       );
@@ -97,18 +114,18 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
         const finalQuantity = selectedExistingItem.cantidad_actual + addQuantity;
         const { data, error } = await supabase
           .from('inventario')
-          .update({ 
+          .update({
             cantidad_actual: finalQuantity,
             cantidad_minima: newItem.cantidad_minima,
             referencia: newItem.referencia,
             ubicacion: newItem.ubicacion,
             fecha_caducidad: newItem.fecha_caducidad
           })
-          .eq('id', selectedExistingItem.id)
+          .eq('id', selectedExistingItem.id).eq('barco_id', selectedShipId)
           .select();
 
         if (error) throw error;
-        
+
         if (data) {
           setItems(prev => prev.map(i => i.id === selectedExistingItem.id ? data[0] : i));
         }
@@ -135,6 +152,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
         if (data) setItems(prev => [...prev, data[0]]);
       }
 
+      window.dispatchEvent(new CustomEvent('gaulos:logistics-changed', { detail: { vesselId: selectedShipId, source: 'inventory' } }));
       setShowAddModal(false);
       resetAddForm();
     } catch (err: any) {
@@ -150,27 +168,6 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
     setMatchingItems([]);
   };
 
-  const fetchInventory = async () => {
-    if (!selectedShipId) {
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('inventario')
-        .select('*')
-        .eq('barco_id', selectedShipId)
-        .order('nombre', { ascending: true });
-      if (error) throw error;
-      setItems(data || []);
-    } catch (err) {
-      console.error('Error fetching inventory:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleUpdateStock = async (item: InventoryItem, delta: number) => {
     const newQty = Math.max(0, item.cantidad_actual + delta);
     if (newQty === item.cantidad_actual) return;
@@ -178,9 +175,10 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
       const { error } = await supabase
         .from('inventario')
         .update({ cantidad_actual: newQty })
-        .eq('id', item.id);
+        .eq('id', item.id).eq('barco_id', selectedShipId);
       if (error) throw error;
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, cantidad_actual: newQty } : i));
+      window.dispatchEvent(new CustomEvent('gaulos:logistics-changed', { detail: { vesselId: selectedShipId, source: 'inventory' } }));
     } catch (err) {
       console.error('Error updating stock:', err);
     }
@@ -192,9 +190,10 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
       const { error } = await supabase
         .from('inventario')
         .delete()
-        .eq('id', id);
+        .eq('id', id).eq('barco_id', selectedShipId);
       if (error) throw error;
       setItems(prev => prev.filter(i => i.id !== id));
+      window.dispatchEvent(new CustomEvent('gaulos:logistics-changed', { detail: { vesselId: selectedShipId, source: 'inventory' } }));
     } catch (err) {
       console.error('Error deleting item:', err);
     }
@@ -202,9 +201,9 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
 
   const filteredItems = items.filter(item => {
     const matchesFilter = filter === 'Todos' || item.categoria === filter;
-    const matchesSearch = item.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = item.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.referencia?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesSearch && (location === null || (item.ubicacion?.trim() || '') === location);
   });
 
   const isExpired = (dateStr?: string) => {
@@ -228,7 +227,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative">
         <div className="flex items-center gap-4">
           {onClose && (
-            <button 
+            <button
               onClick={onClose}
               className="p-2 bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors text-slate-400 hover:text-white"
             >
@@ -238,7 +237,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
           <div>
             <h2 className="text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
               <Box className="w-8 h-8 text-cyan-500" />
-              Gestión de Inventario <span className="text-cyan-500">SmartShip</span>
+              Gestión de Inventario <span className="text-cyan-500">GAULOS</span>
             </h2>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">Control de Stock y Caducidades</p>
           </div>
@@ -266,6 +265,9 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
         </div>
       </div>
 
+      {loadError && <p role="alert" className="rounded-xl border border-amber-700 p-4 text-amber-200">Error al cargar inventario: {loadError}</p>}
+      {!loading && !loadError && selectedShipId && <StowagePlan items={items} selected={location} onSelect={setLocation} />}
+
       {/* Controls */}
       <div className="flex flex-col lg:flex-row gap-4 justify-between items-center bg-slate-900/30 p-4 rounded-3xl border border-slate-800/50 backdrop-blur-md">
         <div className="flex flex-wrap gap-2">
@@ -275,8 +277,8 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
               onClick={() => setFilter(cat)}
               className={cn(
                 "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
-                filter === cat 
-                  ? "bg-cyan-600 text-white shadow-lg shadow-cyan-900/20" 
+                filter === cat
+                  ? "bg-cyan-600 text-white shadow-lg shadow-cyan-900/20"
                   : "bg-slate-900 text-slate-500 hover:text-white hover:bg-slate-800"
               )}
             >
@@ -289,7 +291,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
         <div className="flex gap-3 w-full lg:w-auto">
           <div className="relative flex-1 lg:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-            <input 
+            <input
               type="text"
               placeholder="Buscar por nombre o ref..."
               value={searchTerm}
@@ -297,7 +299,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
               className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs outline-none focus:border-cyan-500/50 transition-all"
             />
           </div>
-          <button 
+          <button
             onClick={() => setShowAddModal(true)}
             className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-cyan-900/20"
           >
@@ -347,10 +349,10 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                 filteredItems.map(item => {
                   const lowStock = item.cantidad_actual <= item.cantidad_minima;
                   const expired = isExpired(item.fecha_caducidad);
-                  
+
                   return (
-                    <tr 
-                      key={item.id} 
+                    <tr
+                      key={item.id}
                       className={cn(
                         "group transition-colors",
                         expired ? "bg-red-950/20 hover:bg-red-950/30" : "hover:bg-slate-800/30"
@@ -383,7 +385,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2">
-                            <button 
+                            <button
                               onClick={() => handleUpdateStock(item, -1)}
                               className="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors"
                             >
@@ -395,7 +397,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                             )}>
                               {item.cantidad_actual}
                             </span>
-                            <button 
+                            <button
                               onClick={() => handleUpdateStock(item, 1)}
                               className="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors"
                             >
@@ -427,9 +429,9 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button 
+                        <button
                           onClick={() => handleDeleteItem(item.id, item.nombre)}
-                          className="p-2 text-slate-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          className="p-2 text-slate-600 hover:text-red-500 transition-colors opacity-100"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -447,7 +449,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
       <AnimatePresence>
         {showAddModal && (
           <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -468,8 +470,8 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
                     Nombre del Artículo <span className="text-red-500">*</span>
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={newItem.nombre || ''}
                     onChange={(e) => {
                       setNewItem({ ...newItem, nombre: e.target.value });
@@ -478,7 +480,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                     placeholder="Escriba para buscar o añadir nuevo..."
                     className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-white text-sm outline-none focus:border-cyan-500/50 transition-all font-bold"
                   />
-                  
+
                   {matchingItems.length > 0 && (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden z-20 shadow-2xl">
                       {matchingItems.map(item => (
@@ -497,8 +499,8 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
 
                 <div>
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Referencia / SKU</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={newItem.referencia || ''}
                     onChange={(e) => setNewItem({ ...newItem, referencia: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-white text-sm outline-none focus:border-cyan-500/50 transition-all"
@@ -509,7 +511,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
                     Categoría <span className="text-red-500">*</span>
                   </label>
-                  <select 
+                  <select
                     value={newItem.categoria}
                     disabled={!!selectedExistingItem}
                     onChange={(e) => setNewItem({ ...newItem, categoria: e.target.value as any })}
@@ -527,8 +529,8 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
                     {selectedExistingItem ? 'Cantidad Actual (DB)' : 'Cantidad Inicial'}
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     readOnly={!!selectedExistingItem}
                     value={newItem.cantidad_actual}
                     onChange={(e) => setNewItem({ ...newItem, cantidad_actual: Number(e.target.value) })}
@@ -540,8 +542,8 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
                     Stock Mínimo
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={newItem.cantidad_minima}
                     onChange={(e) => setNewItem({ ...newItem, cantidad_minima: Number(e.target.value) })}
                     className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-white text-sm outline-none focus:border-cyan-500/50 transition-all font-mono"
@@ -553,8 +555,8 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                     <label className="text-[10px] font-black text-cyan-500 uppercase tracking-widest px-1 block mb-2">
                       + Añadir Cantidad al Stock
                     </label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       autoFocus
                       value={addQuantity}
                       onChange={(e) => setAddQuantity(Number(e.target.value))}
@@ -568,8 +570,8 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
 
                 <div>
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Ubicación</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={newItem.ubicacion || ''}
                     onChange={(e) => setNewItem({ ...newItem, ubicacion: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-white text-sm outline-none focus:border-cyan-500/50 transition-all"
@@ -578,8 +580,8 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
 
                 <div>
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Fecha de Caducidad</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     value={newItem.fecha_caducidad || ''}
                     onChange={(e) => setNewItem({ ...newItem, fecha_caducidad: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-white text-sm outline-none focus:border-cyan-500/50 transition-all"
@@ -592,7 +594,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                   <span className="text-red-500">*</span> Campos obligatorios
                 </p>
                 <div className="flex gap-3">
-                  <button 
+                  <button
                     onClick={() => {
                       setShowAddModal(false);
                       setNewItem({ categoria: 'General', cantidad_actual: 0, cantidad_minima: 1 });
@@ -601,7 +603,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({
                   >
                     Cancelar
                   </button>
-                  <button 
+                  <button
                     onClick={handleAddItem}
                     disabled={!newItem.nombre || newItem.cantidad_actual === undefined || newItem.cantidad_minima === undefined}
                     className="flex-[2] py-4 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-black uppercase tracking-widest rounded-2xl transition-all text-xs shadow-lg shadow-cyan-900/20"

@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"atlantic-central","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-6.7,35.9,-6.1,37.2],"simplified":false,"layerParts":{"sea":["base-atlantic-central-sea-0.json"],"land":["base-atlantic-central-land-0.json"],"inlandWater":["base-atlantic-central-inlandWater-0.json"]}}

@@ -1,5 +1,5 @@
 /**
- * Matriz Polar de Rendimiento - SmartShip PRO
+ * Matriz Polar de Rendimiento - GAULOS
  * Mapea: TWS (Viento Real) + TWA (Ángulo Real) -> Target Speed (Knots)
  */
 

@@ -1,0 +1,19 @@
+SmartCHARTS Andalucía land/sea display base v1 — EXPERIMENTAL, NOT FOR NAVIGATION
+
+Geographic data © OpenStreetMap contributors. Regional extract by Geofabrik GmbH.
+https://www.openstreetmap.org/copyright
+https://download.geofabrik.de/europe/spain/andalucia.html
+
+Derived database: Open Database License (ODbL) 1.0.
+https://opendatacommons.org/licenses/odbl/1-0/
+Individual database contents: https://opendatacommons.org/licenses/dbcl/1-0/
+
+The complete derived surface database is distributed as base-atlas.json in
+SmartCHARTS/examples/andalucia/base and as per-sector resources in each app.
+Commercial reuse remains subject to attribution and ODbL obligations, including
+share-alike for derivative databases. The software license does not replace the
+data license. Source hashes, coverage and processing method are in base-catalog.json.
+
+Changes: bounded coastline polygonization, directed land/sea face classification,
+subtraction of mapped inland water, overview generalization, and display-resource
+partitioning. No surveyed depths or navigational accuracy are provided.

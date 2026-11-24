@@ -11,3 +11,37 @@ coverage/
 .env.*.local
 !.env.example
 prueba.mbtiles
+
+# Salidas locales de empaquetado y validación (no versionar)
+dist_electron_*/
+_claude_*.bat
+_diag_*.txt
+_inspect_update*.txt
+_install_run.txt
+_restart_dev*.txt
+_*_done.txt
+_claude_task.cmd
+_claude_task.log
+_claude_task_*.log
+_claude_task_last.txt
+_claude_val_launch.cmd
+_val_*.log
+_feed*.log
+_claude_*.ps1
+
+# Isolated Windows installer staging
+.packaging/
+
+# GAULOS release hygiene
+/dist-main/
+/dist_electron/
+/.packaging/
+*.bak
+*.backup
+*.backup-*
+*-backup
+*.cp1252-backup
+/supabase/migrations/migrations.zip
+.env.*
+
+/devkit/output/

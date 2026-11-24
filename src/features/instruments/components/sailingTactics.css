@@ -1,0 +1,516 @@
+/* ==========================================================================
+   GAULOS SAIL TACTICAL CENTER — Digital Marine Instrument Design System
+   ========================================================================== */
+
+.st-panel {
+  position: absolute;
+  top: var(--vl-content-top, 60px);
+  right: var(--vl-dock-reserve, 80px);
+  width: min(1140px, calc(100% - var(--vl-dock-reserve, 80px) - 20px));
+  max-height: calc(100% - var(--vl-content-top, 60px) - 12px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  background: #050b14;
+  color: #f1f5f9;
+  z-index: var(--vl-z-panel, 7000);
+  pointer-events: auto;
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  color-scheme: dark;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  user-select: none;
+}
+
+.st-panel.st-expanded {
+  position: fixed;
+  inset: 10px;
+  width: auto;
+  max-height: none;
+  z-index: var(--vl-z-modal, 10000);
+  border-radius: 12px;
+}
+
+/* ==========================================================================
+   THEMES: Day / Tactical Dark (Default) vs Night Vision (Pure Red Monochrome)
+   ========================================================================== */
+
+.st-panel.theme-night {
+  background: #080202;
+  border-color: #450a0a;
+  color: #f87171;
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(239, 68, 68, 0.15);
+}
+
+.st-panel.theme-night .st-panel-header {
+  background: #140404;
+  border-color: #3b0707;
+}
+
+.st-panel.theme-night .st-mode-btn {
+  color: #991b1b;
+  border-color: #3b0707;
+  background: #0f0303;
+}
+
+.st-panel.theme-night .st-mode-btn.active {
+  color: #fca5a5;
+  background: #2b0707;
+  border-color: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+}
+
+.st-panel.theme-night .st-action-btn {
+  background: #180505;
+  border-color: #450a0a;
+  color: #f87171;
+}
+
+.st-panel.theme-night .st-display {
+  background: #050101;
+}
+
+.st-panel.theme-night .st-tile {
+  background: linear-gradient(145deg, #160404, #080202);
+  border-color: #3b0707;
+}
+
+.st-panel.theme-night .st-tile strong {
+  color: #fca5a5;
+}
+
+.st-panel.theme-night .st-tile .st-tile-label {
+  color: #b91c1c;
+}
+
+.st-panel.theme-night .st-tile small,
+.st-panel.theme-night .st-tile p {
+  color: #7f1d1d;
+}
+
+.st-panel.theme-night .st-footer-bar {
+  border-color: #3b0707;
+  color: #991b1b;
+}
+
+/* ==========================================================================
+   HEADER & NAVIGATION CONTROLS
+   ========================================================================== */
+
+.st-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 10px 16px;
+  border-bottom: 1px solid #1e293b;
+  background: #091322;
+}
+
+.st-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.st-header-title h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0;
+  color: #f8fafc;
+}
+
+.st-header-title h2 svg {
+  color: #06b6d4;
+}
+
+.st-header-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  color: #38bdf8;
+  text-transform: uppercase;
+}
+
+/* Mode Switcher Segmented Control */
+.st-mode-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.st-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.st-mode-btn:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.st-mode-btn.active {
+  background: #0f2744;
+  border-color: #0284c7;
+  color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+}
+
+.st-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.st-action-btn {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 1px solid #28394e;
+  border-radius: 6px;
+  background: #0e1e32;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.st-action-btn:hover {
+  background: #162c47;
+  color: #ffffff;
+  border-color: #38bdf8;
+}
+
+.st-panel button:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   PANEL BODY & DISPLAY CANVAS
+   ========================================================================== */
+
+.st-panel-body {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+}
+
+.st-display {
+  padding: 14px 16px;
+  background: radial-gradient(circle at center, #0c182a 0%, #050b14 75%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Simulation Alert Banner */
+.st-simulated-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #d97706;
+  background: linear-gradient(90deg, rgba(120, 53, 15, 0.45), rgba(69, 26, 3, 0.5));
+  color: #fbbf24;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.st-simulated-banner span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   TACTICAL INSTRUMENT GRID LAYOUT (3 Columns: Left Tiles | Center Rose | Right Tiles)
+   ========================================================================== */
+
+.st-instrument-grid {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.15fr) minmax(280px, 3.2fr) minmax(140px, 1.15fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.st-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  justify-content: space-between;
+}
+
+/* ==========================================================================
+   DIGITAL INSTRUMENT TILES (High-Contrast Marine Bezel)
+   ========================================================================== */
+
+.st-tile {
+  padding: 10px 12px;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(17, 30, 48, 0.75) 0%, rgba(6, 14, 25, 0.95) 75%);
+  backdrop-filter: blur(8px);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.15s ease-in-out;
+}
+
+.st-tile:hover {
+  border-color: #334155;
+}
+
+.st-tile-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.st-tile-label {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.st-tile-unit {
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.st-tile strong {
+  font-size: clamp(24px, 2.5vw, 36px);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 2px 0 1px;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  overflow-wrap: anywhere;
+}
+
+.st-tile-detail {
+  color: #64748b;
+  font-size: 8.5px;
+  line-height: 1.35;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Category Accent Strips */
+.st-tile.accent-wind {
+  border-left: 3px solid #0284c7;
+}
+
+.st-tile.accent-nav {
+  border-left: 3px solid #10b981;
+}
+
+.st-tile.accent-wp {
+  border-left: 3px solid #8b5cf6;
+}
+
+/* ==========================================================================
+   CENTER TACTICAL COMPASS ROSE CONTAINER
+   ========================================================================== */
+
+.st-center {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.st-rose-wrapper {
+  width: 100%;
+  max-width: 540px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.st-rose {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 520px;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.5));
+}
+
+/* Legend / Vectors key below the rose */
+.st-key {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 8px 0 2px;
+  color: #cbd5e1;
+}
+
+.st-key-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.st-key-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.st-key-dot.true-wind {
+  background: #38bdf8;
+  box-shadow: 0 0 6px #38bdf8;
+}
+
+.st-key-dot.app-wind {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
+}
+
+.st-key-dot.waypoint {
+  background: #a855f7;
+  box-shadow: 0 0 6px #a855f7;
+}
+
+.st-key-dot.layline-port {
+  background: #f43f5e;
+}
+
+.st-key-dot.layline-stbd {
+  background: #10b981;
+}
+
+/* ==========================================================================
+   FOOTER TELEMETRY & NAV BAR
+   ========================================================================== */
+
+.st-footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px solid #1e293b;
+  padding: 10px 4px 2px;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.st-footer-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.st-footer-item strong {
+  color: #f1f5f9;
+}
+
+.st-layline-status {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+
+.st-legal-notice {
+  color: #475569;
+  font-size: 8.5px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ==========================================================================
+   RESPONSIVE ADAPTATIONS
+   ========================================================================== */
+
+@media (min-width: 1300px) {
+  .st-expanded .st-display {
+    max-width: 1320px;
+    margin: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .st-instrument-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .st-center {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .st-rose {
+    max-height: 420px;
+  }
+  .st-mode-btn span.mode-label {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .st-instrument-grid {
+    grid-template-columns: 1fr;
+  }
+  .st-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .st-panel-header h2 span.title-text {
+    display: none;
+  }
+  .st-mode-selector {
+    display: none;
+  }
+}

@@ -1054,4 +1054,136 @@ export const VADEMECUM_DATA: Record<string, VademecumItem[]> = {
         "Composición: Agua, cristales de hielo, nieve y granizo. Forma: Torre vertical con yunque en la cima (anvil). Base muy oscura.",
     },
   ],
+  radio: [
+    {
+      id: "vhf-16",
+      title: "VHF Canal 16 — 156.800 MHz",
+      category: "radio",
+      description: "Frecuencia internacional de emergencia y llamada.",
+      protocol:
+        "Obligatoria monitorización 24/7 en navegación. Canal exclusivo para llamadas de emergencia y contacto inicial.",
+      utility:
+        "Primera frecuencia a monitorizar. Todos los buques deben estar equipados con VHF. Rango: ~20-25 NM (visibilidad).",
+    },
+    {
+      id: "vhf-13",
+      title: "VHF Canal 13 — 156.650 MHz",
+      category: "radio",
+      description: "Tráfico portuario y maniobras de buques.",
+      protocol:
+        "Usado entre buques en canales, puertos y escluses. Regla 10(g) COLREGS. Obligatorio en aguas confinadas.",
+      utility:
+        "Coordinar maniobras complejas. Obligatorio para tráfico en puertos. Rango: ~15 NM.",
+    },
+    {
+      id: "vhf-12",
+      title: "VHF Canal 12 — 156.600 MHz",
+      category: "radio",
+      description: "Llamadas de seguridad y control de tráfico portuario.",
+      protocol:
+        "Usado por autoridades portuarias y buques en puertos. Para seguridad y coordinación.",
+      utility:
+        "Comunicación con autoridades de puerto. Rango: ~15-20 NM.",
+    },
+    {
+      id: "vhf-14",
+      title: "VHF Canal 14 — 156.700 MHz",
+      category: "radio",
+      description: "Llamadas de seguridad y transmisión de información.",
+      protocol: "Similar al Canal 12. Altamente directivo.",
+      utility:
+        "Seguridad portuaria. Comunicaciones en puerto. Rango: ~10-15 NM.",
+    },
+    {
+      id: "vhf-70",
+      title: "VHF Canal 70 — 156.525 MHz",
+      category: "radio",
+      description: "Digital Selective Calling (DSC) — Sistema automático de llamadas.",
+      protocol:
+        "Equipo DSC obligatorio en buques Solas. Permite identificación automática y enrutamiento de emergencias.",
+      utility:
+        "Llamadas automáticas identificadas. Rango: ~25-30 NM. Esencial para GMDSS.",
+    },
+    {
+      id: "ssb-2182",
+      title: "SSB 2182 kHz",
+      category: "radio",
+      description: "Frecuencia internacional de emergencia de onda media.",
+      protocol:
+        "Usada para MEDÉ y comunicaciones de larga distancia. Requiere equipo SSB (bandas laterales).",
+      utility:
+        "Emergencias en alta mar. Rango: 100-300 NM según condiciones. Obsoleta en algunos buques modernos.",
+    },
+    {
+      id: "ssb-4125",
+      title: "SSB 4125 kHz",
+      category: "radio",
+      description: "Frecuencia de comunicación de larga distancia MF/HF.",
+      protocol:
+        "Banda de seguridad marina internacional. Comunicaciones de barco a tierra.",
+      utility:
+        "Comunicaciones con centros de coordinación de rescate (RCC). Rango: Intercontinental.",
+    },
+    {
+      id: "vhf-1",
+      title: "VHF Canal 1 — 156.050 MHz",
+      category: "radio",
+      description: "Navegación costera entre buques.",
+      protocol:
+        "Canal de trabajo para navegación costera. No debe usarse para transmisiones largas.",
+      utility:
+        "Comunicación entre buques cercanos. Rango: ~15-20 NM.",
+    },
+    {
+      id: "vhf-6",
+      title: "VHF Canal 6 — 156.300 MHz",
+      category: "radio",
+      description: "Llamadas buque a buque.",
+      protocol:
+        "Específicamente para comunicaciones entre dos buques. Es cortesía establecer contacto en Canal 16 y cambiar a Canal 6.",
+      utility:
+        "Comunicación punto a punto entre buques. Rango: ~20-25 NM.",
+    },
+    {
+      id: "vhf-72",
+      title: "VHF Canal 72 — 156.625 MHz",
+      category: "radio",
+      description: "Comunicaciones entre buques — Navegación segura.",
+      protocol:
+        "Alternativa al Canal 6. Menos congestionado. Buenas prácticas de radiotelefonia.",
+      utility:
+        "Llamadas buque a buque. Rango: ~20 NM.",
+    },
+    {
+      id: "MEDÉ",
+      title: "Procedimiento MEDÉ",
+      category: "radio",
+      description:
+        "Señal de máxima emergencia para comunicar peligro de vida inminente.",
+      protocol:
+        "Pronunciado 3 veces: MEDÉ-MEDÉ-MEDÉ. Transmitir en VHF Canal 16 o SSB 2182 kHz.",
+      utility:
+        'Respuesta obligatoria. Todos los buques escuchan. Procedimiento: 1) MEDÉ×3 2) Identificación 3) Posición 4) Naturaleza del peligro 5) Número de personas 6) Equipo de seguridad.',
+    },
+    {
+      id: "pan-pan",
+      title: "Procedimiento PAN PAN",
+      category: "radio",
+      description: "Señal de urgencia — Situación seria pero controlada.",
+      protocol:
+        "Pronunciado 3 veces: PAN-PAN-PAN. Usar cuando MEDÉ no es apropiado pero hay urgencia.",
+      utility:
+        "Ej: Fallo de motor, mala estabilidad, etc. Todos escuchan pero no es máxima prioridad.",
+    },
+    {
+      id: "securite",
+      title: "Procedimiento SÉCURITÉ",
+      category: "radio",
+      description: "Aviso de seguridad náutica importante.",
+      protocol:
+        "Pronunciado 3 veces: SECURITÉ-SECURITÉ-SECURITÉ. Ej: obstáculos, detritus, condiciones peligrosas.",
+      utility:
+        "Información de interés para navegación segura. Menor prioridad que PAN PAN.",
+    },
+  ],
 };

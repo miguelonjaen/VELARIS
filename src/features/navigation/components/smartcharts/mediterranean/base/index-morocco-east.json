@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"morocco-east","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-2.5,34.8,-1.7,35.5],"simplified":false,"layerParts":{"sea":["base-morocco-east-sea-0.json"],"land":["base-morocco-east-land-0.json"],"inlandWater":["base-morocco-east-inlandWater-0.json"]}}

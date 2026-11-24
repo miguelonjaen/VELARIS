@@ -1,0 +1,142 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "domain": {
+      "type": "string",
+      "enum": [
+        "ROUTE",
+        "OTHER"
+      ]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "CREATE",
+        "MODIFY",
+        "QUERY",
+        "CLARIFY",
+        "NONE"
+      ]
+    },
+    "origin": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200
+    },
+    "destination": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200
+    },
+    "via": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PORT",
+              "ISLAND",
+              "CAPE",
+              "PLACE"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "CALL",
+              "UNSPECIFIED"
+            ]
+          },
+          "distanceNm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "exclusiveMinimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "mode",
+          "distanceNm"
+        ]
+      }
+    },
+    "coastDistance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "KEEP",
+            "SET",
+            "INCREASE"
+          ]
+        },
+        "nm": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "operation",
+        "nm"
+      ]
+    },
+    "unhandledConstraints": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    },
+    "wantsTotalDistance": {
+      "type": "boolean"
+    },
+    "question": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 400
+    }
+  },
+  "required": [
+    "domain",
+    "action",
+    "origin",
+    "destination",
+    "via",
+    "coastDistance",
+    "unhandledConstraints",
+    "wantsTotalDistance",
+    "question"
+  ]
+}

@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"algeria-west","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-2.3,34.8,0.5,36.4],"simplified":false,"layerParts":{"sea":["base-algeria-west-sea-0.json"],"land":["base-algeria-west-land-0.json"],"inlandWater":["base-algeria-west-inlandWater-0.json"]}}

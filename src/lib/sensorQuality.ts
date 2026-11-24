@@ -24,7 +24,7 @@ const SENSOR_LABELS: Record<SensorId, string> = {
   sog: 'SOG',
 };
 
-const STALE_LIMITS_SECONDS: Record<SensorId, number> = {
+export const STALE_LIMITS_SECONDS: Record<SensorId, number> = {
   gps: 10,
   wind: 8,
   depth: 8,

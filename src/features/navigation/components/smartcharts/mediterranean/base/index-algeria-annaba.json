@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"algeria-annaba","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[6.1,36.6,8.9,37.5],"simplified":false,"layerParts":{"sea":["base-algeria-annaba-sea-0.json"],"land":["base-algeria-annaba-land-0.json"],"inlandWater":["base-algeria-annaba-inlandWater-0.json"]}}

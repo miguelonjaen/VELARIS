@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"mediterranean-central","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-4.5,36.2,-3.8,37.1],"simplified":false,"layerParts":{"sea":["base-mediterranean-central-sea-0.json"],"land":["base-mediterranean-central-land-0.json"],"inlandWater":["base-mediterranean-central-inlandWater-0.json"]}}

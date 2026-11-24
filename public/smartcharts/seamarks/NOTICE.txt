@@ -1,0 +1,22 @@
+GAULOS offline seamarks — OpenStreetMap / SeaChart
+
+Data: OpenStreetMap contributors, ODbL 1.0.
+Snapshot: 2026-11-01T17:26:28Z; selection envelope: [-18.3, 27.5, 4.7, 44.3].
+Scope: OSM Spain administrative area plus the Mediterranean/Alboran query window; inventario comunitario no exhaustivo.
+Inventory is not exhaustive. 5437 objects have seamark attributes;
+74 have no declared seamark:type; no type or attributes were invented.
+Source IDs, versions, timestamps, tags, topology and WGS84 coordinates are retained.
+Contributor user/uid/changeset fields were removed; no vessel telemetry is included.
+
+SeaChart symbols and rules by Malcolm Herring and contributors, GPL-2.0-or-later.
+Upstream revision: 22f394a0ea3ed5cedcfcb0b81345e8333d72adbe.
+Upstream code and BatchSeamarks adapter, native OSM input, source snapshot, query,
+provenance, jobs and build scripts are included in renderer-source.zip.
+No claim of pixel identity or update parity with live OpenSeaMap tiles.
+XYZ RGBA 256x256, native zoom 6–16; overscaling adds no information.
+Empty tiles are omitted. Explicit offline mode does not request public tiles.
+
+Not an ENC, hydrographic hazard inventory, UKC source or current navigational warning service.
+No official temporary warnings have been added as permanent chart marks.
+https://www.openstreetmap.org/copyright
+https://github.com/JOSM/josm-plugins/tree/22f394a0ea3ed5cedcfcb0b81345e8333d72adbe/SeaChart

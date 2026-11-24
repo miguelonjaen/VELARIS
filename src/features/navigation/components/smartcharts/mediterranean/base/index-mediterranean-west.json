@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"mediterranean-west","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-5.25,36.2,-4.5,37.0],"simplified":false,"layerParts":{"sea":["base-mediterranean-west-sea-0.json"],"land":["base-mediterranean-west-land-0.json"],"inlandWater":["base-mediterranean-west-inlandWater-0.json"]}}

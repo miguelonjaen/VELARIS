@@ -1,0 +1,145 @@
+[
+  {
+    "tile": "F3",
+    "center": [
+      -7.000520833333038,
+      36.000520833333105
+    ],
+    "raster": -806.986389160156,
+    "wms": -806.9863891601562,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=-7.001041666666372%2C35.99999999999977%2C-6.999999999999704%2C36.00104166666644&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 2.2737367544323206e-13
+  },
+  {
+    "tile": "F4",
+    "center": [
+      -3.5255208333332417,
+      36.650520833333125
+    ],
+    "raster": -385.5,
+    "wms": -385.5,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=-3.526041666666575%2C36.64999999999979%2C-3.5249999999999084%2C36.65104166666646&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 0.0
+  },
+  {
+    "tile": "F5",
+    "center": [
+      7.999479166666811,
+      40.00052083333323
+    ],
+    "raster": -1258.46142578125,
+    "wms": -1258.46142578125,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=7.998958333333477%2C39.9999999999999%2C8.000000000000144%2C40.001041666666566&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 0.0
+  },
+  {
+    "tile": "E4",
+    "center": [
+      3.449479166666981,
+      43.250520833333034
+    ],
+    "raster": -13.6000003814697,
+    "wms": -13.600000381469727,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=3.4489583333336475%2C43.2499999999997%2C3.450000000000314%2C43.25104166666637&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 2.6645352591003757e-14
+  },
+  {
+    "tile": "E5",
+    "center": [
+      8.999479166666843,
+      43.80052083333305
+    ],
+    "raster": -997.299987792969,
+    "wms": -997.2999877929688,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=8.99895833333351%2C43.79999999999972%2C9.000000000000176%2C43.801041666666386&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 2.2737367544323206e-13
+  },
+  {
+    "tile": "E6",
+    "center": [
+      13.999479166666687,
+      44.000520833333056
+    ],
+    "raster": -71.0999984741211,
+    "wms": -71.0999984741211,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=13.998958333333354%2C43.99999999999972%2C14.00000000000002%2C44.00104166666639&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 0.0
+  },
+  {
+    "tile": "F6",
+    "center": [
+      18.99947916666685,
+      36.000520833333105
+    ],
+    "raster": -3618.0,
+    "wms": -3618,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=18.998958333333515%2C35.99999999999977%2C19.00000000000018%2C36.00104166666644&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 0.0
+  },
+  {
+    "tile": "F7",
+    "center": [
+      24.99947916666672,
+      37.000520833333134
+    ],
+    "raster": -84.94140625,
+    "wms": -84.94140625,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=24.998958333333388%2C36.9999999999998%2C25.000000000000053%2C37.00104166666647&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 0.0
+  },
+  {
+    "tile": "F8",
+    "center": [
+      33.999479166666696,
+      34.00052083333304
+    ],
+    "raster": -2198.640625,
+    "wms": -2198.640625,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=33.99895833333336%2C33.99999999999971%2C34.00000000000003%2C34.001041666666374&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 0.0
+  },
+  {
+    "tile": "G5",
+    "center": [
+      11.999479166666939,
+      33.000520833333304
+    ],
+    "raster": -3.3828125,
+    "wms": -3.3828125,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=11.998958333333606%2C32.99999999999997%2C12.000000000000272%2C33.00104166666664&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 0.0
+  },
+  {
+    "tile": "G6",
+    "center": [
+      17.999479166666816,
+      32.000520833333276
+    ],
+    "raster": -1597.39367675781,
+    "wms": -1597.3936767578125,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=17.998958333333483%2C31.999999999999943%2C18.00000000000015%2C32.00104166666661&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 2.5011104298755527e-12
+  },
+  {
+    "tile": "G7",
+    "center": [
+      29.99947916666688,
+      32.000520833333276
+    ],
+    "raster": -947.647827148438,
+    "wms": -947.6478271484375,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=29.998958333333547%2C31.999999999999943%2C30.000000000000213%2C32.00104166666661&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 4.547473508864641e-13
+  },
+  {
+    "tile": "G8",
+    "center": [
+      34.49947916666671,
+      32.000520833333276
+    ],
+    "raster": -257.50537109375,
+    "wms": -257.50537109375,
+    "url": "https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=emodnet%3Amean&query_layers=emodnet%3Amean&styles=&srs=EPSG%3A4326&bbox=34.49895833333338%2C31.999999999999943%2C34.50000000000004%2C32.00104166666661&width=101&height=101&x=50&y=50&format=image%2Fpng&info_format=application%2Fjson",
+    "difference": 0.0
+  }
+]

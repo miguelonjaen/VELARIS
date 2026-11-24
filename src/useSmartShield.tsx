@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SmartshipAlarm, SecurityThresholds, AlarmSeverity, UserProfile, ShipData } from './types';
+import { GAULOSAlarm, SecurityThresholds, AlarmSeverity, UserProfile, ShipData } from './types';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { SensorQualityMap } from './lib/sensorQuality';
+import { calculateDistanceNM } from './lib/aisMath';
 
 interface SmartShieldProps {
   userProfile: UserProfile | null;
   supabase: SupabaseClient;
   fleet: ShipData[];
   selectedShipId: string | null;
+  ownShipPosition: { lat: number; lng: number } | null;
   depth: number;
   engineData: { rpm: number; temp: number; voltage: number; fuel: number; water: number };
   aisTargets: any[];
@@ -27,6 +29,7 @@ export const useSmartShield = ({
   supabase,
   fleet,
   selectedShipId,
+  ownShipPosition,
   depth,
   engineData,
   aisTargets,
@@ -36,7 +39,7 @@ export const useSmartShield = ({
   sensorQuality,
   anchorWatch,
 }: SmartShieldProps) => {
-  const [alarms, setAlarms] = useState<SmartshipAlarm[]>([]);
+  const [alarms, setAlarms] = useState<GAULOSAlarm[]>([]);
   const [alarmHistory, setAlarmHistory] = useState<any[]>([]);
   const [thresholds, setThresholds] = useState<SecurityThresholds>({
     minDepth: 2.5,
@@ -56,7 +59,7 @@ export const useSmartShield = ({
       const { data, error } = await supabase
         .from('bitacora')
         .select('*')
-        .eq('es_alarma', true)
+        .eq('categoria', 'Seguridad')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -64,11 +67,10 @@ export const useSmartShield = ({
         setAlarmHistory(data.map(log => ({
           id: log.id || log.created_at,
           message: log.descripcion,
-          type: log.tipo_evento?.replace('ALERTA_', '').toLowerCase() || 'unknown',
-          severity: log.nivel_critico || 'warning',
+          type: log.titulo?.replace('ALARMA ', '').toLowerCase() || 'unknown',
+          severity: 'warning',
           timestamp: new Date(log.created_at).getTime(),
-          value: parseFloat(log.descripcion.split('Valor: ')[1]) || 0,
-          modulo_origen: log.modulo_origen
+          value: parseFloat(log.descripcion.split('Valor: ')[1]) || 0
         })));
       }
     };
@@ -79,17 +81,16 @@ export const useSmartShield = ({
       .channel('bitacora-alarms-shield')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'bitacora', filter: 'es_alarma=eq.true' },
+        { event: 'INSERT', schema: 'public', table: 'bitacora' },
         (payload) => {
           const newLog = payload.new;
           setAlarmHistory(prev => [{
             id: newLog.id || newLog.created_at,
             message: newLog.descripcion,
-            type: newLog.tipo_evento?.replace('ALERTA_', '').toLowerCase() || 'unknown',
-            severity: newLog.nivel_critico || 'warning',
+            type: newLog.titulo?.replace('ALARMA ', '').toLowerCase() || 'unknown',
+            severity: 'warning',
             timestamp: new Date(newLog.created_at).getTime(),
-            value: parseFloat(newLog.descripcion.split('Valor: ')[1]) || 0,
-            modulo_origen: newLog.modulo_origen
+            value: parseFloat(newLog.descripcion.split('Valor: ')[1]) || 0
           }, ...prev].slice(0, 50));
         }
       )
@@ -102,11 +103,11 @@ export const useSmartShield = ({
     setAlarms(prev => prev.filter(a => a.id !== id));
   }, []);
 
-  const removeAlarmByType = useCallback((type: SmartshipAlarm['type']) => {
+  const removeAlarmByType = useCallback((type: GAULOSAlarm['type']) => {
     setAlarms(prev => prev.filter(a => a.type !== type));
   }, []);
 
-  const addAlarm = useCallback(async (type: SmartshipAlarm['type'], severity: AlarmSeverity, message: string, value: number) => {
+  const addAlarm = useCallback(async (type: GAULOSAlarm['type'], severity: AlarmSeverity, message: string, value: number) => {
     const existing = alarms.find(a => a.type === type);
     if (existing && existing.severity === severity) return;
     
@@ -124,18 +125,15 @@ export const useSmartShield = ({
           capitan_id: userProfile.id,
           titulo: `ALARMA ${type.toUpperCase()}`,
           descripcion: `${message} | Valor: ${value}`,
-          tipo_evento: `ALERTA_${type.toUpperCase()}`,
           categoria: 'Seguridad',
-          nivel_critico: severity,
-          es_alarma: true,
-          modulo_origen: 'SmartShield-Watchdog',
+          fecha: new Date().toISOString().slice(0, 10),
           created_at: new Date().toISOString(),
           is_auto: true
         }]);
       } catch (err) { console.error("Error logging alarm to Supabase:", err); }
     }
 
-    const newAlarm: SmartshipAlarm = {
+    const newAlarm: GAULOSAlarm = {
       id: crypto.randomUUID(),
       type,
       severity,
@@ -145,7 +143,7 @@ export const useSmartShield = ({
     };
     
     setAlarms(prev => [newAlarm, ...prev.filter(a => a.type !== type)].slice(0, 8));
-    if (severity === 'critical' && !isAlertMuted) console.log("🚨 ALERTA CRÍTICA:", message);
+    if (severity === 'critical' && !isAlertMuted) ;
   }, [alarms, userProfile, fleet, selectedShipId, isAlertMuted, supabase]);
 
   // Logica del Watchdog (Monitorizacion 5s)
@@ -174,12 +172,37 @@ export const useSmartShield = ({
         removeAlarmByType('anchor_drift');
       }
 
-      const proximityTarget = aisTargets.reduce((prev, curr) => ((curr.cpa || Infinity) < (prev?.cpa || Infinity) ? curr : prev), null);
-      if (proximityTarget && proximityTarget.cpa < thresholds.minCPA) {
-        const tcpaText = Number.isFinite(proximityTarget.tcpa) ? ' TCPA ' + proximityTarget.tcpa.toFixed(1) + ' min' : '';
+      ;
+      ;
+      const proximityTarget = aisTargets.reduce((prev, curr) => {
+        const currCpa = curr.cpaNm ?? curr.cpa;
+        const prevCpa = prev ? (prev.cpaNm ?? prev.cpa) : undefined;
+        return Number.isFinite(currCpa) && (!Number.isFinite(prevCpa) || currCpa < prevCpa)
+          ? curr
+          : prev;
+      }, null);
+      const proximityCpa = proximityTarget
+        ? (proximityTarget.cpaNm ?? proximityTarget.cpa)
+        : null;
+      const proximityTcpa = proximityTarget
+        ? (proximityTarget.tcpaMinutes ?? proximityTarget.tcpa)
+        : null;
+      ;
+      const riskLevel = proximityTarget?.riskLevel;
+      const hasRiskLevel = riskLevel === 'CAUTION' || riskLevel === 'WARNING' || riskLevel === 'CRITICAL';
+      const isWithinShieldThreshold = Number.isFinite(proximityCpa) && proximityCpa < thresholds.minCPA;
+      ;
+      if (proximityTarget && (hasRiskLevel || isWithinShieldThreshold)) {
+        const tcpaText = Number.isFinite(proximityTcpa) ? ' TCPA ' + proximityTcpa.toFixed(1) + ' min' : '';
         const targetName = proximityTarget.nombre || proximityTarget.name || proximityTarget.mmsi || 'AIS';
-        addAlarm('ais_collision', 'critical', 'PELIGRO COLISION: ' + targetName + '.' + tcpaText, proximityTarget.cpa);
-      } else { removeAlarmByType('ais_collision'); }
+        ;
+        ;
+        addAlarm('ais_collision', 'critical', 'PELIGRO COLISION: ' + targetName + '.' + tcpaText, proximityCpa ?? 0);
+      } else {
+        ;
+        ;
+        removeAlarmByType('ais_collision');
+      }
 
       const badSensor = sensorQuality
         ? Object.values(sensorQuality).find(sensor => sensor.source === 'real' && (sensor.status === 'stale' || sensor.status === 'offline'))
@@ -194,4 +217,3 @@ export const useSmartShield = ({
 
   return { alarms, setAlarms, alarmHistory, thresholds, setThresholds, isAlertMuted, setIsAlertMuted, removeAlarm, removeAlarmByType, addAlarm };
 };
-

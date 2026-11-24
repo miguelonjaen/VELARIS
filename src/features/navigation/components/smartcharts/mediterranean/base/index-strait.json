@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"strait","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-6.1,35.5,-5.25,36.5],"simplified":false,"layerParts":{"sea":["base-strait-sea-0.json"],"land":["base-strait-land-0.json"],"inlandWater":["base-strait-inlandWater-0.json"]}}

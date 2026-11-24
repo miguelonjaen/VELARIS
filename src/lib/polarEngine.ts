@@ -1,7 +1,9 @@
 /**
- * Motor de Polares Táctico - SmartShip Pro
+ * Motor de Polares Táctico - GAULOS
  * Gestiona el rendimiento teórico vs real y cálculos de VMG.
  */
+
+import { calculateTwa } from './useWeather';
 
 export interface PolarPoint {
   tws: number; // True Wind Speed (kt)
@@ -79,7 +81,7 @@ export interface VesselPerformanceResult {
 }
 
 export const calculateVesselPerformance = ({ sog, cog, windSpeed, windDir }: VesselPerformanceInput): VesselPerformanceResult => {
-  const twa = Math.abs(((cog - windDir + 180 + 360) % 360) - 180);
+  const twa = calculateTwa(windDir, cog);
   const targetSpeed = getTargetPerformance(windSpeed, twa);
   const ratio = targetSpeed > 0 ? Math.min(Math.max(sog / targetSpeed, 0), 1.2) : 0;
   return {

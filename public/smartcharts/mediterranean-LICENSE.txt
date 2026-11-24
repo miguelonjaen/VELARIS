@@ -1,0 +1,11 @@
+SMARTCHARTS — WESTERN MEDITERRANEAN EXPERIMENTAL DATABASE
+
+© OpenStreetMap contributors / Geofabrik. Data and derived geographic database: Open Database License (ODbL) 1.0.
+https://www.openstreetmap.org/copyright
+https://opendatacommons.org/licenses/odbl/1-0/
+
+Commercial reuse is permitted subject to the ODbL terms, including attribution and applicable share-alike/source-availability obligations for the derived database. The OSM data are not exclusively owned by SmartCHARTS. This notice does not change the software licence.
+
+Source extracts and their URLs/checksums: source-provenance.json. Original extracted coastline and water, transformations, coverage geometry and regeneration tools accompany the derived data in SmartCHARTS/examples/mediterranean and SmartCHARTS/tools/mediterranean.
+
+EXPERIMENTAL DISPLAY DATA ONLY. NOT AN OFFICIAL ENC. NOT FOR NAVIGATION. NO VERIFIED DEPTHS OR BATHYMETRY. NO HYDROGRAPHIC COMPLETENESS OR ACCURACY CLAIM. Coverage edges are not coastlines or territorial boundaries.

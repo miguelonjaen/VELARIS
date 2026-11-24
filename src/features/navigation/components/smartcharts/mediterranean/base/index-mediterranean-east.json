@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"mediterranean-east","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-3.8,36.4,-3.1,37.1],"simplified":false,"layerParts":{"sea":["base-mediterranean-east-sea-0.json"],"land":["base-mediterranean-east-land-0.json"],"inlandWater":["base-mediterranean-east-inlandWater-0.json"]}}

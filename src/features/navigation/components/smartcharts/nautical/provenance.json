@@ -1,0 +1,23 @@
+{
+  "sourceFile": "spain-261024.osm.pbf",
+  "sourceBytes": 1495446095,
+  "sha256": "f924ea1f74a209417bfbfc0285b5750409f1ebc99dbe7157315d429f98353c16",
+  "license": "ODbL-1.0",
+  "attribution": "OpenStreetMap contributors / Geofabrik",
+  "sourceURL": "https://download.geofabrik.de/europe/spain.html",
+  "selection": "all_tags LIKE '%\"seamark:%' OR man_made IN ('pier','breakwater','quay','lighthouse','beacon','dolphin','offshore_platform') OR waterway='dock' OR historic='wreck'",
+  "elapsedSeconds": 721.14,
+  "experimental": true,
+  "navigationUse": false,
+  "coverage": "Source extract only; not an exhaustive inventory of real objects",
+  "gdal": "2.4.0",
+  "pbfHeader": {
+    "requiredFeatures": [
+      "OsmSchema-V0.6",
+      "DenseNodes"
+    ],
+    "writingProgram": "osmium/1.16.0",
+    "replicationTimestamp": "2026-10-24T20:20:51+00:00",
+    "replicationBaseURL": "https://download.geofabrik.de/europe/spain-updates"
+  }
+}

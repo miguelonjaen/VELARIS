@@ -3,6 +3,7 @@ import { Contact } from "./contacts/Contact";
 import { Vessel } from "./contacts/Vessel";
 import { TacticalTargetMapper } from "./mappers/TacticalTargetMapper";
 import { TacticalTarget } from "./models/TacticalTarget";
+import { AISContact } from "./contacts/AISContact";
 
 export class TacticalEngine {
 
@@ -57,12 +58,22 @@ export class TacticalEngine {
         this.contacts.remove(id);
 
     }
+    public getAISContacts(): AISContact[] {
+
+    return this.contacts
+        .getAll()
+        .filter(
+            contact => contact instanceof AISContact
+        ) as AISContact[];
+
+}
 
     public getTargets(): TacticalTarget[] {
 
-    return this.getVessels().map(
-        vessel => this.targetMapper.map(vessel)
+    return this.getAISContacts().map(
+        contact => this.targetMapper.map(contact)
     );
+
 
 }
 }

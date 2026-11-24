@@ -1,0 +1,6756 @@
+{
+  "query": "https://ows.emodnet-bathymetry.eu/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=emodnet%3Adownload_tiles&outputFormat=application%2Fjson&bbox=-7.43%2C30%2C36.5%2C46%2Curn%3Aogc%3Adef%3Acrs%3AOGC%3A1.3%3ACRS84&srsName=urn%3Aogc%3Adef%3Acrs%3AOGC%3A1.3%3ACRS84",
+  "response": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": "download_tiles.df227fd4-ca68-409a-a433-91f23e23d9c7",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                52.5
+              ],
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -16.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E3",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E3_2024.tif.zip"
+        },
+        "bbox": [
+          -16.25,
+          43.125,
+          -6.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.306780ae-8a24-41f7-857f-a157dfacac67",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                3.5,
+                52.5
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E4",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E4_2024.tif.zip"
+        },
+        "bbox": [
+          -6.375,
+          43.125,
+          3.5,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.68a4ad6b-cb80-4ff5-9eba-6675f9d72aa3",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                52.5
+              ],
+              [
+                13.375,
+                52.5
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E5",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E5_2024.tif.zip"
+        },
+        "bbox": [
+          3.5,
+          43.125,
+          13.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.0e9b4805-8843-40a5-9865-dcdbcf491d3f",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                52.5
+              ],
+              [
+                23.25,
+                52.5
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E6",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E6_2024.tif.zip"
+        },
+        "bbox": [
+          13.375,
+          43.125,
+          23.25,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.044ea957-df04-4fde-9194-8c92f28dbcb5",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                52.5
+              ],
+              [
+                33.125,
+                52.5
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E7",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E7_2024.tif.zip"
+        },
+        "bbox": [
+          23.25,
+          43.125,
+          33.125,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.528fbb98-b246-4bce-8048-cfabbff82e36",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                52.5
+              ],
+              [
+                43,
+                52.5
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E8",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E8_2024.tif.zip"
+        },
+        "bbox": [
+          33.125,
+          43.125,
+          43,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.59146cc9-a9d2-4a8a-a095-433a67391ab7",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -16.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F3",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F3_2024.tif.zip"
+        },
+        "bbox": [
+          -16.25,
+          33.75,
+          -6.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.99d86742-aa90-46ea-a7ae-84af4359f4bf",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F4",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F4_2024.tif.zip"
+        },
+        "bbox": [
+          -6.375,
+          33.75,
+          3.5,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.d08f6e69-4681-4f4f-b45e-4dcf03250a83",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                3.5,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F5",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F5_2024.tif.zip"
+        },
+        "bbox": [
+          3.5,
+          33.75,
+          13.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.f080ed46-f7fd-4ae6-aea3-038085b6e9a9",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F6",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F6_2024.tif.zip"
+        },
+        "bbox": [
+          13.375,
+          33.75,
+          23.25,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.55a53986-f4ce-4e48-bc1e-7c5cae2ead5f",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F7",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F7_2024.tif.zip"
+        },
+        "bbox": [
+          23.25,
+          33.75,
+          33.125,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.07111117-dc76-4585-8fda-84eb9a646da1",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                43.125
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F8",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F8_2024.tif.zip"
+        },
+        "bbox": [
+          33.125,
+          33.75,
+          43,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.a919c0c7-e8fb-4b5a-bdac-42bf2ebf5f55",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                24.375
+              ],
+              [
+                -16.25,
+                24.375
+              ],
+              [
+                -16.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G3",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G3_2024.tif.zip"
+        },
+        "bbox": [
+          -16.25,
+          24.375,
+          -6.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.d8c7dc28-ee5f-49d2-aa0b-50dc214bb652",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                3.5,
+                24.375
+              ],
+              [
+                3.5,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G5",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G5_2024.tif.zip"
+        },
+        "bbox": [
+          3.5,
+          24.375,
+          13.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.c34cd615-e2a3-4371-ab0a-88799664f91a",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                13.375,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G6",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G6_2024.tif.zip"
+        },
+        "bbox": [
+          13.375,
+          24.375,
+          23.25,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.e31c1196-cb3c-43d7-aa63-17ff7cfb73e6",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                23.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G7",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G7_2024.tif.zip"
+        },
+        "bbox": [
+          23.25,
+          24.375,
+          33.125,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.fe7f5682-cb87-4b94-835d-36b2bceb7994",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                33.75
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                43,
+                24.375
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                33.125,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G8",
+          "product_format": "32 bit float GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G8_2024.tif.zip"
+        },
+        "bbox": [
+          33.125,
+          24.375,
+          43,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.f8e9dbac-4a05-477f-9e25-5b0fdddf1484",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                52.5
+              ],
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -16.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E3",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E3_2024.emo.zip"
+        },
+        "bbox": [
+          -16.25,
+          43.125,
+          -6.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.56ad45f0-02c9-41fd-9481-df6e678b8d9e",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                3.5,
+                52.5
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E4",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E4_2024.emo.zip"
+        },
+        "bbox": [
+          -6.375,
+          43.125,
+          3.5,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.2059bce4-1d3a-4e8a-829b-efc87d719321",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                52.5
+              ],
+              [
+                13.375,
+                52.5
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E5",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E5_2024.emo.zip"
+        },
+        "bbox": [
+          3.5,
+          43.125,
+          13.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.d4f8c931-a476-4415-bc12-8f162852b8d9",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                52.5
+              ],
+              [
+                23.25,
+                52.5
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E6",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E6_2024.emo.zip"
+        },
+        "bbox": [
+          13.375,
+          43.125,
+          23.25,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.1fd06b45-b049-4ee1-9bcb-97a025e542f8",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                52.5
+              ],
+              [
+                33.125,
+                52.5
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E7",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E7_2024.emo.zip"
+        },
+        "bbox": [
+          23.25,
+          43.125,
+          33.125,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.e0aa48e8-097a-45ed-ad96-e575fe00b9ca",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                52.5
+              ],
+              [
+                43,
+                52.5
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E8",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E8_2024.emo.zip"
+        },
+        "bbox": [
+          33.125,
+          43.125,
+          43,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.5ad5a0ec-1604-4f52-bfa1-78ea50b5a2a0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -16.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F3",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F3_2024.emo.zip"
+        },
+        "bbox": [
+          -16.25,
+          33.75,
+          -6.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.95a0c655-9944-49ae-aeb3-18a6af30c64a",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F4",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F4_2024.emo.zip"
+        },
+        "bbox": [
+          -6.375,
+          33.75,
+          3.5,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.af1d4f3a-c27d-433c-a23f-f79f00dfc7f3",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                3.5,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F5",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F5_2024.emo.zip"
+        },
+        "bbox": [
+          3.5,
+          33.75,
+          13.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.16d1ab19-bbd7-4200-b9a1-e58d88b6aa6c",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F6",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F6_2024.emo.zip"
+        },
+        "bbox": [
+          13.375,
+          33.75,
+          23.25,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.f0e16cdd-d1a0-4892-b67f-cf0455e61e30",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F7",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F7_2024.emo.zip"
+        },
+        "bbox": [
+          23.25,
+          33.75,
+          33.125,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.561be874-303a-4b6a-b3c2-12c5e381ff84",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                43.125
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F8",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F8_2024.emo.zip"
+        },
+        "bbox": [
+          33.125,
+          33.75,
+          43,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.5401e2a4-6cd6-469b-8db6-bc9b83b0822d",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                24.375
+              ],
+              [
+                -16.25,
+                24.375
+              ],
+              [
+                -16.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G3",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G3_2024.emo.zip"
+        },
+        "bbox": [
+          -16.25,
+          24.375,
+          -6.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.f8abb3c3-41d4-40cd-bc99-cc39144260a8",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                3.5,
+                24.375
+              ],
+              [
+                3.5,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G5",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G5_2024.emo.zip"
+        },
+        "bbox": [
+          3.5,
+          24.375,
+          13.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.aff18515-64d3-41f7-ae00-cadf508f9078",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                13.375,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G6",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G6_2024.emo.zip"
+        },
+        "bbox": [
+          13.375,
+          24.375,
+          23.25,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.2720c9a7-b829-42c4-b519-65d9e8ed0eb1",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                23.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G7",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G7_2024.emo.zip"
+        },
+        "bbox": [
+          23.25,
+          24.375,
+          33.125,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.356deccf-953a-48ee-889a-a39b2f4c447e",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                33.75
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                43,
+                24.375
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                33.125,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G8",
+          "product_format": "EMO",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G8_2024.emo.zip"
+        },
+        "bbox": [
+          33.125,
+          24.375,
+          43,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.69b53d96-cf70-44d3-a4d6-9984dbca80ce",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                52.5
+              ],
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -16.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E3",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E3_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          -16.25,
+          43.125,
+          -6.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.cab3f752-5423-415b-8425-8f32f8c40e39",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                3.5,
+                52.5
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E4",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E4_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          -6.375,
+          43.125,
+          3.5,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.4d10784d-7b8c-4d3e-97fe-d98f5dacb0ad",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                52.5
+              ],
+              [
+                13.375,
+                52.5
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E5",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E5_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          3.5,
+          43.125,
+          13.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.e36bbc83-28fb-4521-8e16-cb526a41c862",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                52.5
+              ],
+              [
+                23.25,
+                52.5
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E6",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E6_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          13.375,
+          43.125,
+          23.25,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.c74295d2-fc3b-4c58-8694-a24d9c9506a6",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                52.5
+              ],
+              [
+                33.125,
+                52.5
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E7",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E7_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          23.25,
+          43.125,
+          33.125,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.904ca28d-707a-472d-a3bd-d341d2bd0dde",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                52.5
+              ],
+              [
+                43,
+                52.5
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E8",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E8_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          33.125,
+          43.125,
+          43,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.cc5ad129-b1c0-4236-a9de-52d2ccbe3540",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -16.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F3",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F3_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          -16.25,
+          33.75,
+          -6.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.53b76e25-3a0b-4476-9928-98173fd36ec3",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F4",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F4_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          -6.375,
+          33.75,
+          3.5,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.b43eb367-b69c-4638-a030-b70bda304ff6",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                3.5,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F5",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F5_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          3.5,
+          33.75,
+          13.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.29aac1c8-840b-489e-a90d-85726b489b90",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F6",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F6_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          13.375,
+          33.75,
+          23.25,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.14dc7792-401f-4b0b-9c41-f5b796f0d103",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F7",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F7_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          23.25,
+          33.75,
+          33.125,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.01544fb5-fba5-43ce-a36d-91c8bfce9018",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                43.125
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F8",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F8_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          33.125,
+          33.75,
+          43,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.170812f9-11a5-449c-a77c-0cecf57a12a7",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                24.375
+              ],
+              [
+                -16.25,
+                24.375
+              ],
+              [
+                -16.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G3",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G3_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          -16.25,
+          24.375,
+          -6.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.389ebddd-6e44-4de5-b334-d5cc7e37443c",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                3.5,
+                24.375
+              ],
+              [
+                3.5,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G5",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G5_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          3.5,
+          24.375,
+          13.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.82407238-98d8-485b-bc5a-658b36cb6528",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                13.375,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G6",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G6_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          13.375,
+          24.375,
+          23.25,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.e62563b4-0449-4924-a588-372ec2909e5a",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                23.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G7",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G7_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          23.25,
+          24.375,
+          33.125,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.2491f7ae-73c7-4410-8607-73023ae49744",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                33.75
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                43,
+                24.375
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                33.125,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G8",
+          "product_format": "EMO (without GEBCO data)",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G8_2024_no_gebco.emo.zip"
+        },
+        "bbox": [
+          33.125,
+          24.375,
+          43,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.ad40ea53-288b-4631-afc1-d1bfde5ee423",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                52.5
+              ],
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -16.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E3",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E3_2024.asc.zip"
+        },
+        "bbox": [
+          -16.25,
+          43.125,
+          -6.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.505de843-7de1-4dce-8b4a-cc150d8e62d1",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                3.5,
+                52.5
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E4",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E4_2024.asc.zip"
+        },
+        "bbox": [
+          -6.375,
+          43.125,
+          3.5,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.417bd2ef-3cd1-47a1-9b87-1220f52d6071",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                52.5
+              ],
+              [
+                13.375,
+                52.5
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E5",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E5_2024.asc.zip"
+        },
+        "bbox": [
+          3.5,
+          43.125,
+          13.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.30c25bbb-226d-4965-8ebc-9c3c4bb47c91",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                52.5
+              ],
+              [
+                23.25,
+                52.5
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E6",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E6_2024.asc.zip"
+        },
+        "bbox": [
+          13.375,
+          43.125,
+          23.25,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.5c102df1-7de3-4b7f-ad8c-cd521933e0b8",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                52.5
+              ],
+              [
+                33.125,
+                52.5
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E7",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E7_2024.asc.zip"
+        },
+        "bbox": [
+          23.25,
+          43.125,
+          33.125,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.1f4a86bf-84db-4627-9ec0-64c7d4fcedb5",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                52.5
+              ],
+              [
+                43,
+                52.5
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E8",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E8_2024.asc.zip"
+        },
+        "bbox": [
+          33.125,
+          43.125,
+          43,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.19c389bc-2807-4a94-be25-796d346d536b",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -16.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F3",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F3_2024.asc.zip"
+        },
+        "bbox": [
+          -16.25,
+          33.75,
+          -6.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.6b11234a-ca1d-4b93-bf11-0ca80c3f47f1",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F4",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F4_2024.asc.zip"
+        },
+        "bbox": [
+          -6.375,
+          33.75,
+          3.5,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.686f96b9-db4c-444c-9288-fc82986227e3",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                3.5,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F5",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F5_2024.asc.zip"
+        },
+        "bbox": [
+          3.5,
+          33.75,
+          13.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.3ad3d38b-30e1-4416-986c-c84cd23e8c84",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F6",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F6_2024.asc.zip"
+        },
+        "bbox": [
+          13.375,
+          33.75,
+          23.25,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.c5e28d66-76be-4921-bd45-1a76222edc9a",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F7",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F7_2024.asc.zip"
+        },
+        "bbox": [
+          23.25,
+          33.75,
+          33.125,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.721d925b-3af9-4fba-9246-8f06595c2abb",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                43.125
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F8",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F8_2024.asc.zip"
+        },
+        "bbox": [
+          33.125,
+          33.75,
+          43,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.7d43d93e-423c-4544-ac9e-405e0106e652",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                24.375
+              ],
+              [
+                -16.25,
+                24.375
+              ],
+              [
+                -16.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G3",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G3_2024.asc.zip"
+        },
+        "bbox": [
+          -16.25,
+          24.375,
+          -6.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.38aeeabe-8f0b-4efe-910c-c5a2e213ed6e",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                3.5,
+                24.375
+              ],
+              [
+                3.5,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G5",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G5_2024.asc.zip"
+        },
+        "bbox": [
+          3.5,
+          24.375,
+          13.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.d9ecccbe-8686-4cf1-9ac9-e9074b5095ed",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                13.375,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G6",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G6_2024.asc.zip"
+        },
+        "bbox": [
+          13.375,
+          24.375,
+          23.25,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.41a9bb7c-2f5a-4626-8aca-4517c886b95f",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                23.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G7",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G7_2024.asc.zip"
+        },
+        "bbox": [
+          23.25,
+          24.375,
+          33.125,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.8a153e7e-4ad2-43fc-bba7-7bd791f01b7a",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                33.75
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                43,
+                24.375
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                33.125,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G8",
+          "product_format": "ESRI ASCII",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G8_2024.asc.zip"
+        },
+        "bbox": [
+          33.125,
+          24.375,
+          43,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.add3ec16-d31a-46a6-bad7-d0020ac514ae",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                52.5
+              ],
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -16.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E3",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E3_2024.msl.zip"
+        },
+        "bbox": [
+          -16.25,
+          43.125,
+          -6.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.bdfa68a6-5184-4b49-bf0e-8e4deaa8b56e",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                3.5,
+                52.5
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E4",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E4_2024.msl.zip"
+        },
+        "bbox": [
+          -6.375,
+          43.125,
+          3.5,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.1772babe-9f74-446a-bd5d-b645191aa301",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                52.5
+              ],
+              [
+                13.375,
+                52.5
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E5",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E5_2024.msl.zip"
+        },
+        "bbox": [
+          3.5,
+          43.125,
+          13.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.cdf49350-3161-48de-b1da-4ad98ab7e24c",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                52.5
+              ],
+              [
+                23.25,
+                52.5
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E6",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E6_2024.msl.zip"
+        },
+        "bbox": [
+          13.375,
+          43.125,
+          23.25,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.c88ca9ba-f7df-4b37-af8f-b4c6823ca6fa",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                52.5
+              ],
+              [
+                33.125,
+                52.5
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E7",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E7_2024.msl.zip"
+        },
+        "bbox": [
+          23.25,
+          43.125,
+          33.125,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.cf3f195d-a83d-4324-88c6-8b70c8878e42",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                52.5
+              ],
+              [
+                43,
+                52.5
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E8",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E8_2024.msl.zip"
+        },
+        "bbox": [
+          33.125,
+          43.125,
+          43,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.43beaac5-72ba-401f-9b4b-30e0a03789c2",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -16.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F3",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F3_2024.msl.zip"
+        },
+        "bbox": [
+          -16.25,
+          33.75,
+          -6.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.aa13127a-5286-412f-93a6-03d6f1652c83",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F4",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F4_2024.msl.zip"
+        },
+        "bbox": [
+          -6.375,
+          33.75,
+          3.5,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.3699ee0d-cfa7-4629-ad22-c441c563662c",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                3.5,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F5",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F5_2024.msl.zip"
+        },
+        "bbox": [
+          3.5,
+          33.75,
+          13.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.6db382d8-c8e7-44d2-8cf8-7b3a57031fd7",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F6",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F6_2024.msl.zip"
+        },
+        "bbox": [
+          13.375,
+          33.75,
+          23.25,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.25c32451-94ed-482a-854a-048aee5a119e",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F7",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F7_2024.msl.zip"
+        },
+        "bbox": [
+          23.25,
+          33.75,
+          33.125,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.51dd1810-2b30-46e6-8596-ede47b6c6dcb",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                43.125
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F8",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F8_2024.msl.zip"
+        },
+        "bbox": [
+          33.125,
+          33.75,
+          43,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.1fb5c16a-90cf-43f5-91d1-328589d0c881",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                24.375
+              ],
+              [
+                -16.25,
+                24.375
+              ],
+              [
+                -16.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G3",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G3_2024.msl.zip"
+        },
+        "bbox": [
+          -16.25,
+          24.375,
+          -6.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.69ead2b4-4cb4-4021-a27d-cf78dc693e08",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                3.5,
+                24.375
+              ],
+              [
+                3.5,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G5",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G5_2024.msl.zip"
+        },
+        "bbox": [
+          3.5,
+          24.375,
+          13.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.12cf04f1-01f2-4ded-bf47-94e2db6a9fca",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                13.375,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G6",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G6_2024.msl.zip"
+        },
+        "bbox": [
+          13.375,
+          24.375,
+          23.25,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.7bd68106-7195-45d5-8309-aef2492fd064",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                23.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G7",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G7_2024.msl.zip"
+        },
+        "bbox": [
+          23.25,
+          24.375,
+          33.125,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.6a9d2c8b-ebe9-4e24-833b-4ce450ed0aca",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                33.75
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                43,
+                24.375
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                33.125,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G8",
+          "product_format": "ESRI ASCII Mean Sea Level",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G8_2024.msl.zip"
+        },
+        "bbox": [
+          33.125,
+          24.375,
+          43,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.df79b0c3-e859-4cf9-b260-cc4a1945491a",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                52.5
+              ],
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -16.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E3",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E3_2024_rgb.tif"
+        },
+        "bbox": [
+          -16.25,
+          43.125,
+          -6.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.4dfb1955-49dd-4d14-b338-3f10e18de363",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                3.5,
+                52.5
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E4",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E4_2024_rgb.tif"
+        },
+        "bbox": [
+          -6.375,
+          43.125,
+          3.5,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.9f6806b0-967a-4644-9ea2-b51fa2773601",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                52.5
+              ],
+              [
+                13.375,
+                52.5
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E5",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E5_2024_rgb.tif"
+        },
+        "bbox": [
+          3.5,
+          43.125,
+          13.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.15edfc76-59f9-431e-8788-d1becb27b311",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                52.5
+              ],
+              [
+                23.25,
+                52.5
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E6",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E6_2024_rgb.tif"
+        },
+        "bbox": [
+          13.375,
+          43.125,
+          23.25,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.8062f131-b971-4adc-862d-daf6443f14c5",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                52.5
+              ],
+              [
+                33.125,
+                52.5
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E7",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E7_2024_rgb.tif"
+        },
+        "bbox": [
+          23.25,
+          43.125,
+          33.125,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.589dcc08-ee14-47e5-b396-2c49cd06846c",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                52.5
+              ],
+              [
+                43,
+                52.5
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E8",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E8_2024_rgb.tif"
+        },
+        "bbox": [
+          33.125,
+          43.125,
+          43,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.abef532b-cbe5-4796-a8f0-684499899f66",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -16.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F3",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F3_2024_rgb.tif"
+        },
+        "bbox": [
+          -16.25,
+          33.75,
+          -6.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.a54376f7-34d8-46b7-b17b-d8e1f9803097",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F4",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F4_2024_rgb.tif"
+        },
+        "bbox": [
+          -6.375,
+          33.75,
+          3.5,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.a3331be4-6b40-44f0-9554-2a357f8c708e",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                3.5,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F5",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F5_2024_rgb.tif"
+        },
+        "bbox": [
+          3.5,
+          33.75,
+          13.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.833539cc-f981-4722-9f21-6cd2181f3e38",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F6",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F6_2024_rgb.tif"
+        },
+        "bbox": [
+          13.375,
+          33.75,
+          23.25,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.6f6bb2c6-41d2-495b-8411-63629b7e4f89",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F7",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F7_2024_rgb.tif"
+        },
+        "bbox": [
+          23.25,
+          33.75,
+          33.125,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.785ab820-2b62-4b72-87fe-0fb6d29bbc16",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                43.125
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F8",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F8_2024_rgb.tif"
+        },
+        "bbox": [
+          33.125,
+          33.75,
+          43,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.a3c983e1-412a-4ff5-810b-52cd77f0e3ef",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                24.375
+              ],
+              [
+                -16.25,
+                24.375
+              ],
+              [
+                -16.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G3",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G3_2024_rgb.tif"
+        },
+        "bbox": [
+          -16.25,
+          24.375,
+          -6.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.2f7a723f-d3f6-4d47-a9aa-f8a433deaa56",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                3.5,
+                24.375
+              ],
+              [
+                3.5,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G5",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G5_2024_rgb.tif"
+        },
+        "bbox": [
+          3.5,
+          24.375,
+          13.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.4e640b96-35d1-4a59-95cc-ee092ab67872",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                13.375,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G6",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G6_2024_rgb.tif"
+        },
+        "bbox": [
+          13.375,
+          24.375,
+          23.25,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.ea860980-676a-414a-8edb-9a94691dc152",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                23.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G7",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G7_2024_rgb.tif"
+        },
+        "bbox": [
+          23.25,
+          24.375,
+          33.125,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.088d63b5-6ddc-4993-8c06-03a387bf42e5",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                33.75
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                43,
+                24.375
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                33.125,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G8",
+          "product_format": "RGB GeoTiff",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G8_2024_rgb.tif"
+        },
+        "bbox": [
+          33.125,
+          24.375,
+          43,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.a22a571a-8333-4168-a14a-97131c244f69",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                52.5
+              ],
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -16.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E3",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E3_2024.nc.zip"
+        },
+        "bbox": [
+          -16.25,
+          43.125,
+          -6.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.1bb6a0b3-100a-48e2-b2e2-a134357954d1",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                3.5,
+                52.5
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E4",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E4_2024.nc.zip"
+        },
+        "bbox": [
+          -6.375,
+          43.125,
+          3.5,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.43b0f28e-87ee-4ddf-b3e0-92d5f5c095fd",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                52.5
+              ],
+              [
+                13.375,
+                52.5
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E5",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E5_2024.nc.zip"
+        },
+        "bbox": [
+          3.5,
+          43.125,
+          13.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.8c37b0fe-7efe-429d-9028-402a6bb577f4",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                52.5
+              ],
+              [
+                23.25,
+                52.5
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E6",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E6_2024.nc.zip"
+        },
+        "bbox": [
+          13.375,
+          43.125,
+          23.25,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.cbe74e55-9fb1-4b3d-a29e-37cfc85a269b",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                52.5
+              ],
+              [
+                33.125,
+                52.5
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E7",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E7_2024.nc.zip"
+        },
+        "bbox": [
+          23.25,
+          43.125,
+          33.125,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.0616c400-bcb4-449c-a6cf-2181fcdaeb51",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                52.5
+              ],
+              [
+                43,
+                52.5
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E8",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E8_2024.nc.zip"
+        },
+        "bbox": [
+          33.125,
+          43.125,
+          43,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.598195af-02d5-4d50-bbb6-ce3eedea0b7b",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -16.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F3",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F3_2024.nc.zip"
+        },
+        "bbox": [
+          -16.25,
+          33.75,
+          -6.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.845f8dc0-304b-4c14-a90d-5b17103416d2",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F4",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F4_2024.nc.zip"
+        },
+        "bbox": [
+          -6.375,
+          33.75,
+          3.5,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.0e5cfee2-af83-42bb-b598-9da4f7ebd548",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                3.5,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F5",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F5_2024.nc.zip"
+        },
+        "bbox": [
+          3.5,
+          33.75,
+          13.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.8c1dbc24-1ab3-4e57-9484-0ab83c2533b0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F6",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F6_2024.nc.zip"
+        },
+        "bbox": [
+          13.375,
+          33.75,
+          23.25,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.20bc7d2e-71f7-4e5e-875c-281dace187f5",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F7",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F7_2024.nc.zip"
+        },
+        "bbox": [
+          23.25,
+          33.75,
+          33.125,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.ce056e53-27da-461e-91a0-663f60a49227",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                43.125
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F8",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F8_2024.nc.zip"
+        },
+        "bbox": [
+          33.125,
+          33.75,
+          43,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.ddc2a96f-dceb-451d-b6ef-47a30bcb953d",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                24.375
+              ],
+              [
+                -16.25,
+                24.375
+              ],
+              [
+                -16.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G3",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G3_2024.nc.zip"
+        },
+        "bbox": [
+          -16.25,
+          24.375,
+          -6.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.5b20cbec-aa68-4b3b-9e8b-acef123dfdf5",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                3.5,
+                24.375
+              ],
+              [
+                3.5,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G5",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G5_2024.nc.zip"
+        },
+        "bbox": [
+          3.5,
+          24.375,
+          13.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.98d995a9-de6f-42b8-8d82-9351f42fea44",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                13.375,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G6",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G6_2024.nc.zip"
+        },
+        "bbox": [
+          13.375,
+          24.375,
+          23.25,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.9014b167-0851-4c09-a5b9-24b3f1fb27a5",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                23.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G7",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G7_2024.nc.zip"
+        },
+        "bbox": [
+          23.25,
+          24.375,
+          33.125,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.da2f4f6e-1237-4d4d-a038-b66d885b2191",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                33.75
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                43,
+                24.375
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                33.125,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G8",
+          "product_format": "NetCDF",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G8_2024.nc.zip"
+        },
+        "bbox": [
+          33.125,
+          24.375,
+          43,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.7f52a650-3d76-45ed-a852-f9b1af120ec2",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                52.5
+              ],
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -16.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E3",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E3_2024.sd.zip"
+        },
+        "bbox": [
+          -16.25,
+          43.125,
+          -6.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.4b9df608-f107-4124-a726-aca36f2c581b",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                3.5,
+                52.5
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E4",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E4_2024.sd.zip"
+        },
+        "bbox": [
+          -6.375,
+          43.125,
+          3.5,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.b0750e9a-358c-4045-9821-7b1f705fb09a",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                52.5
+              ],
+              [
+                13.375,
+                52.5
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E5",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E5_2024.sd.zip"
+        },
+        "bbox": [
+          3.5,
+          43.125,
+          13.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.68362f97-3eaf-4909-823a-0f189dde7adb",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                52.5
+              ],
+              [
+                23.25,
+                52.5
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E6",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E6_2024.sd.zip"
+        },
+        "bbox": [
+          13.375,
+          43.125,
+          23.25,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.cfdf1393-580d-46cd-a0f2-128bf6aeeb48",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                52.5
+              ],
+              [
+                33.125,
+                52.5
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E7",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E7_2024.sd.zip"
+        },
+        "bbox": [
+          23.25,
+          43.125,
+          33.125,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.4abf0a7c-55b3-4d6a-a279-80b0204b22a9",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                52.5
+              ],
+              [
+                43,
+                52.5
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E8",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E8_2024.sd.zip"
+        },
+        "bbox": [
+          33.125,
+          43.125,
+          43,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.19bb599a-fc4f-412f-bbcf-29c7805f3961",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -16.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F3",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F3_2024.sd.zip"
+        },
+        "bbox": [
+          -16.25,
+          33.75,
+          -6.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.8c5c6ae8-245a-4d28-9e7c-283985841374",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F4",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F4_2024.sd.zip"
+        },
+        "bbox": [
+          -6.375,
+          33.75,
+          3.5,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.ab5456f9-615b-45c1-9940-9909a36d03cd",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                3.5,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F5",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F5_2024.sd.zip"
+        },
+        "bbox": [
+          3.5,
+          33.75,
+          13.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.fd3361be-79d8-425e-912c-1ef46244af58",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F6",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F6_2024.sd.zip"
+        },
+        "bbox": [
+          13.375,
+          33.75,
+          23.25,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.cccaad7e-72b4-46f6-8df6-48f8e08430cf",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F7",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F7_2024.sd.zip"
+        },
+        "bbox": [
+          23.25,
+          33.75,
+          33.125,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.c22c7784-0b09-41e5-935f-779ccec4ec6f",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                43.125
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F8",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F8_2024.sd.zip"
+        },
+        "bbox": [
+          33.125,
+          33.75,
+          43,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.dd585991-e251-4908-b122-c13ce764d51d",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                24.375
+              ],
+              [
+                -16.25,
+                24.375
+              ],
+              [
+                -16.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G3",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G3_2024.sd.zip"
+        },
+        "bbox": [
+          -16.25,
+          24.375,
+          -6.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.6b6961af-01be-4a17-bc7e-d211ceaf767c",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                3.5,
+                24.375
+              ],
+              [
+                3.5,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G5",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G5_2024.sd.zip"
+        },
+        "bbox": [
+          3.5,
+          24.375,
+          13.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.f4fa7fa1-22a2-4e40-a19f-54e13bd275c2",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                13.375,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G6",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G6_2024.sd.zip"
+        },
+        "bbox": [
+          13.375,
+          24.375,
+          23.25,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.7ed86dbd-9b2c-49ac-9b04-cc75a323a416",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                23.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G7",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G7_2024.sd.zip"
+        },
+        "bbox": [
+          23.25,
+          24.375,
+          33.125,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.ddf8cfe4-d649-4283-b6bf-5818fb7951c6",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                33.75
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                43,
+                24.375
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                33.125,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G8",
+          "product_format": "SD",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G8_2024.sd.zip"
+        },
+        "bbox": [
+          33.125,
+          24.375,
+          43,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.ea2984d9-9cc9-4c6a-bc2c-b98ceded7a41",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                52.5
+              ],
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -16.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E3",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E3_2024.xyz.zip"
+        },
+        "bbox": [
+          -16.25,
+          43.125,
+          -6.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.cadc2d7e-4b02-4f73-9a8f-ea078cf71d46",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                52.5
+              ],
+              [
+                3.5,
+                52.5
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E4",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E4_2024.xyz.zip"
+        },
+        "bbox": [
+          -6.375,
+          43.125,
+          3.5,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.6d0e1aab-921b-4b45-bc7b-73adc28a51c7",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                52.5
+              ],
+              [
+                13.375,
+                52.5
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E5",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E5_2024.xyz.zip"
+        },
+        "bbox": [
+          3.5,
+          43.125,
+          13.375,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.b24009dd-8a53-4d1f-95fa-673e9cc1c050",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                52.5
+              ],
+              [
+                23.25,
+                52.5
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E6",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E6_2024.xyz.zip"
+        },
+        "bbox": [
+          13.375,
+          43.125,
+          23.25,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.eee6a52a-e4b7-4ce5-9324-74fdbd40d9a5",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                52.5
+              ],
+              [
+                33.125,
+                52.5
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E7",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E7_2024.xyz.zip"
+        },
+        "bbox": [
+          23.25,
+          43.125,
+          33.125,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.b866486a-fec5-4dd0-944e-a8d05bfcd50c",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                52.5
+              ],
+              [
+                43,
+                52.5
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                52.5
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "E8",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/E8_2024.xyz.zip"
+        },
+        "bbox": [
+          33.125,
+          43.125,
+          43,
+          52.5
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.d6254ee2-5c37-433f-ac0d-f79ef242103c",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                43.125
+              ],
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -16.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F3",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F3_2024.xyz.zip"
+        },
+        "bbox": [
+          -16.25,
+          33.75,
+          -6.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.2d4c4ac2-adcf-40c7-a1c6-144b406ce144",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -6.375,
+                43.125
+              ],
+              [
+                3.5,
+                43.125
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F4",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F4_2024.xyz.zip"
+        },
+        "bbox": [
+          -6.375,
+          33.75,
+          3.5,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.7d5cc39a-fdeb-4e53-805a-7206b588376d",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                43.125
+              ],
+              [
+                13.375,
+                43.125
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                3.5,
+                33.75
+              ],
+              [
+                3.5,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F5",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F5_2024.xyz.zip"
+        },
+        "bbox": [
+          3.5,
+          33.75,
+          13.375,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.6f03d38c-267e-4cfd-8822-3a0cf03d66af",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                43.125
+              ],
+              [
+                23.25,
+                43.125
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F6",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F6_2024.xyz.zip"
+        },
+        "bbox": [
+          13.375,
+          33.75,
+          23.25,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.735526ef-1f41-44c0-80d2-4131e34fe323",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                43.125
+              ],
+              [
+                33.125,
+                43.125
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F7",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F7_2024.xyz.zip"
+        },
+        "bbox": [
+          23.25,
+          33.75,
+          33.125,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.658c6e26-799b-46c1-a344-cfe9c2221de5",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                43.125
+              ],
+              [
+                43,
+                43.125
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                43.125
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "F8",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/F8_2024.xyz.zip"
+        },
+        "bbox": [
+          33.125,
+          33.75,
+          43,
+          43.125
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.e5b0735c-cbb1-443a-88bd-482c204d4062",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -16.25,
+                33.75
+              ],
+              [
+                -6.375,
+                33.75
+              ],
+              [
+                -6.375,
+                24.375
+              ],
+              [
+                -16.25,
+                24.375
+              ],
+              [
+                -16.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G3",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G3_2024.xyz.zip"
+        },
+        "bbox": [
+          -16.25,
+          24.375,
+          -6.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.4ddf361a-a7b9-401b-a8b5-296988716ccc",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                3.5,
+                33.75
+              ],
+              [
+                13.375,
+                33.75
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                3.5,
+                24.375
+              ],
+              [
+                3.5,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G5",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G5_2024.xyz.zip"
+        },
+        "bbox": [
+          3.5,
+          24.375,
+          13.375,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.2217188d-18ad-4999-904f-feae47542d78",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.375,
+                33.75
+              ],
+              [
+                23.25,
+                33.75
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                13.375,
+                24.375
+              ],
+              [
+                13.375,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G6",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G6_2024.xyz.zip"
+        },
+        "bbox": [
+          13.375,
+          24.375,
+          23.25,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.dd7e05e6-0152-4863-acae-f93bc545feba",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                23.25,
+                33.75
+              ],
+              [
+                33.125,
+                33.75
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                23.25,
+                24.375
+              ],
+              [
+                23.25,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G7",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G7_2024.xyz.zip"
+        },
+        "bbox": [
+          23.25,
+          24.375,
+          33.125,
+          33.75
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "download_tiles.0b8801b3-b1d8-445b-bec9-454445569bc8",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                33.125,
+                33.75
+              ],
+              [
+                43,
+                33.75
+              ],
+              [
+                43,
+                24.375
+              ],
+              [
+                33.125,
+                24.375
+              ],
+              [
+                33.125,
+                33.75
+              ]
+            ]
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "dtm_release": "2024",
+          "dtm_tile": "G8",
+          "product_format": "XYZ",
+          "download_url": "https://downloads.emodnet-bathymetry.eu/v12/G8_2024.xyz.zip"
+        },
+        "bbox": [
+          33.125,
+          24.375,
+          43,
+          33.75
+        ]
+      }
+    ],
+    "totalFeatures": 153,
+    "numberMatched": 153,
+    "numberReturned": 153,
+    "timeStamp": "2026-10-24T15:27:36.826Z",
+    "crs": {
+      "type": "name",
+      "properties": {
+        "name": "urn:ogc:def:crs:EPSG::4326"
+      }
+    },
+    "bbox": [
+      -16.25,
+      24.375,
+      43,
+      52.5
+    ]
+  }
+}

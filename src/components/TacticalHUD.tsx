@@ -1,3 +1,5 @@
+import type { BoatPolar, PolarTargets } from '../core/navigation/BoatPolar';
+import type { WindObservation } from '../core/instruments/resolveWind';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -7,10 +9,13 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AnchorWatchPage } from './AnchorWatchPage';
-import { H5000WindHub } from './H5000WindHub';
+import { H5000WindHub } from '../features/instruments/components/H5000WindHub';
 
 interface TacticalHUDProps {
   isOpen: boolean;
+  windObservation?: WindObservation;
+  boatPolar?: BoatPolar | null;
+  polarTargets?: PolarTargets | null;
   onClose: () => void;
   sog: number;
   hdg: number;
@@ -59,6 +64,9 @@ interface TacticalHUDProps {
 
 export const TacticalHUD: React.FC<TacticalHUDProps> = ({
   isOpen,
+  windObservation,
+  boatPolar,
+  polarTargets,
   onClose,
   sog,
   hdg,
@@ -219,6 +227,9 @@ export const TacticalHUD: React.FC<TacticalHUDProps> = ({
 
           {currentPage.id === 'sail' && (
             <H5000WindHub
+              windObservation={windObservation}
+              boatPolar={boatPolar}
+              polarTargets={polarTargets}
               sog={sog}
               hdg={hdg}
               twd={twd}
@@ -252,6 +263,9 @@ export const TacticalHUD: React.FC<TacticalHUDProps> = ({
 
           {currentPage.id === 'weather' && (
             <H5000WindHub
+              windObservation={windObservation}
+              boatPolar={boatPolar}
+              polarTargets={polarTargets}
               sog={sog}
               hdg={hdg}
               twd={twd}

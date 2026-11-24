@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"mallorca-cabrera","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[2.2,38.95,3.6,40.0],"simplified":false,"layerParts":{"sea":["base-mallorca-cabrera-sea-0.json"],"land":["base-mallorca-cabrera-land-0.json"],"inlandWater":["base-mallorca-cabrera-inlandWater-0.json"]}}

@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"almeria-west","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-3.1,35.8,-2.4,37.3],"simplified":false,"layerParts":{"sea":["base-almeria-west-sea-0.json"],"land":["base-almeria-west-land-0.json"],"inlandWater":["base-almeria-west-inlandWater-0.json","base-almeria-west-inlandWater-1.json"]}}

@@ -3,20 +3,16 @@
  * Real-time monitoring and alerts for navigation precision and sail optimization
  * 
  * Monitors:
- * - Layline deviation using dynamic thresholds
+ * - Polar laylines remain visual information, outside the safety channel
  * - Sail configuration optimization based on wind conditions
  * - VMG improvement opportunities
  * - Critical weather/safety thresholds
  */
 
-import { calculateLaylineDeviation, calculateDynamicDeviationThreshold } from './laylineCalculator';
 import {
-  SAIL_POLARS,
-  getWindConditionCategory,
   getRecommendedSailConfig,
   calculateSailConfigVMGGain,
-  getOptimalTWA,
-  getMaxVMG
+  getOptimalTWA
 } from './sailPolars';
 
 export interface TacticalAlert {
@@ -43,6 +39,9 @@ export interface NavigationTelemetry {
   waypointLat: number;
   waypointLng: number;
   currentSailConfig?: string;
+  /** Explicit navigation context; absent context must not activate tactical advice. */
+  activeWaypoint?: boolean;
+  windSource?: 'BOAT' | 'METEO' | 'NONE';
 }
 
 /**
@@ -53,104 +52,72 @@ export interface NavigationTelemetry {
 export function generateTacticalAlerts(telemetry: NavigationTelemetry): TacticalAlert[] {
   const alerts: TacticalAlert[] = [];
 
-  // 1. LAYLINE DEVIATION ALERT
-  const laylineData = calculateLaylineDeviation(
-    telemetry.lat,
-    telemetry.lng,
-    telemetry.waypointLat,
-    telemetry.waypointLng,
-    telemetry.cog,
-    telemetry.windDir,
-    telemetry.sog
-  );
+  // The former layline comparison was COG versus direct BTW, not a polar layline.
+  // Actual polar laylines stay in the chart; they never become safety alarms here.
+  const tacticsAvailable = telemetry.activeWaypoint === true && telemetry.currentSailConfig !== 'motor'
+    && telemetry.windSource === 'BOAT' && [telemetry.lat, telemetry.lng, telemetry.waypointLat,
+      telemetry.waypointLng, telemetry.cog, telemetry.sog, telemetry.windSpeed, telemetry.windDir].every(Number.isFinite)
+    && Math.abs(telemetry.lat) <= 90 && Math.abs(telemetry.waypointLat) <= 90
+    && Math.abs(telemetry.lng) <= 180 && Math.abs(telemetry.waypointLng) <= 180
+    && telemetry.sog > 0 && telemetry.windSpeed > 0;
+  if (tacticsAvailable) {
+    // 2. SAIL CONFIGURATION OPTIMIZATION
+    const recommendedConfig = getRecommendedSailConfig(telemetry.windSpeed);
+    const currentConfig = telemetry.currentSailConfig || 'full';
 
-  if (laylineData.isOffLayline) {
-    const deviationDegrees = Math.abs(laylineData.deviation);
-    alerts.push({
-      type: 'layline',
-      severity: 'critical',
-      message: `⚠️ MUY desviado de layline: ${deviationDegrees.toFixed(1)}° del rumbo óptimo.`,
-      suggestedAction: `Corregir rumbo a ${laylineData.optimalBearing.toFixed(0)}° inmediatamente.`,
-      timeWindow: 'INMEDIATO',
-      logbookEntry: {
-        titulo: 'Alerta Táctica Crítica: Desviación Severa de Layline',
-        descripcion: `Desviación extrema detectada: ${deviationDegrees.toFixed(1)}° de layline óptima. Rumbo actual: ${telemetry.cog}° → Rumbo recomendado: ${laylineData.optimalBearing.toFixed(0)}°. Acción inmediata requerida.`,
-        categoria: 'NAVEGACIÓN TÁCTICA'
+    if (recommendedConfig !== currentConfig) {
+      const vmgGain = calculateSailConfigVMGGain(
+        telemetry.windSpeed,
+        currentConfig,
+        recommendedConfig
+      );
+
+      if (vmgGain > 0.3) {
+        alerts.push({
+          type: 'sail',
+          severity: 'info',
+          message: `🪁 Recomendación de velas: Cambiar a ${recommendedConfig.toUpperCase()}.`,
+          suggestedAction: `Ganancia táctica: +${vmgGain.toFixed(1)} nudos VMG`,
+          gain: vmgGain,
+          timeWindow: 'Próximos 5 minutos',
+          logbookEntry: {
+            titulo: 'Recomendación de Trimado de Velas',
+            descripcion: `Sistema táctico recomienda cambio de configuración. Actual: ${currentConfig} → Recomendado: ${recommendedConfig}. Viento: ${telemetry.windSpeed.toFixed(1)} kts. Ganancia esperada: +${vmgGain.toFixed(1)} nudos VMG. Ventana: Próximos 5 minutos.`,
+            categoria: 'NAVEGACIÓN TÁCTICA'
+          }
+        });
       }
-    });
-  } else if (laylineData.isDeviated) {
-    const deviationDegrees = Math.abs(laylineData.deviation);
-    const deviationDir = laylineData.deviation > 0 ? 'estribor' : 'babor';
-    alerts.push({
-      type: 'layline',
-      severity: 'warning',
-      message: `Desviado ${deviationDegrees.toFixed(1)}° a ${deviationDir} de layline óptima.`,
-      suggestedAction: `Sugerencia: Corregir a ${laylineData.optimalBearing.toFixed(0)}°`,
-      gain: Math.abs(laylineData.deviation),
-      logbookEntry: {
-        titulo: 'Alerta Táctica: Desviación de Layline',
-        descripcion: `Desviación detectada: ${deviationDegrees.toFixed(1)}° a ${deviationDir}. Rumbo actual: ${telemetry.cog}° → Rumbo óptimo: ${laylineData.optimalBearing.toFixed(0)}°. Corrección recomendada.`,
-        categoria: 'NAVEGACIÓN TÁCTICA'
-      }
-    });
-  }
-
-  // 2. SAIL CONFIGURATION OPTIMIZATION
-  const recommendedConfig = getRecommendedSailConfig(telemetry.windSpeed);
-  const currentConfig = telemetry.currentSailConfig || 'full';
-
-  if (recommendedConfig !== currentConfig) {
-    const vmgGain = calculateSailConfigVMGGain(
-      telemetry.windSpeed,
-      currentConfig,
-      recommendedConfig
-    );
-
-    if (vmgGain > 0.3) {
-      alerts.push({
-        type: 'sail',
-        severity: vmgGain > 1.0 ? 'warning' : 'info',
-        message: `🪁 Recomendación de velas: Cambiar a ${recommendedConfig.toUpperCase()}.`,
-        suggestedAction: `Ganancia táctica: +${vmgGain.toFixed(1)} nudos VMG`,
-        gain: vmgGain,
-        timeWindow: 'Próximos 5 minutos',
-        logbookEntry: {
-          titulo: 'Recomendación de Trimado de Velas',
-          descripcion: `Sistema táctico recomienda cambio de configuración. Actual: ${currentConfig} → Recomendado: ${recommendedConfig}. Viento: ${telemetry.windSpeed.toFixed(1)} kts. Ganancia esperada: +${vmgGain.toFixed(1)} nudos VMG. Ventana: Próximos 5 minutos.`,
-          categoria: 'NAVEGACIÓN TÁCTICA'
-        }
-      });
     }
-  }
 
-  // 3. VMG OPTIMIZATION CHECK
-  const optimalTWA = getOptimalTWA(telemetry.windSpeed, currentConfig);
-  if (optimalTWA) {
-    // Calculate current TWA
-    const twa = Math.abs(telemetry.windDir - telemetry.cog);
-    const normalizedTWA = twa > 180 ? 360 - twa : twa;
+    // 3. VMG OPTIMIZATION CHECK
+    const optimalTWA = getOptimalTWA(telemetry.windSpeed, currentConfig);
+    if (optimalTWA) {
+      // Calculate current TWA
+    const normalizedTWA = Math.abs(((telemetry.windDir - telemetry.cog + 540) % 360) - 180);
 
-    const twaDifference = Math.abs(normalizedTWA - optimalTWA);
+      const twaDifference = Math.abs(normalizedTWA - optimalTWA);
     
-    if (twaDifference > 8) {
-      alerts.push({
-        type: 'vmg',
-        severity: 'info',
-        message: `💨 Ángulo de viento no óptimo: ${normalizedTWA.toFixed(0)}° vs ${optimalTWA}° ideal.`,
-        suggestedAction: `Ajustar rumbo para maximizar VMG`,
-        gain: twaDifference,
-        logbookEntry: {
-          titulo: 'Ajuste de Rumbo para Optimización VMG',
-          descripcion: `Optimización de VMG sugerida. TWA actual: ${normalizedTWA.toFixed(0)}° → TWA óptimo: ${optimalTWA}°. Diferencia: ${twaDifference.toFixed(1)}°. Ajustar rumbo para maximizar velocidad real respecto destino.`,
-          categoria: 'NAVEGACIÓN TÁCTICA'
-        }
-      });
+      if (twaDifference > 8) {
+        alerts.push({
+          type: 'vmg',
+          severity: 'info',
+          message: `💨 Ángulo de viento no óptimo: ${normalizedTWA.toFixed(0)}° vs ${optimalTWA}° ideal.`,
+          suggestedAction: `Ajustar rumbo para maximizar VMG`,
+          gain: twaDifference,
+          logbookEntry: {
+            titulo: 'Ajuste de Rumbo para Optimización VMG',
+            descripcion: `Optimización de VMG sugerida. TWA actual: ${normalizedTWA.toFixed(0)}° → TWA óptimo: ${optimalTWA}°. Diferencia: ${twaDifference.toFixed(1)}°. Ajustar rumbo para maximizar velocidad real respecto destino.`,
+            categoria: 'NAVEGACIÓN TÁCTICA'
+          }
+        });
+      }
     }
+
   }
 
   // 4. CRITICAL SAFETY THRESHOLDS
   // Check wind conditions
-  if (telemetry.windSpeed > 25) {
+  if (Number.isFinite(telemetry.windSpeed) && telemetry.windSpeed > 25) {
     alerts.push({
       type: 'safety',
       severity: 'critical',
@@ -163,7 +130,7 @@ export function generateTacticalAlerts(telemetry: NavigationTelemetry): Tactical
         categoria: 'SEGURIDAD CRÍTICA'
       }
     });
-  } else if (telemetry.windSpeed > 18) {
+  } else if (Number.isFinite(telemetry.windSpeed) && telemetry.windSpeed > 18) {
     alerts.push({
       type: 'safety',
       severity: 'warning',
@@ -177,6 +144,14 @@ export function generateTacticalAlerts(telemetry: NavigationTelemetry): Tactical
     });
   }
 
+  // Weather forecasts remain distinct from measured instrument warnings.
+  for (const alert of alerts) {
+    if (alert.type === 'safety' && telemetry.windSource !== 'BOAT') {
+      const label = telemetry.windSource === 'METEO' ? 'Previsión meteorológica' : 'Origen del viento no confirmado';
+      alert.message = `${label}: ${alert.message}`;
+      if (alert.logbookEntry) alert.logbookEntry.descripcion = `${label}. ${alert.logbookEntry.descripcion}`;
+    }
+  }
   return alerts;
 }
 
@@ -192,7 +167,7 @@ export function formatTacticalAdvisory(alerts: TacticalAlert[]): {
 } {
   if (alerts.length === 0) {
     return {
-      message: 'Almirante, sistemas verdes. Navegación en condiciones óptimas.',
+      message: 'Sin avisos tácticos disponibles; no implica una evaluación de seguridad.',
       priority: 'info'
     };
   }
@@ -234,7 +209,7 @@ export function getTacticalRecommendations(telemetry: NavigationTelemetry): stri
   const improvements = alerts.filter(a => a.gain || a.type === 'sail');
   
   if (improvements.length === 0) {
-    return 'Sistema navegacional óptimo. Mantenga rumbo actual.';
+    return 'Sin recomendaciones tácticas disponibles.';
   }
 
   // Find best opportunity
@@ -250,5 +225,10 @@ export function getTacticalRecommendations(telemetry: NavigationTelemetry): stri
     return `📍 AJUSTE RECOMENDADO: Variar ${best.gain.toFixed(0)}° para optimizar VMG.`;
   }
 
-  return 'Sistema navegacional óptimo. Mantenga rumbo actual.';
+  return 'Sin recomendaciones tácticas disponibles.';
+}
+
+/** Automatic journal entries belong to safety events; tactical advice is opt-in/manual. */
+export function shouldAutomaticallyLogTacticalAlert(alert: TacticalAlert): boolean {
+  return alert.type === 'safety' && (alert.severity === 'warning' || alert.severity === 'critical');
 }

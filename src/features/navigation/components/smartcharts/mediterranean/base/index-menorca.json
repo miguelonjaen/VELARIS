@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"menorca","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[3.7,39.7,4.5,40.2],"simplified":false,"layerParts":{"sea":["base-menorca-sea-0.json"],"land":["base-menorca-land-0.json"],"inlandWater":["base-menorca-inlandWater-0.json"]}}

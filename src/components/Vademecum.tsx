@@ -1029,7 +1029,7 @@ const Vademecum: React.FC<VademecumProps> = ({ onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 pointer-events-none"
+            className="fixed inset-0 z-(--vl-z-modal) flex items-center justify-center p-4 md:p-10 pointer-events-none"
           >
             <div
               className="absolute inset-0 bg-slate-950/90 backdrop-blur-lg pointer-events-auto"

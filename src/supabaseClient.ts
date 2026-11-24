@@ -1,6 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+import { normalizeSupabaseUrl } from './lib/normalizeSupabaseUrl';
 
-const supabaseUrl = 'https://puxkefnscvzzrdsmckjt.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1eGtlZm5zY3Z6enJkc21ja2p0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTUwMDIsImV4cCI6MjA5MDQzMTAwMn0.b02TnDBYir17BtzA79pec1EO8Lkf3CYJsMGD4ldAXbE'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+if (!supabaseUrl || !supabasePublishableKey) {
+  throw new Error(
+    'Faltan VITE_SUPABASE_URL o VITE_SUPABASE_PUBLISHABLE_KEY en la configuración de entorno.'
+  );
+}
+
+export const supabase = createClient(normalizeSupabaseUrl(supabaseUrl), supabasePublishableKey);

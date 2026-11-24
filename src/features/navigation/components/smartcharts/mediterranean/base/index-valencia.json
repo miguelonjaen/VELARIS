@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"valencia","experimental":true,"navigationUse":false,"officialEnc":false,"depthKnown":false,"license":"ODbL-1.0","coverage":[-0.5,38.8,0.6,39.95],"simplified":false,"layerParts":{"sea":["base-valencia-sea-0.json"],"land":["base-valencia-land-0.json"],"inlandWater":["base-valencia-inlandWater-0.json"]}}

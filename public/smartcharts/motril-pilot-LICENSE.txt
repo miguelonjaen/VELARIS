@@ -1,0 +1,19 @@
+SmartCHARTS Motril pilot v1 — EXPERIMENTAL / NOT FOR NAVIGATION / NOT AN OFFICIAL ENC
+
+Geographic data: © OpenStreetMap contributors.
+Database license: Open Database License (ODbL) 1.0.
+https://www.openstreetmap.org/copyright
+https://opendatacommons.org/licenses/odbl/1-0/
+Individual database contents: https://opendatacommons.org/licenses/dbcl/1-0/
+
+This derived database may be used commercially subject to attribution and the
+ODbL share-alike obligations. The software license does not replace the data license.
+The distributed motril-pilot.geojson (Desktop: motril-pilot.json) is the complete
+derived database. Its source extract, original OSM response, retrieval timestamp,
+OSM object versions and reproducible generator are kept in SmartCHARTS/examples/motril
+and SmartCHARTS/tools/motril.ts. Changes: selected coastline, pier and breakwater
+ways; flattened WGS84 coordinates; stripped unrelated tags; sorted stable IDs.
+
+No surveyed depths, datum conversion, navigation aids or navigational accuracy
+are provided. Open coastline ways are retained as lines; no land/water topology
+is inferred. These data are incomplete and are not suitable for navigation.
