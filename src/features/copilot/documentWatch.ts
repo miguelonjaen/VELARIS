@@ -50,3 +50,23 @@ export function formatDocumentAnswer(items: readonly DocumentWatchItem[], vessel
   const rows = [...items].sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status) || a.title.localeCompare(b.title));
   return `OFICIAL VIRTUAL · DOCUMENTACIÓN · ${vesselName}\n${rows.map(value => `- ${value.status} · ${value.title} · ${value.detail}`).join('\n')}`;
 }
+
+export async function collectDocumentPages<T extends { id: string }>(
+  loadPage: (offset: number) => Promise<readonly T[]>,
+  stillCurrent: () => boolean,
+  maxPages = 20
+): Promise<T[]> {
+  const collected = new Map<string, T>();
+  let offset = 0;
+  for (let pageNumber = 0; pageNumber < maxPages; pageNumber += 1) {
+    if (!stillCurrent()) throw new Error('Consulta cancelada por cambio de embarcación.');
+    const page = await loadPage(offset);
+    if (!stillCurrent()) throw new Error('Consulta cancelada por cambio de embarcación.');
+    if (!page.length) return [...collected.values()];
+    const before = collected.size;
+    for (const item of page) collected.set(item.id, item);
+    if (collected.size === before) throw new Error('Paginacion sin progreso; informe documental incompleto.');
+    offset += page.length;
+  }
+  throw new Error('La biblioteca supera el límite seguro de paginación; no se devuelve un informe parcial.');
+}

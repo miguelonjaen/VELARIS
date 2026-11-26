@@ -16,22 +16,28 @@ export interface VesselWatchThresholds {
   maxDataAgeSeconds: ThresholdValue | null;
   documentLeadDays: ThresholdValue | null;
   reliefLeadMinutes: ThresholdValue | null;
+  restrictedVisibilityMeters: ThresholdValue | null;
+  adverseWindKn: ThresholdValue | null;
 }
 
 export function emptyWatchThresholds(vesselId: string): VesselWatchThresholds {
   return { vesselId, batteryStartVolts: null, batteryServiceVolts: null, engineTemperatureC: null, oilPressureBar: null,
     fuelPercent: null, waterPercent: null, minimumDepthMeters: null, anchorRadiusMeters: null, aisCpaNm: null, xteNm: null,
-    windChangeKn: null, maxDataAgeSeconds: null, documentLeadDays: null, reliefLeadMinutes: null };
+    windChangeKn: null, maxDataAgeSeconds: null, documentLeadDays: null, reliefLeadMinutes: null,
+    restrictedVisibilityMeters: null, adverseWindKn: null };
 }
 
 const RANGES: Record<Exclude<keyof VesselWatchThresholds, 'vesselId'>, readonly [number, number]> = {
   batteryStartVolts: [1, 100], batteryServiceVolts: [1, 100], engineTemperatureC: [20, 200], oilPressureBar: [0, 20],
   fuelPercent: [0, 100], waterPercent: [0, 100], minimumDepthMeters: [0, 2_000], anchorRadiusMeters: [1, 10_000],
   aisCpaNm: [0.01, 20], xteNm: [0.001, 20], windChangeKn: [0.1, 100], maxDataAgeSeconds: [1, 3_600],
-  documentLeadDays: [0, 365], reliefLeadMinutes: [0, 240]
+  documentLeadDays: [0, 365], reliefLeadMinutes: [0, 240], restrictedVisibilityMeters: [50, 50_000], adverseWindKn: [1, 150]
 };
 
-export function setWatchThreshold<K extends Exclude<keyof VesselWatchThresholds, 'vesselId'>>(
+export type WatchThresholdKey = Exclude<keyof VesselWatchThresholds, 'vesselId'>;
+export const WATCH_THRESHOLD_KEYS = Object.freeze(Object.keys(RANGES) as WatchThresholdKey[]);
+
+export function setWatchThreshold<K extends WatchThresholdKey>(
   current: VesselWatchThresholds, key: K, threshold: ThresholdValue | null
 ): VesselWatchThresholds {
   if (threshold) {

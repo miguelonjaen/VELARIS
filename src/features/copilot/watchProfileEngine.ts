@@ -78,9 +78,9 @@ export class WatchProfileEngine {
     const runtime = this.vessels.get(input.vesselId) ?? { state: null, pending: null };
     this.vessels.set(input.vesselId, runtime);
     const automatic = automaticProfile(input.situation);
-    const requested = input.manualOverride ?? automatic;
-    const source = input.manualOverride ? 'DECLARED' as const : 'AUTOMATIC' as const;
     const urgent = automatic === 'EMERGENCY' || automatic === 'ANCHOR_WATCH' && input.situation.situation.value === 'DRIFTING';
+    const requested = urgent ? automatic : input.manualOverride ?? automatic;
+    const source = !urgent && input.manualOverride ? 'DECLARED' as const : 'AUTOMATIC' as const;
     let profile = runtime.state?.profile ?? requested;
     let activatedAt = runtime.state?.activatedAt ?? input.now;
     let previous = runtime.state?.previous ?? null;
@@ -103,7 +103,9 @@ export class WatchProfileEngine {
     if (input.degradedInstrumentation) modifiers.push('DEGRADED_INSTRUMENTATION');
     if (input.simulated) modifiers.push('SIMULATION');
     const limitations = [...input.situation.situation.limitations, ...input.situation.propulsion.limitations, ...input.situation.context.limitations];
-    if (input.manualOverride && input.manualOverride !== automatic) limitations.push(`Perfil declarado ${input.manualOverride}; perfil automático observado ${automatic}.`);
+    if (urgent && input.manualOverride && input.manualOverride !== automatic) {
+      limitations.push(`El perfil crítico ${automatic} prevalece sobre el perfil declarado ${input.manualOverride}.`);
+    } else if (input.manualOverride && input.manualOverride !== automatic) limitations.push(`Perfil declarado ${input.manualOverride}; perfil automático observado ${automatic}.`);
     if (runtime.pending) limitations.push(`Transición automática a ${runtime.pending.profile} pendiente de confirmación.`);
     const available = ['SharedNavigationState', ...(input.situation.propulsion.value !== 'UNKNOWN' ? ['instrumentación de propulsión'] : [])];
     const degraded = input.degradedInstrumentation ? ['instrumentación parcial o caducada'] : [];

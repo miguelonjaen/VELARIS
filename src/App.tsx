@@ -31,8 +31,10 @@ import { buildLogisticsReadOnlyAnswer, classifyReadOnlyLogisticsQuery } from './
 import { BrowserOperationalMemoryStorage, VesselSituationService, type SituationMonitorSnapshot } from './features/copilot/vesselSituationService';
 import { selectOfficerInstruments } from './features/copilot/instrumentSelection';
 import { resolveOperationalDeclarations } from './features/copilot/operationalDeclarations';
-import { classifyDocuments, formatDocumentAnswer, isReadOnlyDocumentQuery } from './features/copilot/documentWatch';
+import { classifyDocuments, collectDocumentPages, formatDocumentAnswer, isReadOnlyDocumentQuery } from './features/copilot/documentWatch';
 import { loadDocumentPage } from './features/traffic/components/documents/repository';
+import { BrowserWatchThresholdStorage, emptyWatchThresholds, setWatchThreshold, type ThresholdOrigin, type WatchThresholdKey } from './features/copilot/watchThresholds';
+import type { WatchProfile } from './features/copilot/watchProfileEngine';
 import CoastProximity from './features/navigation/components/smartcharts/CoastProximity';
 import { useBoatPolar } from './features/boat/boatPolarStore';
 import { evaluatePolarLaylines, polarLaylineRays } from './core/navigation/BoatPolar';
@@ -810,6 +812,35 @@ const getCoreSimulationRoute = () => {
     }
   }, []);
   const [officerSituation, setOfficerSituation] = useState<SituationMonitorSnapshot | null>(null);
+  const watchThresholdStorage = useMemo(() => typeof window === 'undefined' ? null : new BrowserWatchThresholdStorage(window.localStorage), []);
+  const [watchThresholds, setWatchThresholds] = useState(() => emptyWatchThresholds('none'));
+  const [watchProfileOverride, setWatchProfileOverride] = useState<WatchProfile | null>(null);
+  useEffect(() => {
+    if (!selectedShipId) { setWatchThresholds(emptyWatchThresholds('none')); setWatchProfileOverride(null); return; }
+    setWatchThresholds(watchThresholdStorage?.load(selectedShipId) ?? emptyWatchThresholds(selectedShipId));
+    try {
+      const stored = window.localStorage.getItem(`gaulos:watch-profile:v1:${selectedShipId}`);
+      const profiles: WatchProfile[] = ['PORT','PRE_DEPARTURE','ENGINE_NAVIGATION','SAIL_NAVIGATION','MOTOR_SAILING','ANCHOR_WATCH','PORT_APPROACH','EMERGENCY','UNKNOWN'];
+      setWatchProfileOverride(profiles.includes(stored as WatchProfile) ? stored as WatchProfile : null);
+    } catch { setWatchProfileOverride(null); }
+  }, [selectedShipId, watchThresholdStorage]);
+  const updateWatchThreshold = useCallback((key: WatchThresholdKey, value: number | null, origin: ThresholdOrigin): void => {
+    if (!selectedShipId || watchThresholds.vesselId !== selectedShipId) return;
+    try {
+      const next = setWatchThreshold(watchThresholds, key, value === null ? null : { value, origin });
+      watchThresholdStorage?.save(next); setWatchThresholds(next);
+    } catch (cause: unknown) {
+      setMessages(previous => [...previous, { id: crypto.randomUUID(), role: 'ai', text: `OFICIAL VIRTUAL · Umbral rechazado: ${cause instanceof Error ? cause.message : 'valor no válido'}`, timestamp: new Date() }]);
+    }
+  }, [selectedShipId, watchThresholdStorage, watchThresholds]);
+  const updateWatchProfileOverride = useCallback((profile: WatchProfile | null): void => {
+    const vesselId = selectedShipIdRef.current; if (!vesselId) return;
+    setWatchProfileOverride(profile);
+    try {
+      if (profile) window.localStorage.setItem(`gaulos:watch-profile:v1:${vesselId}`, profile);
+      else window.localStorage.removeItem(`gaulos:watch-profile:v1:${vesselId}`);
+    } catch { /* override sigue activo en memoria durante esta sesión */ }
+  }, []);
   const routeTrial = useRouteTrial(selectedShipId);
   const boatPolar = useBoatPolar(selectedShipId);
   const trialSnapshot = routeTrial.snapshot;
@@ -1391,13 +1422,16 @@ const prevMessagesLength = useRef(0);
         setIsProcessing(false); return;
       }
       try {
-        const documents = await loadDocumentPage(vesselId, 0, '', '', false);
+        const documents = await collectDocumentPages(
+          offset => loadDocumentPage(vesselId, offset, '', '', false),
+          () => selectedShipIdRef.current === vesselId
+        );
         if (selectedShipIdRef.current !== vesselId) {
           setMessages(previous => [...previous, { id: crypto.randomUUID(), role: 'ai', text: 'OFICIAL VIRTUAL · Consulta documental cancelada: cambió la embarcación seleccionada.', timestamp: new Date() }]);
           return;
         }
         const today = new Date().toISOString().slice(0, 10);
-        const answer = formatDocumentAnswer(classifyDocuments(documents, vesselId, today, 30), vessel.nombre || 'Embarcación seleccionada');
+        const answer = formatDocumentAnswer(classifyDocuments(documents, vesselId, today, watchThresholds.vesselId === vesselId ? watchThresholds.documentLeadDays?.value ?? 0 : 0), vessel.nombre || 'Embarcación seleccionada');
         setMessages(previous => [...previous, { id: crypto.randomUUID(), role: 'ai', text: answer, timestamp: new Date() }]);
       } catch (cause: unknown) {
         if (selectedShipIdRef.current === vesselId) setMessages(previous => [...previous, {
@@ -2225,11 +2259,11 @@ const [navigationMode, setNavigationMode] =
 
   const officerLiveRef = useRef({
     selectedShipId, alarms, tacticalAisTargets, thresholds, isAnchorWatchActive, anchorPosition,
-    currentAnchorDistance, swingRadius, anchorTrend, mobActive
+    currentAnchorDistance, swingRadius, anchorTrend, mobActive, watchProfileOverride, watchThresholds
   });
   officerLiveRef.current = {
     selectedShipId, alarms, tacticalAisTargets, thresholds, isAnchorWatchActive, anchorPosition,
-    currentAnchorDistance, swingRadius, anchorTrend, mobActive
+    currentAnchorDistance, swingRadius, anchorTrend, mobActive, watchProfileOverride, watchThresholds
   };
   const officerReportSignaturesRef = useRef(new Map<string, string>());
 
@@ -2345,8 +2379,10 @@ const [navigationMode, setNavigationMode] =
             tcpaMinutes: valid ? target.tcpaMinutes ?? null : null
           };
         }),
+        thresholds: live.watchThresholds.vesselId === vesselId ? live.watchThresholds : undefined,
         watch: {
           simulated: selectedInstruments.simulated || navigation.position.source === 'SIMULATOR',
+            manualOverride: live.watchProfileOverride,
           night: new Date(now).getHours() < 6 || new Date(now).getHours() >= 20,
           restrictedVisibility: false,
           adverseWeather: false,
@@ -2685,7 +2721,6 @@ const [navigationMode, setNavigationMode] =
   const [dockPage, setDockPage] = useState<
   "chart" | "nav" | "sail" | "race"
 >("chart");
-const [isWeatherPanelOpen, setIsWeatherPanelOpen] = useState(false); // New state for weather panel
   const [isLaylinesActive, setIsLaylinesActive] = useState(false);
   const [isWaypointLaylinesActive, setIsWaypointLaylinesActive] = useState(false); // New state for laylines
   const [isSailSteerWidgetOpen, setIsSailSteerWidgetOpen] = useState(false); // New state for SailSteer widget
@@ -3794,7 +3829,6 @@ return;
         licencia_nautica: profileForm.licencia_nautica,
         dni_nie: profileForm.dni_nie,
         fecha_nacimiento: profileForm.fecha_nacimiento || null,
-        foto_perfil_url: profileForm.foto_perfil_url,
         nacionalidad: profileForm.nacionalidad,
         direccion: profileForm.direccion,
         poblacion: profileForm.poblacion,
@@ -3828,56 +3862,104 @@ return;
     };
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file || !userProfile) return;
+      const input = e.currentTarget;
+      const file = input.files?.[0];
+      input.value = '';
 
-      setIsUpdatingProfile(true);
-      // Filename as requested: avatar_${userProfile!.id}.png
-      const fileName = `avatar_${userProfile!.id}.png`;
+      if (!file || !userProfile || isUpdatingProfile) return;
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatares')
-        .upload(fileName, file, { upsert: true });
+      const userId = userProfile.id;
 
-      if (uploadError) {
-        setAdvisorMessage(`Error al subir avatar: ${uploadError.message}`);
-        setIsUpdatingProfile(false);
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        alert('Seleccione una imagen JPG, PNG o WEBP.');
         return;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatares')
-        .getPublicUrl(fileName);
-
-
-
-      // Forced update to database immediately
-      const { error: updateError } = await supabase
-        .from('usuarios')
-        .update({
-          foto_perfil_url: publicUrl
-        })
-        .eq('id', userProfile.id);
-
-      if (updateError) {
-        console.error("Error al actualizar foto_perfil_url:", updateError);
-        setAdvisorMessage(`Error al guardar URL de avatar: ${updateError.message}`);
-      } else {
-
-
-        // Add a cache-busting timestamp to the URL to force browser refresh
-        const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
-
-        setProfileForm(prev => ({ ...prev, foto_perfil_url: cacheBustedUrl }));
-        setAdvisorMessage('Avatar actualizado y sincronizado en todos los sistemas.');
-
-        // Update global state immediately with cache-busting
-        setUserProfile(prev => prev ? ({ ...prev, photoUrl: cacheBustedUrl, foto_perfil_url: cacheBustedUrl }) : null);
-
-        // Also fetch from server to be sure
-        await fetchProfile(userProfile.id);
+      if (file.size > 5 * 1024 * 1024) {
+        alert('La fotografia no puede superar los 5 MB.');
+        return;
       }
-      setIsUpdatingProfile(false);
+
+      setIsUpdatingProfile(true);
+
+      try {
+        const { data: authData, error: authError } =
+          await supabase.auth.getUser();
+
+        if (authError || authData.user?.id !== userId) {
+          throw new Error('Sesion no valida.');
+        }
+
+        const extension =
+          file.type === 'image/jpeg' ? 'jpg' :
+          file.type === 'image/webp' ? 'webp' : 'png';
+
+        const fileName = `avatar_${userId}_${crypto.randomUUID()}.${extension}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatares')
+          .upload(fileName, file, {
+            contentType: file.type,
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          throw new Error(`Storage: ${uploadError.message}`);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatares')
+          .getPublicUrl(fileName);
+
+        const { data: saved, error: updateError } = await supabase
+          .from('usuarios')
+          .update({ foto_perfil_url: publicUrl })
+          .eq('id', userId)
+          .select('id, foto_perfil_url')
+          .single();
+
+        if (updateError || !saved?.foto_perfil_url) {
+          await supabase.storage.from('avatares').remove([fileName]);
+
+          throw new Error(
+            `Base de datos: ${updateError?.message || 'No se ha actualizado el perfil.'}`
+          );
+        }
+
+        const confirmedUrl = saved.foto_perfil_url;
+
+        setProfileForm(prev => ({
+          ...prev,
+          foto_perfil_url: confirmedUrl
+        }));
+
+        setUserProfile(prev =>
+          prev?.id === userId
+            ? {
+                ...prev,
+                photoUrl: confirmedUrl,
+                foto_perfil_url: confirmedUrl
+              }
+            : prev
+        );
+
+        setAdvisorMessage('Fotografia de perfil guardada correctamente.');
+
+        console.info('[GAULOS AVATAR] Guardado confirmado.');
+
+      } catch (error) {
+        const message = error instanceof Error
+          ? error.message
+          : String(error);
+
+        console.error('[GAULOS AVATAR]', message);
+        setAdvisorMessage(`Error de fotografia: ${message}`);
+        alert(`No se pudo guardar la fotografia.\n${message}`);
+
+      } finally {
+        setIsUpdatingProfile(false);
+      }
     };
 
     useEffect(() => {
@@ -4955,7 +5037,7 @@ console.log("2d. Role =", userProfile?.role);
               onPause: () => handleRecordingPause(true), onResume: () => handleRecordingPause(false), onEnd: handleEndTravesia,
               onRecover: () => resolveRecoveredVoyage(true), onClosePending: () => resolveRecoveredVoyage(false) }} />
         )}
-        <button type="button" aria-pressed={mobActive} aria-label={mobActive ? 'MOB activo · desactivar alerta' : 'MOB · hombre al agua'} onClick={() => void handleMOB()} className={`fixed bottom-3 ${showSafetyModal ? 'left-3' : 'right-3'} z-[2000] min-h-12 min-w-16 rounded-xl border-2 border-red-300 px-3 font-black text-white shadow-lg ${mobActive ? 'animate-pulse bg-red-600' : 'bg-red-950'}`}>MOB</button>
+        <button type="button" aria-pressed={mobActive} aria-label={mobActive ? 'MOB activo · desactivar alerta' : 'MOB · hombre al agua'} onClick={() => void handleMOB()} className={`fixed ${showSafetyModal ? 'bottom-3 left-3' : 'vl-bottom-mob-control'} z-[2000] min-h-12 min-w-16 rounded-xl border-2 border-red-300 px-3 font-black text-white shadow-lg ${mobActive ? 'animate-pulse bg-red-600' : 'bg-red-950'}`}>MOB</button>
         <AlarmToasts alarms={alarms} onRemove={removeAlarm} isMuted={isAlertMuted} onMuteToggle={() => setIsAlertMuted(!isAlertMuted)} />
 
         {activeTab !== 'fleet' && <CommandSidebar
@@ -5051,6 +5133,8 @@ console.log("2d. Role =", userProfile?.role);
                     onOpenInventory={() => setActiveTab('inventory')}
                     onOpenMaintenance={() => { setFleetTab('mantenimiento'); setActiveTab('fleet'); }}
                     situation={officerSituation}
+                    onWatchProfileChange={updateWatchProfileOverride}
+                    watchProfileOverride={watchProfileOverride}
                     onAcknowledgeAlert={(alertId) => {
                       if (!selectedShipId || !situationService.acknowledge(selectedShipId, alertId)) return;
                       setOfficerSituation(previous => previous?.vesselId === selectedShipId ? {
@@ -5412,8 +5496,6 @@ console.table(
                         onToggleAIS={() => setLayersState(prev => ({ ...prev, showAIS: !prev.showAIS }))} // Pass toggle function
                         onToggleWind={() => setLayersState(prev => ({ ...prev, showWind: !prev.showWind }))} // Pass toggle function
                         onToggleCollisionFilter={() => setLayersState(prev => ({ ...prev, collisionFilter: !prev.collisionFilter }))} // Pass toggle function
-                        isWeatherPanelOpen={isWeatherPanelOpen}
-                        setIsWeatherPanelOpen={setIsWeatherPanelOpen}
                         isLaylinesActive={isLaylinesActive}
                         isSailSteerWidgetOpen={isSailSteerWidgetOpen}
                         setIsSailSteerWidgetOpen={setIsSailSteerWidgetOpen}
@@ -5425,6 +5507,7 @@ console.table(
                         isVoyagePanelOpen={showSystems && workspaceView === 'voyage'}
                         onCloseMissionPanel={() => setShowSystems(false)}
                         renderWeather={() => <><WeatherWidget
+                          position={weatherPosition ?? chartWeatherPosition}
                           windObservation={weatherPosition ? instrumentWind : undefined}
                           weather={weatherPosition ? weather : chartWeather.weatherCore.atmospheric}
                           marineWeather={weatherPosition ? weatherCore.marine : chartWeather.weatherCore.marine}
@@ -5434,7 +5517,7 @@ console.table(
                         />
                           {advisorScope && <TacticalAdvisorPanel key={advisorScope} alerts={tacticalAdvisor.alerts} summary={tacticalAdvisor.advisory.message}
                             priority={tacticalAdvisor.advisory.priority} sources={tacticalSources} navigation={tacticalNavigation} />}</>}
-                        renderBoatOperations={input => <BoatOperations key={selectedShipId ?? 'none'} input={input} crew={getTripLogger().getCurrentSession()?.shipId === selectedShipId ? getTripLogger().getCurrentSession()?.crew : undefined} anchorWatch={<div><p>Vigilancia de garreo: {isAnchorWatchActive ? 'activa' : 'inactiva'} · software; no confirma ancla largada.</p><button type="button" className="min-h-11" onClick={toggleAnchorWatch}>{isAnchorWatchActive ? 'Desactivar' : 'Activar'} vigilancia de fondeo</button></div>} entries={[...automaticJournalEntries, ...logEntries]} onRecord={recordManualBoatEvent} onLogbook={() => { setActiveTab('logbook'); setShowSystems(false); }} onFleet={() => { setActiveTab('fleet'); setShowSystems(false); }} />}
+                        renderBoatOperations={input => <BoatOperations key={selectedShipId ?? 'none'} input={input} crew={getTripLogger().getCurrentSession()?.shipId === selectedShipId ? getTripLogger().getCurrentSession()?.crew : undefined} reliefLeadMinutes={watchThresholds.vesselId === selectedShipId ? watchThresholds.reliefLeadMinutes?.value ?? null : null} watchThresholds={watchThresholds.vesselId === selectedShipId ? watchThresholds : null} onWatchThresholdChange={updateWatchThreshold} anchorWatch={<div><p>Vigilancia de garreo: {isAnchorWatchActive ? 'activa' : 'inactiva'} · software; no confirma ancla largada.</p><button type="button" className="min-h-11" onClick={toggleAnchorWatch}>{isAnchorWatchActive ? 'Desactivar' : 'Activar'} vigilancia de fondeo</button></div>} entries={[...automaticJournalEntries, ...logEntries]} onRecord={recordManualBoatEvent} onLogbook={() => { setActiveTab('logbook'); setShowSystems(false); }} onFleet={() => { setActiveTab('fleet'); setShowSystems(false); }} />}
                         getBoatPanelInput={getBoatPanelInput}
                         technicalUserId={userProfile?.id ?? null}
                         getInstrumentFeed={getFleetInstrumentFeed}
@@ -5562,7 +5645,7 @@ console.table(
               style={{
                 left: 'var(--vl-gap)',
                 bottom: 'var(--vl-gap)',
-                width: 'min(520px, calc(100% - var(--vl-dock-reserve) - var(--vl-gap)))',
+                width: 'min(520px, max(160px, calc(100% - var(--vl-bottom-controls-width) - var(--vl-gap) * 2)))',
                 height: 36,
               }}
               className="

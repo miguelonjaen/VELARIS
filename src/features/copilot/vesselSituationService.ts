@@ -5,7 +5,8 @@ import {
   type VesselSituationInput,
   type VesselSituationSnapshot
 } from './vesselSituationEngine';
-import { WatchProfileEngine, type WatchProfileSnapshot } from './watchProfileEngine';
+import { WatchProfileEngine, type WatchProfileSnapshot, type WatchProfile } from './watchProfileEngine';
+import type { VesselWatchThresholds } from './watchThresholds';
 
 export type OfficerAlertPriority = 'INFO' | 'ADVISORY' | 'WARNING' | 'CRITICAL';
 export type OfficerAlertStatus = 'active' | 'acknowledged' | 'resolved';
@@ -34,12 +35,14 @@ export interface VesselWatchInput {
   situation: VesselSituationInput;
   existingAlarms: readonly ExistingAlarmInput[];
   aisRisks: readonly AisRiskInput[];
+  thresholds?: VesselWatchThresholds;
   watch?: {
     simulated: boolean;
     night: boolean;
     restrictedVisibility: boolean;
     adverseWeather: boolean;
     degradedInstrumentation: boolean;
+    manualOverride?: WatchProfile | null;
   };
 }
 
@@ -116,6 +119,37 @@ function desiredAlerts(input: VesselWatchInput, snapshot: VesselSituationSnapsho
     source: 'alarma existente de GAULOS', message: alarm.message,
     recommendation: 'Atienda el procedimiento y la instrumentación asociados a esta alarma.'
   });
+
+  const thresholds = input.thresholds?.vesselId === vesselId ? input.thresholds : null;
+  const instrumentKind = input.situation.instrumentSource === 'SIMULATOR' || input.situation.instrumentSource === 'MIXED' ? 'simulated' as const : 'measured' as const;
+  const measuredEvidence = (id: string, detail: string, ageMs: number): SituationEvidence => ({
+    id, kind: instrumentKind, source: input.situation.instrumentSource ?? 'UNKNOWN', observedAt: now - ageMs, ageMs, detail
+  });
+  const thresholdAlert = (id: string, category: OfficerAlert['category'], message: string, detail: string, evidenceValue: SituationEvidence, origin: 'manufacturer' | 'user'): void => add({
+    id: `threshold:${id}`, category, priority: 'WARNING', evidence: [evidenceValue], source: 'umbral por embarcación', message,
+    recommendation: `Verifique la lectura y el umbral de origen ${origin === 'manufacturer' ? 'fabricante' : 'usuario'}. ${detail}`
+  });
+  if (thresholds) {
+    for (const engine of input.situation.instruments.engines) {
+      if (thresholds.engineTemperatureC && engine.temperatureC && engine.temperatureC.value >= thresholds.engineTemperatureC.value)
+        thresholdAlert(`engine-temp:${engine.engine}`, 'PROPULSION', `Temperatura del motor ${engine.engine} por encima del umbral configurado.`, `${engine.temperatureC.value.toFixed(1)} °C ≥ ${thresholds.engineTemperatureC.value} °C.`, measuredEvidence(`engine:${engine.engine}:temperature`, `Temperatura ${engine.temperatureC.value.toFixed(1)} °C.`, engine.temperatureC.ageMs), thresholds.engineTemperatureC.origin);
+      if (thresholds.oilPressureBar && engine.rpm && engine.rpm.value > 0 && engine.oilPressureBar && engine.oilPressureBar.value <= thresholds.oilPressureBar.value)
+        thresholdAlert(`oil-pressure:${engine.engine}`, 'PROPULSION', `Presión de aceite del motor ${engine.engine} por debajo del umbral configurado.`, `${engine.oilPressureBar.value.toFixed(2)} bar ≤ ${thresholds.oilPressureBar.value} bar.`, measuredEvidence(`engine:${engine.engine}:oil`, `Presión ${engine.oilPressureBar.value.toFixed(2)} bar con RPM vigentes.`, engine.oilPressureBar.ageMs), thresholds.oilPressureBar.origin);
+    }
+    for (const battery of input.situation.instruments.batteries) {
+      const configured = battery.role === 'start' ? thresholds.batteryStartVolts : battery.role === 'service' ? thresholds.batteryServiceVolts : null;
+      if (configured && battery.volts && battery.volts.value <= configured.value)
+        thresholdAlert(`battery:${battery.name}`, 'ENERGY', `Tensión baja en ${battery.name}.`, `${battery.volts.value.toFixed(2)} V ≤ ${configured.value} V.`, measuredEvidence(`battery:${battery.name}`, `Tensión ${battery.volts.value.toFixed(2)} V.`, battery.volts.ageMs), configured.origin);
+    }
+    for (const tank of input.situation.instruments.tanks) {
+      const configured = tank.kind === 'fuel' ? thresholds.fuelPercent : tank.kind === 'freshWater' ? thresholds.waterPercent : null;
+      if (configured && tank.percent.value <= configured.value)
+        thresholdAlert(`tank:${tank.kind}:${tank.name}`, tank.kind === 'fuel' ? 'PROPULSION' : 'SAFETY', `Nivel bajo en ${tank.name}.`, `${tank.percent.value.toFixed(1)} % ≤ ${configured.value} %.`, measuredEvidence(`tank:${tank.kind}:${tank.name}`, `Nivel ${tank.percent.value.toFixed(1)} %.`, tank.percent.ageMs), configured.origin);
+    }
+    const depth = input.situation.instruments.depth;
+    if (thresholds.minimumDepthMeters && depth && depth.value.meters <= thresholds.minimumDepthMeters.value)
+      thresholdAlert('depth', 'NAVIGATION', 'Sonda por debajo del umbral configurado.', `${depth.value.meters.toFixed(2)} m ≤ ${thresholds.minimumDepthMeters.value} m; referencia ${depth.value.reference ?? 'desconocida'}.`, measuredEvidence('depth', `Sonda ${depth.value.meters.toFixed(2)} m.`, depth.ageMs), thresholds.minimumDepthMeters.origin);
+  }
 
   for (const target of input.aisRisks.filter(value => value.valid && (value.riskLevel === 'CRITICAL' || value.riskLevel === 'WARNING'))) add({
     id: `ais:${target.id}`, category: 'NAVIGATION', priority: target.riskLevel === 'CRITICAL' ? 'CRITICAL' : 'WARNING',
@@ -282,7 +316,8 @@ export class VesselSituationService {
       night: input.watch?.night ?? false,
       restrictedVisibility: input.watch?.restrictedVisibility ?? false,
       adverseWeather: input.watch?.adverseWeather ?? false,
-      degradedInstrumentation: input.watch?.degradedInstrumentation ?? capability(input, situation, active) !== 'OPERATIVE'
+      degradedInstrumentation: input.watch?.degradedInstrumentation ?? capability(input, situation, active) !== 'OPERATIVE',
+      manualOverride: input.watch?.manualOverride ?? null
     });
     return { ...situation, capability: capability(input, situation, active), activeAnomalies: active.length,
       alerts, notifications, logisticsEvaluatedAt: memory.logistics?.evaluatedAt ?? null, watchProfile };

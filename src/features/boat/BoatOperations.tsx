@@ -7,7 +7,8 @@ import { loadTechnicalInventory } from '../traffic/components/technical/reposito
 import type { TechnicalInventory } from '../traffic/components/technical/model';
 import { conditionLabels } from '../traffic/components/technical/systemEquipment';
 import { manualBoatState, type ManualBoatEvent } from './boatOperationsModel';
-import { confirmWatchRelief, createCrewWatchState, crewWatchNotice, loadCrewWatch, nextWatchkeeper, reliefDueAt, saveCrewWatch, type CrewWatchState, type WatchCrewMember } from '../copilot/crewWatch';
+import { configureCrewWatch, confirmWatchRelief, createCrewWatchState, crewWatchNotice, loadCrewWatch, moveCrewInRotation, nextWatchkeeper, reconcileCrewWatch, reliefDueAt, saveCrewWatch, type CrewWatchState, type WatchCrewMember } from '../copilot/crewWatch';
+import { WATCH_THRESHOLD_KEYS, type ThresholdOrigin, type VesselWatchThresholds, type WatchThresholdKey } from '../copilot/watchThresholds';
 interface Props {
   input: BoatPanelInput;
   entries: readonly LogEntry[];
@@ -16,9 +17,22 @@ interface Props {
   onFleet: () => void;
   anchorWatch?: React.ReactNode;
   crew?: readonly WatchCrewMember[];
+  reliefLeadMinutes?: number | null;
+  watchThresholds?: VesselWatchThresholds | null;
+  onWatchThresholdChange?: (key: WatchThresholdKey, value: number | null, origin: ThresholdOrigin) => void;
 }
 const EMPTY_CREW: readonly WatchCrewMember[] = [];
-export function BoatOperations({ input, entries, onRecord, onLogbook, onFleet, anchorWatch, crew = EMPTY_CREW }: Props) {
+const THRESHOLD_LABELS: Record<WatchThresholdKey, string> = {
+  batteryStartVolts: 'Batería arranque mínima (V)', batteryServiceVolts: 'Batería servicio mínima (V)',
+  engineTemperatureC: 'Temperatura motor máxima (°C)', oilPressureBar: 'Presión aceite mínima (bar)',
+  fuelPercent: 'Combustible mínimo (%)', waterPercent: 'Agua mínima (%)', minimumDepthMeters: 'Sonda mínima (m)',
+  anchorRadiusMeters: 'Radio fondeo (m)', aisCpaNm: 'CPA AIS mínimo (NM)', xteNm: 'XTE máximo (NM)',
+  windChangeKn: 'Cambio de viento (kn)', maxDataAgeSeconds: 'Edad máxima de datos (s)',
+  documentLeadDays: 'Preaviso documental (días)', reliefLeadMinutes: 'Preaviso de relevo (min)',
+  restrictedVisibilityMeters: 'Visibilidad restringida (m)', adverseWindKn: 'Viento adverso (kn)'
+};
+export function BoatOperations({ input, entries, onRecord, onLogbook, onFleet, anchorWatch, crew = EMPTY_CREW,
+  reliefLeadMinutes = null, watchThresholds = null, onWatchThresholdChange }: Props) {
   const vesselId = input.vesselId ?? null;
   const [inventory, setInventory] = useState<TechnicalInventory | null>(null);
   const [message, setMessage] = useState('');
@@ -37,7 +51,9 @@ export function BoatOperations({ input, entries, onRecord, onLogbook, onFleet, a
   useEffect(() => {
     if (!vesselId) { setCrewWatch(null); return; }
     const stored = typeof localStorage === 'undefined' ? null : loadCrewWatch(localStorage, vesselId);
-    setCrewWatch(stored ?? createCrewWatchState(vesselId, crew));
+    const next = reconcileCrewWatch(stored ?? createCrewWatchState(vesselId, crew), crew);
+    if (typeof localStorage !== 'undefined') saveCrewWatch(localStorage, next);
+    setCrewWatch(next);
   }, [vesselId, crew]);
   const state = manualBoatState(entries, vesselId ?? '');
   const equipment = inventory?.systems?.equipment.filter(e => !e.archived) ?? [];
@@ -74,6 +90,10 @@ export function BoatOperations({ input, entries, onRecord, onLogbook, onFleet, a
     } catch (cause: unknown) { setMessage(cause instanceof Error ? cause.message : 'No se confirmó el relevo'); }
     finally { locked.current = false; setBusy(false); }
   };
+  const updateCrewConfiguration = (next: CrewWatchState): void => {
+    if (typeof localStorage !== 'undefined') saveCrewWatch(localStorage, next);
+    setCrewWatch(next);
+  };
   return <div className="p-3 text-xs text-slate-200">
     <p className="mb-2 text-slate-400">Embarcación: {vesselId ?? 'sin seleccionar'}</p>
     <p className="mb-3 text-amber-200">Declaraciones manuales del patrón. No accionan equipos ni confirman ejecución física. La telemetría vigente prevalece.</p>
@@ -94,11 +114,32 @@ export function BoatOperations({ input, entries, onRecord, onLogbook, onFleet, a
       {!crew.length && <p>Sin tripulación asociada a la travesía activa. No se asigna guardia por defecto.</p>}
       {crewWatch && crew.length > 0 && <>
         <p>Guardia actual: <strong>{crew.find(member => member.id === crewWatch.currentWatchkeeperId)?.nombre ?? 'sin confirmar'}</strong></p>
-        <p>Próximo relevo: {reliefDueAt(crewWatch) ? new Date(reliefDueAt(crewWatch)!).toLocaleString() : 'sin programar'} · {crewWatchNotice(crewWatch, Date.now()) === 'OVERDUE' ? 'VENCIDO' : crewWatchNotice(crewWatch, Date.now()) === 'DUE_SOON' ? 'próximo' : 'sin aviso'}</p>
+        <p>Próximo relevo: {reliefDueAt(crewWatch) ? new Date(reliefDueAt(crewWatch)!).toLocaleString() : 'sin programar'} · {crewWatchNotice(crewWatch, Date.now(), reliefLeadMinutes ?? 0) === 'OVERDUE' ? 'VENCIDO' : crewWatchNotice(crewWatch, Date.now(), reliefLeadMinutes ?? 0) === 'DUE_SOON' ? 'próximo' : 'sin aviso'}</p>
         <p>Siguiente en rotación: {crew.find(member => member.id === nextWatchkeeper(crewWatch))?.nombre ?? 'sin definir'}</p>
         <div className="mt-2 flex flex-wrap gap-2">{crew.map(member => <button type="button" key={member.id} className="min-h-11 rounded border border-cyan-700 px-2 disabled:opacity-40" disabled={busy || crewWatch.currentWatchkeeperId === member.id} onClick={() => void confirmRelief(member.id)}>Confirmar relevo · {member.nombre}</button>)}</div>
-        <p className="mt-2 text-slate-400">Historial local: {crewWatch.history.length} relevo(s). Duración prevista: {crewWatch.plannedDurationMinutes} min.</p>
+        <label className="mt-3 block">Duración prevista (min)
+          <input key={crewWatch.plannedDurationMinutes} className="ml-2 w-20 rounded border border-slate-600 bg-slate-950 p-1" type="number" min="15" max="720" defaultValue={crewWatch.plannedDurationMinutes}
+            onBlur={event => { const duration = Number(event.target.value); try { updateCrewConfiguration(configureCrewWatch(crewWatch, crewWatch.rotation, duration, crew)); } catch (cause: unknown) { setMessage(cause instanceof Error ? cause.message : 'Duración no válida'); event.target.value = String(crewWatch.plannedDurationMinutes); } }} />
+        </label>
+        <div className="mt-2 space-y-1">{crewWatch.rotation.map((memberId, index) => <div className="flex items-center justify-between rounded border border-white/10 p-1" key={memberId}>
+          <span>{index + 1}. {crew.find(member => member.id === memberId)?.nombre ?? memberId}</span>
+          <span><button type="button" disabled={index === 0} onClick={() => updateCrewConfiguration(moveCrewInRotation(crewWatch, memberId, -1))}>↑</button><button type="button" className="ml-2" disabled={index === crewWatch.rotation.length - 1} onClick={() => updateCrewConfiguration(moveCrewInRotation(crewWatch, memberId, 1))}>↓</button></span>
+        </div>)}</div>
+        <p className="mt-2 text-slate-400">Historial local: {crewWatch.history.length} relevo(s). La edición de rotación no confirma el relevo.</p>
       </>}
+    </details>
+    <details className="bs-details"><summary className="min-h-11 cursor-pointer p-3">Umbrales del Oficial · por embarcación</summary>
+      {!watchThresholds && <p>Configuración no disponible.</p>}
+      {watchThresholds && <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{WATCH_THRESHOLD_KEYS.map(key => {
+        const threshold = watchThresholds[key];
+        return <label className="rounded border border-white/10 p-2" key={key}>{THRESHOLD_LABELS[key]}
+          <div className="mt-1 flex gap-1"><input key={`${key}:${threshold?.value ?? 'none'}`} className="min-w-0 flex-1 rounded border border-slate-600 bg-slate-950 p-1" type="number" step="any" defaultValue={threshold?.value ?? ''}
+            placeholder="Sin configurar" onBlur={event => onWatchThresholdChange?.(key, event.target.value === '' ? null : Number(event.target.value), threshold?.origin ?? 'user')} />
+            <select className="rounded border border-slate-600 bg-slate-950 p-1" value={threshold?.origin ?? 'user'} disabled={!threshold}
+              onChange={event => onWatchThresholdChange?.(key, threshold?.value ?? null, event.target.value as ThresholdOrigin)}><option value="user">Usuario</option><option value="manufacturer">Fabricante</option></select></div>
+        </label>;
+      })}</div>}
+      <p className="mt-2 text-amber-200">Un campo vacío significa no configurado. Ningún valor se interpreta como certificación de seguridad.</p>
     </details>
     <details className="bs-details" open><summary className="min-h-11 cursor-pointer p-3">Propulsión · declaraciones</summary>
       {equipment.some(e => e.catalogId === 'engine') && controls('propulsion', 'Propulsion a motor', measuredEngineRunning(input.instruments.engines))}

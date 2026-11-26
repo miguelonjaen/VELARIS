@@ -70,12 +70,6 @@ export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
     { name: 'Profundidad', key: 'depth', icon: Cpu },
   ];
 
-  const handleSave = () => {
-    console.log("💾 Guardando configuración en el núcleo táctico...");
-    const event = new CustomEvent('tactical-config-saved', { detail: { dataSource, thresholds } });
-    window.dispatchEvent(event);
-    alert("Configuración sincronizada con el Kernel.");
-  };
 
   return (
     <div className="h-full w-full flex items-start justify-center p-4 overflow-y-auto custom-scrollbar">
@@ -83,14 +77,8 @@ export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-black text-white flex items-center gap-3">
             <Settings className="text-cyan-400" />
-            Configuración Maestra
+            Configuración
           </h2>
-          <button
-            onClick={handleSave}
-            className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-cyan-900/20"
-          >
-            Guardar en Kernel
-          </button>
         </div>
 
         <OpenAIConfiguration />
@@ -265,24 +253,6 @@ export const ConfigurationPanel: React.FC<ConfigPanelProps> = ({
                 onChange={(e) => updateThreshold('maxHumidity', parseFloat(e.target.value))}
                 className="w-full h-2 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
-            </div>
-          </div>
-        </div>
-
-        {/* CALIBRACIÓN */}
-        <div className="col-span-full bg-slate-950/50 p-6 rounded-3xl border border-slate-800">
-          <div className="flex items-center gap-2 text-slate-300 mb-4">
-            <Settings size={20} />
-            <span className="font-bold">Calibración</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-slate-400 block mb-1">Offset Profundidad (m)</label>
-              <input type="range" min="0" max="10" step="0.1" className="w-full h-2 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-cyan-500" />
-            </div>
-            <div>
-              <label className="text-xs text-slate-400 block mb-1">Desvío Compás (°)</label>
-              <input type="range" min="-10" max="10" step="0.1" className="w-full h-2 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-cyan-500" />
             </div>
           </div>
         </div>

@@ -14,3 +14,9 @@ test('persistencia queda aislada por UUID y datos corruptos fallan cerrados', ()
   repository.save(setWatchThreshold(emptyWatchThresholds('a'), 'aisCpaNm', { value: 0.5, origin: 'manufacturer' }));
   assert.equal(repository.load('a').aisCpaNm?.value, 0.5); assert.equal(repository.load('b').aisCpaNm, null);
 });
+test('meteorología no se clasifica sin umbral explícito y valida sus rangos', () => {
+  const empty = emptyWatchThresholds('v1');
+  assert.equal(empty.restrictedVisibilityMeters, null); assert.equal(empty.adverseWindKn, null);
+  assert.equal(setWatchThreshold(empty, 'adverseWindKn', { value: 30, origin: 'user' }).adverseWindKn?.value, 30);
+  assert.throws(() => setWatchThreshold(empty, 'restrictedVisibilityMeters', { value: 10, origin: 'user' }));
+});

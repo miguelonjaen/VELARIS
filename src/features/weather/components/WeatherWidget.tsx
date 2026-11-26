@@ -5,6 +5,7 @@ import type { MarineWeatherData } from '../../../lib/useMarineWeather';
 import type { WeatherData } from '../../../lib/useWeather';
 
 interface WeatherWidgetProps {
+  position?: { lat: number; lng: number } | null;
   referenceLabel?: string;
   weather: WeatherData | null;
   windObservation?: WindObservation;
@@ -34,7 +35,35 @@ const formatUpdateTime = (timestamp: number): string =>
   new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 /** Compact chartplotter instrument using centralized atmospheric and marine observations. */
-export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, windObservation, marineWeather = null, isLoading = false, error, className, referenceLabel }) => {
+function WeatherPositionReading({
+  position
+}: {
+  position?: { lat: number; lng: number } | null
+}) {
+  if (
+    !position ||
+    !Number.isFinite(position.lat) ||
+    !Number.isFinite(position.lng) ||
+    Math.abs(position.lat) > 90 ||
+    Math.abs(position.lng) > 180
+  ) return null;
+
+  const format = (
+    value: number,
+    positive: string,
+    negative: string
+  ) => `${Math.abs(value).toFixed(5)}${String.fromCharCode(176)} ${value < 0 ? negative : positive}`;
+
+  return (
+    <div className="flex h-[22px] items-center gap-2 border-b border-white/10 px-3 text-[8px] font-bold text-slate-400">
+      <Navigation size={10} className="shrink-0 text-cyan-400" />
+      <span>LAT {format(position.lat, 'N', 'S')}</span>
+      <span className="ml-auto">LON {format(position.lng, 'E', 'W')}</span>
+    </div>
+  );
+}
+
+export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, windObservation, marineWeather = null, isLoading = false, error, className, referenceLabel, position }) => {
   if (!weather && (windObservation?.source === 'BOAT' || windObservation?.instrumentMode)) {
     return <section className={`vl-surface pointer-events-auto absolute z-(--vl-z-chart-widget) rounded-xl font-mono ${className ?? ''}`} style={WIDGET_POSITION} aria-label="Viento de los instrumentos del barco">
       <WindReadings wind={windObservation} weather={null} />
@@ -80,7 +109,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, windObser
           {referenceLabel}
         </div>
       )}
-      <header className="flex h-8 items-center gap-2 border-b border-white/10 px-3">
+      <WeatherPositionReading position={position} /><header className="flex h-8 items-center gap-2 border-b border-white/10 px-3">
         <Cloud size={15} className="shrink-0 text-slate-400" />
         <span className="text-sm font-black text-white">{weather.temperature.toFixed(0)}°C</span>
         <span className="min-w-0 flex-1 truncate text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">{weather.condition}</span>

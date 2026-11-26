@@ -41,12 +41,43 @@ export function crewWatchNotice(state: CrewWatchState, now: number, leadMinutes 
   return due - now <= leadMinutes * 60_000 ? 'DUE_SOON' : 'NONE';
 }
 
+export function configureCrewWatch(
+  state: CrewWatchState,
+  rotation: readonly string[],
+  plannedDurationMinutes: number,
+  crew: readonly WatchCrewMember[]
+): CrewWatchState {
+  if (!Number.isInteger(plannedDurationMinutes) || plannedDurationMinutes < 15 || plannedDurationMinutes > 720)
+    throw new Error('La duración de guardia debe estar entre 15 y 720 minutos.');
+  const crewIds = new Set(crew.map(member => member.id));
+  if (!rotation.length || rotation.some(id => !crewIds.has(id)) || new Set(rotation).size !== rotation.length)
+    throw new Error('La rotación debe contener tripulantes válidos sin duplicados.');
+  return { ...state, rotation: [...rotation], plannedDurationMinutes };
+}
+
+export function moveCrewInRotation(state: CrewWatchState, memberId: string, direction: -1 | 1): CrewWatchState {
+  const index = state.rotation.indexOf(memberId);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= state.rotation.length) return state;
+  const rotation = [...state.rotation];
+  [rotation[index], rotation[target]] = [rotation[target], rotation[index]];
+  return { ...state, rotation };
+}
+
+export function reconcileCrewWatch(state: CrewWatchState, crew: readonly WatchCrewMember[]): CrewWatchState {
+  const ids = new Set(crew.map(member => member.id));
+  const rotation = [...state.rotation.filter(id => ids.has(id)), ...crew.map(member => member.id).filter(id => !state.rotation.includes(id))];
+  return { ...state, rotation, currentWatchkeeperId: state.currentWatchkeeperId && ids.has(state.currentWatchkeeperId) ? state.currentWatchkeeperId : null,
+    startedAt: state.currentWatchkeeperId && ids.has(state.currentWatchkeeperId) ? state.startedAt : null };
+}
+
 export function loadCrewWatch(storage: Pick<Storage, 'getItem'>, vesselId: string): CrewWatchState | null {
   try {
     const value: unknown = JSON.parse(storage.getItem(`gaulos:crew-watch:v1:${vesselId}`) ?? 'null');
     if (!value || typeof value !== 'object' || (value as { vesselId?: unknown }).vesselId !== vesselId) return null;
     const state = value as CrewWatchState;
-    return Array.isArray(state.rotation) && Array.isArray(state.history) ? state : null;
+    return Array.isArray(state.rotation) && Array.isArray(state.history) && Number.isInteger(state.plannedDurationMinutes)
+      && state.plannedDurationMinutes >= 15 && state.plannedDurationMinutes <= 720 ? state : null;
   } catch { return null; }
 }
 

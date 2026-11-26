@@ -361,7 +361,7 @@ export function SailingTacticsDisplay({ model, mode = 'tactical', theme = 'dark'
       {/* 3-Column Marine Grid */}
       <div className="st-instrument-grid">
         {/* Left Column: Speed, Water, and Wind Sensors */}
-        <div className="st-column">
+        <div className="st-column st-column-left">
           <Tile
             label="BSPD / STW"
             reading={value(model.stw)}
@@ -432,7 +432,7 @@ export function SailingTacticsDisplay({ model, mode = 'tactical', theme = 'dark'
         </div>
 
         {/* Right Column: Ground Navigation and Safety */}
-        <div className="st-column">
+        <div className="st-column st-column-right">
           <Tile
             label="SOG"
             reading={value(model.sog)}
@@ -568,7 +568,7 @@ export function SailingTacticsPanel({
   const content = (
     <section
       ref={panelRef}
-      role="dialog"
+      role={expanded ? 'dialog' : 'region'}
       aria-label="GAULOS · Centro Táctico de Vela"
       aria-modal={expanded ? true : undefined}
       className={`st-panel ${expanded ? 'st-expanded' : ''} theme-${theme}`}

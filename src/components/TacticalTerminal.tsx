@@ -3,6 +3,7 @@ import { Terminal, History, ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@lib/utils';
 import type { SituationMonitorSnapshot } from '../features/copilot/vesselSituationService';
+import type { WatchProfile } from '../features/copilot/watchProfileEngine';
 
 interface Message {
   role: 'user' | 'ai';
@@ -18,6 +19,8 @@ interface TacticalTerminalProps {
   onOpenMaintenance: () => void;
   situation: SituationMonitorSnapshot | null;
   onAcknowledgeAlert: (alertId: string) => void;
+  onWatchProfileChange: (profile: WatchProfile | null) => void;
+  watchProfileOverride: WatchProfile | null;
   isIntMin: boolean;
   setIsIntMin: (val: boolean) => void;
 }
@@ -30,6 +33,8 @@ export const TacticalTerminal: React.FC<TacticalTerminalProps> = ({
   onOpenMaintenance,
   situation,
   onAcknowledgeAlert,
+  onWatchProfileChange,
+  watchProfileOverride,
   isIntMin,
   setIsIntMin
 }) => {
@@ -60,15 +65,15 @@ export const TacticalTerminal: React.FC<TacticalTerminalProps> = ({
       className={cn(
         "absolute z-(--vl-z-chart-widget) overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.5)] flex flex-col min-h-0 border border-cyan-500/30",
         isIntMin
-          ? "h-8 w-[260px] rounded-full bg-[#050607]/90 backdrop-blur-md border-cyan-500/20"
-          : "w-80 max-w-[calc(100%_-_var(--vl-dock-reserve)_-_var(--vl-gap))] rounded-2xl bg-[#0a0f18]/95 backdrop-blur-xl"
+          ? "h-8 w-[var(--vl-weather-w)] rounded-full bg-[#050607]/90 backdrop-blur-md border-cyan-500/20"
+          : "w-[var(--vl-weather-w)] max-w-[calc(100%_-_var(--vl-dock-reserve)_-_var(--vl-gap))] rounded-2xl bg-[#0a0f18]/95 backdrop-blur-xl"
       )}
       style={
         isIntMin
           // Minimizado: justo encima de la línea de comandos, en la esquina inferior izquierda.
           ? { left: 'var(--vl-gap)', bottom: 'calc(var(--vl-gap) * 2 + 36px)' }
           // Desplegado: columna izquierda, debajo del panel meteorológico; nunca lo tapa.
-          : { left: 'var(--vl-gap)', top: 'calc(var(--vl-content-top) + 184px)', bottom: 'calc(var(--vl-gap) * 2 + 36px)' }
+          : { left: 'var(--vl-gap)', top: 'calc(var(--vl-content-top) + 222px)', bottom: 'calc(var(--vl-gap) * 2 + 36px)' }
       }
     >
       <div
@@ -136,6 +141,15 @@ export const TacticalTerminal: React.FC<TacticalTerminalProps> = ({
                 </div>
                 <p className="mt-0.5 text-slate-400">{situation.watchProfile.priorities.join(' · ')}</p>
                 {situation.watchProfile.modifiers.length > 0 && <p className="mt-0.5 text-amber-200">{situation.watchProfile.modifiers.join(' · ')}</p>}
+                <label className="mt-1 flex items-center justify-between gap-2 text-slate-400">Perfil
+                  <select className="min-h-8 rounded border border-slate-600 bg-slate-950 px-1 text-[9px] text-slate-200"
+                    value={watchProfileOverride ?? ''}
+                    onChange={event => onWatchProfileChange(event.target.value ? event.target.value as WatchProfile : null)}>
+                    <option value="">Automático</option>
+                    {(['PORT','PRE_DEPARTURE','ENGINE_NAVIGATION','SAIL_NAVIGATION','MOTOR_SAILING','ANCHOR_WATCH','PORT_APPROACH','EMERGENCY','UNKNOWN'] as WatchProfile[]).map(profile => <option key={profile} value={profile}>{profile}</option>)}
+                  </select>
+                </label>
+                {watchProfileOverride && situation.watchProfile.profile !== watchProfileOverride && <p className="mt-0.5 text-red-300">El perfil crítico automático prevalece sobre {watchProfileOverride}.</p>}
               </div>
             )}
             {situation && situation.activeAnomalies > 0 && (

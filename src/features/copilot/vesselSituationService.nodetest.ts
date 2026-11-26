@@ -1,3 +1,4 @@
+import { emptyWatchThresholds, setWatchThreshold } from './watchThresholds';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { BoatInstrumentSnapshot } from '../../core/instruments/BoatInstrumentStore';
@@ -165,4 +166,36 @@ test('AIS: blancos invalidos no disparan alertas', () => {
   });
 
   assert.equal(result.notifications.length, 0);
+});
+
+test('umbrales por UUID generan avisos medidos y no se aplican a otro buque', () => {
+  const service = new VesselSituationService();
+  const measured: BoatInstrumentSnapshot = { ...emptyInstruments,
+    depth: { value: { meters: 1.8, reference: 'transducer' }, ageMs: 100 },
+    engines: [{ engine: 1, rpm: { value: 900, ageMs: 100 }, temperatureC: { value: 96, ageMs: 100 }, oilPressureBar: { value: 0.8, ageMs: 100 } }],
+    batteries: [{ name: 'START', role: 'start', volts: { value: 11.8, ageMs: 100 }, amps: null }],
+    tanks: [{ kind: 'fuel', name: 'FUEL', percent: { value: 9, ageMs: 100 } }] };
+  let thresholds = emptyWatchThresholds('ship-1');
+  thresholds = setWatchThreshold(thresholds, 'minimumDepthMeters', { value: 2, origin: 'user' });
+  thresholds = setWatchThreshold(thresholds, 'engineTemperatureC', { value: 90, origin: 'manufacturer' });
+  thresholds = setWatchThreshold(thresholds, 'oilPressureBar', { value: 1, origin: 'manufacturer' });
+  thresholds = setWatchThreshold(thresholds, 'batteryStartVolts', { value: 12, origin: 'user' });
+  thresholds = setWatchThreshold(thresholds, 'fuelPercent', { value: 10, origin: 'user' });
+  const ownSituation = { ...situation('ship-1', 1_000, true), instruments: measured };
+  const result = service.evaluate({ situation: ownSituation, existingAlarms: [], aisRisks: [], thresholds });
+  assert.deepEqual(result.alerts.filter(value => value.status === 'active' && value.id.startsWith('threshold:')).map(value => value.id).sort(), [
+    'threshold:battery:START', 'threshold:depth', 'threshold:engine-temp:1', 'threshold:oil-pressure:1', 'threshold:tank:fuel:FUEL'
+  ]);
+  assert.ok(result.alerts.filter(value => value.id.startsWith('threshold:')).every(value => value.evidence[0]?.kind === 'measured'));
+  const other = service.evaluate({ situation: { ...ownSituation, vesselId: 'ship-2', now: 2_000 }, existingAlarms: [], aisRisks: [], thresholds });
+  assert.equal(other.alerts.filter(value => value.status === 'active' && value.id.startsWith('threshold:')).length, 0);
+});
+
+test('lecturas simuladas conservan procedencia en avisos de umbral', () => {
+  const service = new VesselSituationService();
+  const thresholds = setWatchThreshold(emptyWatchThresholds('ship-1'), 'minimumDepthMeters', { value: 3, origin: 'user' });
+  const simulated = { ...situation('ship-1', 1_000, true), instrumentSource: 'SIMULATOR' as const,
+    instruments: { ...emptyInstruments, depth: { value: { meters: 2, reference: 'transducer' as const }, ageMs: 50 } } };
+  const result = service.evaluate({ situation: simulated, existingAlarms: [], aisRisks: [], thresholds });
+  assert.equal(result.alerts.find(value => value.id === 'threshold:depth')?.evidence[0]?.kind, 'simulated');
 });

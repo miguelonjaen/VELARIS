@@ -108,7 +108,7 @@ export default function CoastProximity({ position, simulated, recorder }: { posi
     const status = !config.enabled ? 'Desactivado' : !position ? 'Sin posición vigente'
         : !key ? 'Sin cobertura local suficiente' : data.key !== key ? 'Cargando costa…' : distance === null ? 'Costa no disponible'
         : (level === 'critical' ? 'MUY CERCA · ' : level === 'warning' ? 'PROXIMIDAD · ' : '') + (distance / 1852).toFixed(2) + ' NM a costa OSM';
-    return <><div style={{ position: 'fixed', right: 108, bottom: 64, zIndex: 1100,
+    return <><div className="vl-bottom-coast-control" style={{ position: 'fixed', zIndex: 1100,
         maxWidth: 290, background: '#0b1724', color: level === 'clear' || distance === null ? '#cbd5e1' : '#fbbf24',
         border: '1px solid ' + (level === 'critical' && distance !== null ? '#ef4444' : '#334155'), borderRadius: 10, padding: 10, fontSize: 12 }}
         onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()} onWheel={event => event.stopPropagation()}
@@ -147,7 +147,7 @@ export default function CoastProximity({ position, simulated, recorder }: { posi
             {storageError && <small role="alert">No se pudo guardar configuración o registro local.</small>}
         </div>}
     </div>
-        {recorder && <div style={{ position: 'fixed', right: 12, bottom: 64, zIndex: 1101 }}
+        {recorder && <div className="vl-bottom-rec-control" style={{ position: 'fixed', zIndex: 1101 }}
             onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}
             onPointerDown={event => event.stopPropagation()} onMouseDown={event => event.stopPropagation()} onWheel={event => event.stopPropagation()}>
             <button type="button" disabled={recBusy || recorder.disabled} aria-expanded={recorder.state === 'idle' ? undefined : recMenu}

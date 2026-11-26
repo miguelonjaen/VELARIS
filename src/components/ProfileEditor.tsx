@@ -55,7 +55,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
             </div>
             <label className="absolute bottom-0 right-0 p-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl cursor-pointer shadow-xl transition-all hover:scale-110">
               <Camera className="w-5 h-5" />
-              <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload as any} />
+              <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp" disabled={isUpdatingProfile} onChange={handleAvatarUpload as any} />
             </label>
           </div>
           <div className="text-center">

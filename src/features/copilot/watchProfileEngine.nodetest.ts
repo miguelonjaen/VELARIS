@@ -49,3 +49,10 @@ test('override manual se distingue del perfil automático y no oculta discrepanc
   assert.equal(result.source, 'DECLARED');
   assert.match(result.limitations.join(' '), /perfil automático/i);
 });
+
+test('override manual nunca suprime emergencia ni posible garreo', () => {
+  const emergency = new WatchProfileEngine().evaluate(input(situation('UNDERWAY', 'ENGINE', 'EMERGENCY'), { manualOverride: 'PORT' }));
+  assert.equal(emergency.profile, 'EMERGENCY'); assert.equal(emergency.source, 'AUTOMATIC');
+  const dragging = new WatchProfileEngine().evaluate(input(situation('DRIFTING', 'UNKNOWN', 'NORMAL'), { manualOverride: 'PORT' }));
+  assert.equal(dragging.profile, 'ANCHOR_WATCH'); assert.match(dragging.limitations.join(' '), /prevalece/);
+});

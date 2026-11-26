@@ -48,8 +48,6 @@ interface ZeusSidebarProps {
   setLayersState: React.Dispatch<React.SetStateAction<any>>;
   aisEnabled: boolean;
   windEnabled: boolean;
-  isWeatherPanelOpen: boolean;
-  setIsWeatherPanelOpen: (val: boolean) => void;
   isLaylinesActive: boolean;
   isWaypointLaylinesActive?: boolean;
   setIsWaypointLaylinesActive?: (value: boolean) => void;
@@ -141,10 +139,9 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
   renderRouteTrial,
   renderSailingTactics,
   renderBoatOperations, renderWeather,
-  isWeatherPanelOpen, setIsWeatherPanelOpen,
   className
 }) => {
-  const [group, setGroup] = useState<'route' | 'sail' | 'ais' | 'meteo' | null>(null);
+  const [group, setGroup] = useState<'route' | 'sail' | 'ais' | null>(null);
   const [isRadarOpen, setIsRadarOpen] = useState(false);
   const [aisMode, setAisMode] = useState<'all' | 'risk'>('all');
   const [isLayersOpen, setIsLayersOpen] = useState(false);
@@ -153,14 +150,21 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
   const [isBoatPanelOpen, setIsBoatPanelOpen] = useState(false);
   const [isEnergyPanelOpen, setIsEnergyPanelOpen] = useState(false);
   const [isRouteTrialOpen, setIsRouteTrialOpen] = useState(false);
-  const [isTacticsOpen, setIsTacticsOpen] = useState(false);
+  const [isTacticsOpen, setIsTacticsOpen] = useState(() => {
+    try { return window.localStorage.getItem('GAULOS_sailing_tactics_open') === 'true'; }
+    catch { return false; }
+  });
+
+  useEffect(() => {
+    try { window.localStorage.setItem('GAULOS_sailing_tactics_open', String(isTacticsOpen)); }
+    catch { /* El panel sigue operativo aunque el almacenamiento local no esté disponible. */ }
+  }, [isTacticsOpen]);
 
   // Si el panel de misión se abre desde otro punto (p. ej. el asesor), se
   // cierran los paneles que ocupan el mismo hueco.
   useEffect(() => {
     if (isMissionPanelOpen || isVoyagePanelOpen) {
       setGroup(null);
-      setIsWeatherPanelOpen(false);
       setIsRadarOpen(false);
       setIsLayersOpen(false);
       setIsWindFlowOpen(false);
@@ -168,7 +172,6 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
       setIsBoatPanelOpen(false);
       setIsEnergyPanelOpen(false);
       setIsRouteTrialOpen(false);
-      setIsTacticsOpen(false);
     }
   }, [isMissionPanelOpen, isVoyagePanelOpen]);
 
@@ -178,8 +181,8 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
   }, [activePage]);
 
   // Capas, AIS, Barco y misión comparten el mismo hueco: abrir uno cierra los demás.
-  const openExclusive = (panel: 'radar' | 'layers' | 'ais' | 'boat' | 'trial' | 'windflow' | 'energy' | 'tactics', next: boolean) => {
-    if (next) { setGroup(null); setIsWeatherPanelOpen(false); }
+  const openExclusive = (panel: 'radar' | 'layers' | 'ais' | 'boat' | 'trial' | 'windflow' | 'energy', next: boolean) => {
+    if (next) setGroup(null);
     if (next && (isMissionPanelOpen || isVoyagePanelOpen)) onCloseMissionPanel?.();
     setIsRadarOpen(panel === 'radar' ? next : next ? false : isRadarOpen);
     setIsLayersOpen(panel === 'layers' ? next : next ? false : isLayersOpen);
@@ -188,7 +191,6 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
     setIsBoatPanelOpen(panel === 'boat' ? next : next ? false : isBoatPanelOpen);
     setIsEnergyPanelOpen(panel === 'energy' ? next : next ? false : isEnergyPanelOpen);
     setIsRouteTrialOpen(panel === 'trial' ? next : next ? false : isRouteTrialOpen);
-    setIsTacticsOpen(panel === 'tactics' ? next : next ? false : isTacticsOpen);
   };
 
   const handlePage = (id: 'chart' | 'nav' | 'sail' | 'race') => {
@@ -224,8 +226,7 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
 
   const handleMission = () => {
     openExclusive('boat', false);
-    setGroup(null); setIsRadarOpen(false); setIsRouteTrialOpen(false); setIsWeatherPanelOpen(false);
-    setIsTacticsOpen(false);
+    setGroup(null); setIsRadarOpen(false); setIsRouteTrialOpen(false);
     if (!isMissionPanelOpen) {
       setIsLayersOpen(false);
       setIsWindFlowOpen(false);
@@ -236,13 +237,12 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
     onToggleMenu();
   };
 
-  const toggleGroup = (next: 'route' | 'sail' | 'ais' | 'meteo') => {
-    const closing = group === next || (next === 'route' && (isMissionPanelOpen || isVoyagePanelOpen || isRouteTrialOpen)) || (next === 'ais' && (isAISDrawerOpen || isRadarOpen)) || (next === 'sail' && isTacticsOpen) || (next === 'meteo' && isWindFlowOpen);
+  const toggleGroup = (next: 'route' | 'sail' | 'ais') => {
+    const closing = group === next || (next === 'route' && (isMissionPanelOpen || isVoyagePanelOpen || isRouteTrialOpen)) || (next === 'ais' && (isAISDrawerOpen || isRadarOpen));
     openExclusive('boat', true);
     setIsBoatPanelOpen(false);
     onSelect('chart');
     setGroup(closing ? null : next);
-    setIsWeatherPanelOpen(!closing && next === 'meteo');
   };
   return (
     <>
@@ -306,14 +306,15 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
         /></details></> : undefined}
           technicalUserId={technicalUserId}
           getInstrumentFeed={getInstrumentFeed}
-          onOpenSailingTactics={renderSailingTactics ? () => openExclusive('tactics', true) : undefined}
+          onOpenSailingTactics={renderSailingTactics ? () => { onSelect('chart'); setIsTacticsOpen(true); } : undefined}
         />
       )}
 
       {getBoatPanelInput && <BoatPanel isOpen={isEnergyPanelOpen} electricalOnly technicalUserId={technicalUserId} getInstrumentFeed={getInstrumentFeed} onClose={() => setIsEnergyPanelOpen(false)} getInput={getBoatPanelInput} />}
+      {activePage === 'chart' && renderWeather?.()}
       {isTacticsOpen && renderSailingTactics?.(() => setIsTacticsOpen(false))}
       {isRouteTrialOpen && renderRouteTrial?.(() => setIsRouteTrialOpen(false))}
-      <ChartPanel isOpen={group !== null} onClose={() => { setGroup(null); setIsWeatherPanelOpen(false); }} title={group === 'route' ? 'RUTA · travesía, rutas, waypoints y misión' : group === 'sail' ? 'VELA · táctica' : group === 'ais' ? 'AIS · objetivos y riesgos' : 'METEO'} width={360}>
+      <ChartPanel isOpen={group !== null} onClose={() => setGroup(null)} title={group === 'route' ? 'RUTA · travesía, rutas, waypoints y misión' : group === 'sail' ? 'VELA · táctica' : 'AIS · objetivos y riesgos'} width={360}>
         <div className="grid grid-cols-2 gap-2 p-3 [&_button]:min-h-12 [&_button]:w-full">
           {group === 'route' && <><DockButton
           icon={Compass}
@@ -373,7 +374,7 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
           active={isWaypointLaylinesActive}
           onClick={() => setIsWaypointLaylinesActive(!isWaypointLaylinesActive)}
         />}
-{renderSailingTactics && <DockButton icon={Compass} label="Táctica" kind="panel" tooltip="Navegación / Instrumentos / Táctica de vela" tooltipDetail="Rosa de gobierno, viento medido, waypoint y polar. Permite ampliar a pantalla completa." active={isTacticsOpen} onClick={() => { onSelect('chart'); openExclusive('tactics', !isTacticsOpen); }} />}<p className="col-span-2 text-xs text-slate-400">{laylineStatus}</p></>}
+{renderSailingTactics && <DockButton icon={Compass} label="Táctica" kind="panel" tooltip="Navegación / Instrumentos / Táctica de vela" tooltipDetail="Rosa de gobierno, viento medido, waypoint y polar. Permite ampliar a pantalla completa." active={isTacticsOpen} onClick={() => { onSelect('chart'); setIsTacticsOpen(value => !value); }} />}<p className="col-span-2 text-xs text-slate-400">{laylineStatus}</p></>}
           {group === 'ais' && <><DockButton
           icon={Radar}
           label="AIS"
@@ -394,16 +395,6 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
           onClick={() => { setAisMode('risk'); openExclusive('ais', !isAISDrawerOpen || aisMode !== 'risk'); }}
         />
 <DockButton icon={Radar} label="Radar SIM" kind="panel" tooltip="Laboratorio RADAR · SIMULACIÓN" tooltipDetail="Ecos sintéticos aislados de navegación y alarmas" active={isRadarOpen} onClick={() => openExclusive('radar', !isRadarOpen)} /><button type="button" aria-pressed={collisionFilter} onClick={onToggleCollisionFilter}>Filtro CPA/TCPA: {collisionFilter ? 'sí' : 'no'}</button></>}
-          {group === 'meteo' && <><div className="col-span-2 [&>*]:!static [&>*]:!w-full">{renderWeather?.()}</div><DockButton
-          icon={Wind}
-          label="WindFlow"
-          className="[&>span:first-of-type]:normal-case [&>span:first-of-type]:tracking-normal"
-          kind="panel"
-          tooltip="WindFlow · pronóstico de viento"
-          tooltipDetail="Abre los controles del pronóstico sobre la carta. Cerrar el panel conserva la capa."
-          active={isWindFlowOpen}
-          onClick={() => { onSelect('chart'); openExclusive('windflow', !isWindFlowOpen); }}
-        /></>}
         </div>
       </ChartPanel>
       <Dock className={className}>
@@ -419,8 +410,17 @@ export const ZeusSidebar: React.FC<ZeusSidebarProps> = ({
         />
         <DockButton icon={Route} label="RUTA" kind="panel" tooltip="Travesía, rutas, waypoints y misión" active={group === 'route' || isMissionPanelOpen || isVoyagePanelOpen || isRouteTrialOpen} onClick={() => toggleGroup('route')} />
         <DockButton icon={Radar} label="AIS" kind="panel" tooltip="Objetivos, riesgos CPA/TCPA y laboratorio radar" active={group === 'ais' || isAISDrawerOpen || isRadarOpen} onClick={() => toggleGroup('ais')} />
-        <DockButton icon={Sailboat} label="VELA" kind="panel" tooltip="Táctica, instrumentos y laylines" active={group === 'sail' || isTacticsOpen} onClick={() => toggleGroup('sail')} />
-        <DockButton icon={Wind} label="METEO" kind="panel" tooltip="Meteorología y previsión de viento" active={group === 'meteo' || isWindFlowOpen} onClick={() => toggleGroup('meteo')} />
+        <DockButton icon={Sailboat} label="VELA" kind="panel" tooltip="Abrir o cerrar Táctica de vela" active={isTacticsOpen} onClick={() => { onSelect('chart'); setIsTacticsOpen(value => !value); }} />
+        <DockButton
+          icon={Compass}
+          label="ROSA"
+          kind="panel"
+          tooltip="Rosa y overlays de vela"
+          tooltipDetail="Control independiente del HUD sobre el buque, zona no-go y laylines. Puede usarse a la vez que el Centro Táctico VELA."
+          active={group === 'sail' || isSailSteerWidgetOpen || isLaylinesActive || isWaypointLaylinesActive}
+          onClick={() => toggleGroup('sail')}
+        />
+        <DockButton icon={Wind} label="WINDFLOW" className="[&>span:first-of-type]:text-[8px] [&>span:first-of-type]:tracking-normal" kind="action" tooltip="Activar o desactivar la animación de viento" active={windEnabled} onClick={() => { onSelect('chart'); onToggleWind(); }} />
         <DockButton
           icon={Map}
           label="CAPAS"

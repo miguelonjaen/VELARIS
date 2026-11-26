@@ -238,6 +238,11 @@ body.night-mode ::-webkit-scrollbar-thumb:hover {
   --vl-content-top: calc(var(--vl-band-h) + var(--vl-gap) * 2);
   /* Ancho del panel meteorológico (columna izquierda de la carta) */
   --vl-weather-w: 232px;
+  --vl-bottom-controls-bottom: 12px;
+  --vl-bottom-controls-gap: 8px;
+  --vl-bottom-control-w: 80px;
+  --vl-bottom-controls-reserve: 72px;
+  --vl-bottom-controls-width: 370px;
 
   /* Jerarquía de superposición (de abajo a arriba) */
   --vl-z-chart-widget: 1000;   /* widgets dentro de la carta (meteo, aviso ENC, terminal) */
@@ -250,6 +255,37 @@ body.night-mode ::-webkit-scrollbar-thumb:hover {
   --vl-z-modal: 10000;         /* diálogos modales */
   --vl-z-modal-top: 11000;     /* diálogos sobre diálogos (novedades, acerca de) */
   --vl-z-toast: 13000;         /* alarmas: siempre visibles */
+}
+
+.vl-bottom-mob-control {
+  right: var(--vl-bottom-controls-bottom);
+  bottom: var(--vl-bottom-controls-bottom);
+  width: var(--vl-bottom-control-w);
+}
+
+.vl-bottom-rec-control {
+  right: calc(var(--vl-bottom-controls-bottom) + var(--vl-bottom-control-w) + var(--vl-bottom-controls-gap));
+  bottom: var(--vl-bottom-controls-bottom);
+}
+
+.vl-bottom-coast-control {
+  right: calc(var(--vl-bottom-controls-bottom) + var(--vl-bottom-control-w) + var(--vl-bottom-controls-gap) + var(--vl-bottom-control-w) + var(--vl-bottom-controls-gap));
+  bottom: var(--vl-bottom-controls-bottom);
+}
+
+@media (max-width: 760px) {
+  :root {
+    --vl-bottom-control-w: 68px;
+    --vl-bottom-controls-bottom: 8px;
+    --vl-bottom-controls-gap: 6px;
+    --vl-bottom-controls-width: 300px;
+  }
+
+  .vl-bottom-coast-control {
+    max-width: 150px !important;
+    padding: 7px !important;
+    font-size: 10px !important;
+  }
 }
 
 /* Superficie de panel GAULOS: azul marino muy oscuro, borde sutil */

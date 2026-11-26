@@ -13,7 +13,7 @@
  .zeus-compact-dock button > span:first-of-type:not(.vl-tip) { display: block; }
 }
 
-/* Six primary groups keep labels visible for touch and bridge use. */
+/* Primary bridge controls keep labels visible; the dock scrolls on short windows. */
 .zeus-compact-dock button { min-height: 52px; height: 52px; width: 56px; flex-shrink: 0; }
 .zeus-compact-dock button > span:first-of-type:not(.vl-tip) { display: block; font-size: 8px; }
 
